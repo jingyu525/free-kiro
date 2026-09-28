@@ -3,6 +3,10 @@
 #
 # Quick start (no release): `goreleaser build --snapshot --clean`
 # Tag a release: `git tag v0.1.0 && git push --tags` (CI handles the rest)
+#
+# version: 2 is required by GoReleaser v2.x.
+
+version: 2
 
 project_name: free-kiro
 
