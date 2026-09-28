@@ -1,0 +1,177 @@
+# Steering — 项目约定文档
+
+> Steering 是项目的"持久上下文"。每个 spec 工作流生成（agent 写代码）时，会按 mode
+> 规则自动注入对应的文档。让 agent 不需要反复重述"项目的整体约定"。
+
+## 概念
+
+Steering 是 `.kiro/steering/*.md` 下的 markdown 文件（外加 `AGENTS.md`），每个文件
+带 YAML frontmatter 声明 `mode`（注入时机）。
+
+```
+.kiro/
+├── steering/
+│   ├── product.md       # always — 产品目标
+│   ├── structure.md     # always — 代码组织
+│   └── tech.md          # auto   — 技术栈
+└── AGENTS.md            # always — 给 agent 的总体指令
+```
+
+## 两种作用域
+
+| 作用域 | 路径 | 用途 |
+|---|---|---|
+| **workspace** | `<root>/.kiro/steering/*.md` | 项目级，提交到 git |
+| **global** | `~/.kiro/steering/*.md` | 用户级，跨项目共享 |
+
+**workspace 覆盖 global**（同名文档 workspace 优先）。这是为了让单个项目可以"局部
+推翻"用户的全局约定。
+
+## 四种 inclusion mode
+
+### `always` — 每次都注入
+
+最常用。适合**项目级硬性约定**（编码风格、产品边界、技术栈）。
+
+```markdown
+---
+mode: always
+description: 这个产品的目标、核心能力与边界
+---
+# Product
+
+用 1-3 段说明产品是什么、不是什么。
+```
+
+### `auto` — prompt 关键词命中才注入
+
+适合**领域知识**（API 规范、设计模式）。prompt 关键词与 `description` 重叠时拉起。
+
+```markdown
+---
+mode: auto
+description: REST API design patterns. Use when creating or modifying API endpoints.
+---
+# API 设计
+- 用 nouns 表示资源，verbs 表示动作
+- 状态码遵循 RFC 7231
+- ...
+```
+
+### `manual` — 显式 #name 引用才注入
+
+适合**专用工具 / 罕见工作流**（调试某个子系统、跑迁移脚本）。
+
+```markdown
+---
+mode: manual
+---
+# 数据库迁移工具
+
+只在跑数据库迁移时显式引用。
+```
+
+agent 调用 `free-kiro steering context --manual migration` 才会拉起。
+
+### `filematch` — 编辑特定文件时才注入
+
+适合**文件级约定**（React 组件规范、SQL 风格、文档格式）。
+
+```markdown
+---
+mode: filematch
+fileMatchPattern: "**/*.tsx"
+---
+# React 组件规范
+- 用 functional component + hooks
+- props 用 TS interface 定义
+- ...
+```
+
+agent 在编辑 `components/Button.tsx` 之前，调用：
+
+```bash
+free-kiro steering context --file components/Button.tsx
+```
+
+会自动拉起这份文档。
+
+## 官方 `inclusion` 键 vs 克隆 `mode` 键
+
+free-kiro 接受两种键名，等价：
+
+```markdown
+---
+mode: always          # 克隆风格
+inclusion: always     # Kiro 官方风格
+---
+```
+
+`mode:` 与 `inclusion:` 同时存在时，`inclusion:` 优先（Kiro 官方优先）。
+
+## fileMatchPattern 语法
+
+支持 `**` / `*` / `?` 三种 glob：
+
+| 模式 | 匹配 |
+|---|---|
+| `**/*.tsx` | 任意目录下的 .tsx |
+| `src/**/*.go` | src/ 下任意深度的 .go |
+| `*.md` | 仅根目录的 .md |
+| `?single.md` | 一个字符 + single.md |
+
+也接受 YAML 列表格式：
+
+```markdown
+fileMatchPattern: ["**/*.ts", "**/*.tsx"]
+```
+
+## CLI 命令
+
+```bash
+# 列出全部（workspace + global 合并）
+free-kiro steering list
+
+# 打印单个
+free-kiro steering show product
+
+# 组装上下文（agent 用入口）
+free-kiro steering context \
+  [--file <path>] \
+  [--prompt <text>]
+```
+
+`context` 输出所有匹配的文档拼成的 block，可直接拼到生成 prompt 前缀。
+
+## 在 agent 里集成
+
+每次生成前调用 `steering context`，把结果拼到 prompt 头部：
+
+```bash
+CTX=$(free-kiro steering context --file "$CURRENT_FILE" --prompt "$USER_PROMPT")
+PROMPT="$CTX
+
+---
+
+$USER_PROMPT"
+```
+
+`filematch` + `auto` 会被自动筛选，只有真正相关的文档会被拉起，避免污染上下文。
+
+## 完整示例：.kiro/steering/
+
+`free-kiro init` 默认生成 3 个示例文档：
+
+**product.md**（always）— 一两段说清产品目标  
+**structure.md**（always）— 代码组织原则  
+**tech.md**（auto）— 技术栈与开发规范（"Go projects" / "python projects" 等）
+
+可以继续添加：
+
+- `api.md`（auto）— REST API 设计
+- `frontend.md`（filematch, `**/*.tsx`）— React 组件规范
+- `db-migration.md`（manual）— 数据库迁移脚本指南
+
+---
+
+参考：[CLI.md](CLI.md)（steering 命令）/ [HOOKS.md](HOOKS.md)（用 hook 自动触发 context 组装）
