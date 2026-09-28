@@ -84,6 +84,6 @@ func init() {
 	rootCmd.AddCommand(specCmd)
 	rootCmd.AddCommand(steeringCmdFactory())
 	rootCmd.AddCommand(taskCmdFactory())
-	rootCmd.AddCommand(stubFor("hook", "管理事件驱动 hook（list / add / run）"))
+	rootCmd.AddCommand(hookCmdFactory())
 	rootCmd.AddCommand(lintCmdFactory())
 }

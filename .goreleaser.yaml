@@ -1,0 +1,80 @@
+# GoReleaser configuration for free-kiro.
+# Build cross-platform single binaries on every git tag.
+#
+# Quick start (no release): `goreleaser build --snapshot --clean`
+# Tag a release: `git tag v0.1.0 && git push --tags` (CI handles the rest)
+
+project_name: free-kiro
+
+before:
+  hooks:
+    # Go is reasonably self-contained, but `go mod tidy` keeps the
+    # go.sum + go.mod aligned with the imported packages.
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: free-kiro
+    main: ./cmd/free-kiro
+    binary: free-kiro
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      # Don't bother with 32-bit ARM for now; add `386` later if asked.
+      - goos: windows
+        goarch: arm64
+    flags:
+      - -trimpath
+      - -s
+      - -w
+    ldflags:
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    # Wrap each platform's tarball into the standard
+    # free-kiro_<version>_<os>_<arch>.tar.gz layout.
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE
+      - docs/*
+    rlcp: true
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
+  algorithm: sha256
+
+brews:
+  - tap:
+      owner: liujingyu
+      name: homebrew-tap
+    commit_author:
+      name: liujingyu
+      email: liujingyu@local
+    folder: Formula
+    homepage: https://github.com/liujingyu/free-kiro
+    description: "Spec-driven development workflow engine (Kiro clone in Go)"
+    license: MIT
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-snapshot"
+
+changelog:
+  use: git
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
