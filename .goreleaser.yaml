@@ -54,23 +54,15 @@ archives:
       - README.md
       - LICENSE
       - docs/*
-    rlcp: true
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
 
-brews:
-  - tap:
-      owner: jingyu525
-      name: homebrew-tap
-    commit_author:
-      name: jingyu525
-      email: liujingyu@local
-    folder: Formula
-    homepage: https://github.com/jingyu525/free-kiro
-    description: "Spec-driven development workflow engine (Kiro clone in Go)"
-    license: MIT
+# Homebrew tap is intentionally omitted for v0.1.0 — it requires a
+# separate repository (jingyu525/homebrew-tap) to push the formula
+# to, and we don't have one yet. When the tap repo exists, add the
+# `brews:` block here per GoReleaser v2 schema.
 
 snapshot:
   name_template: "{{ incpatch .Version }}-snapshot"
