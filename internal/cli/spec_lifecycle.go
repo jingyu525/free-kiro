@@ -4,8 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+
+	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/spec"
+	"github.com/jingyu525/free-kiro/internal/taskgraph"
+	"github.com/jingyu525/free-kiro/internal/visualize"
 )
 
 // specApproveCmd marks a spec approved and captures a drift baseline.
@@ -107,11 +114,13 @@ func specSyncCmd() *cobra.Command {
 // specStatusCmd prints a snapshot of the spec's lifecycle position plus
 // drift signals. Default output is a flat, human-readable block; pass
 // --json to get the original nested JSON for piping into jq / hooks.
+// --graph emits a Mermaid graph LR block instead.
 func specStatusCmd() *cobra.Command {
 	var asJSON bool
+	var asGraph bool
 	c := &cobra.Command{
 		Use:   "status <name>",
-		Short: "查看 spec 状态 + 漂移（默认人类可读，--json 取嵌套 JSON）",
+		Short: "查看 spec 状态 + 漂移（默认人类可读，--json/--graph 可选）",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			eng, err := engineForSpec()
@@ -122,19 +131,23 @@ func specStatusCmd() *cobra.Command {
 			if err != nil {
 				return exitWithError(err)
 			}
-			if asJSON {
+			switch {
+			case asJSON:
 				out, err := json.MarshalIndent(status, "", "  ")
 				if err != nil {
 					return exitWithError(err)
 				}
 				fmt.Fprintln(cmd.OutOrStdout(), string(out))
-				return nil
+			case asGraph:
+				renderMermaidStatus(cmd.OutOrStdout(), eng, args[0], status)
+			default:
+				renderHumanStatus(cmd.OutOrStdout(), args[0], status)
 			}
-			renderHumanStatus(cmd.OutOrStdout(), args[0], status)
 			return nil
 		},
 	}
 	c.Flags().BoolVar(&asJSON, "json", false, "emit nested JSON (for piping into jq / IDE hooks)")
+	c.Flags().BoolVar(&asGraph, "graph", false, "emit Mermaid graph LR block (paste into GitHub PR)")
 	return c
 }
 
@@ -209,6 +222,37 @@ func absDelta(d int) int {
 		return -d
 	}
 	return d
+}
+
+// renderMermaidStatus emits a Mermaid graph LR block for one spec.
+// Falls back to a no-op graph (with a comment line) when the spec
+// has no tasks.md yet.
+func renderMermaidStatus(w io.Writer, eng *spec.Engine, name string, status map[string]any) {
+	phase := models.Phase("")
+	if p, ok := status["phase"].(string); ok {
+		phase = models.Phase(p)
+	}
+	tasks, waves := loadTasksForMermaid(eng, name)
+	if len(tasks) == 0 {
+		fmt.Fprintln(w, "graph LR")
+		fmt.Fprintf(w, "  spec_%s[\"%s<br/>phase: %s<br/>no tasks yet\"]\n",
+			name, name, phase)
+		return
+	}
+	visualize.RenderMermaidSpec(w, name, phase, tasks, waves)
+}
+
+// loadTasksForMermaid reads tasks.md and returns the wave grouping.
+func loadTasksForMermaid(eng *spec.Engine, name string) ([]models.Task, [][]models.Task) {
+	data, err := os.ReadFile(filepath.Join(eng.WS().SpecDir(name), "tasks.md"))
+	if err != nil {
+		return nil, nil
+	}
+	tasks := taskgraph.ParseTasks(string(data))
+	if len(tasks) == 0 {
+		return nil, nil
+	}
+	return tasks, taskgraph.ExecutionWaves(tasks)
 }
 
 // specNextCmd prints the oracle's recommendation for the next action.
