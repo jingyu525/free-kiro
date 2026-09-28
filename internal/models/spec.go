@@ -106,6 +106,11 @@ func NewSpecMeta(name, prompt, workflow, specType string, quick bool) *SpecMeta 
 	}
 }
 
+// PhaseEnum returns the spec's phase as a typed Phase value. Equivalent
+// to Phase(m.Phase) but reads better at call sites that need to switch
+// on the phase.
+func (m *SpecMeta) PhaseEnum() Phase { return Phase(m.Phase) }
+
 func (m *SpecMeta) applyDefaults() {
 	if m.Phase == "" {
 		m.Phase = PhaseDraft
