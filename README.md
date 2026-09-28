@@ -116,12 +116,12 @@ free-kiro lint [<name>]                          # 离线质量门禁
 | 2 | 引擎错误（workspace 缺失、非法 phase 转移等） |
 | 3 | 用户输入错误 |
 
-## 与 kiro-clone / 官方 Kiro 的兼容性
+## 与官方 Kiro 的兼容性
 
 - ✅ spec 文档格式（requirements.md / design.md / tasks.md / bugfix.md）
 - ✅ `.kiro/` 目录结构（specs / steering / hooks / settings.json）
 - ✅ Hook JSON 信封（写出的 JSON 可被官方 Kiro IDE 直接加载）
-- ✅ EARS 句式（lint 结果与 kiro-clone 一致）
+- ✅ EARS 句式（lint 结果与官方 Kiro 一致）
 
 不兼容：
 - 不做 AI 模型调用（spec 文档是骨架，由 agent 写内容）
@@ -135,12 +135,7 @@ free-kiro lint [<name>]                          # 离线质量门禁
 - [docs/EARS.md](docs/EARS.md) — 验收标准句式
 - [docs/STEERING.md](docs/STEERING.md) — Steering 文档
 - [docs/HOOKS.md](docs/HOOKS.md) — Hooks 信封
-- [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) — 与 kiro-clone / 官方 Kiro 兼容性
-
-## 致谢
-
-参考实现：[kiro-clone](https://github.com/...)（Python，MIT）。
-free-kiro 是其 1:1 Go 重写，专注于跨平台单二进制分发。
+- [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) — 与官方 Kiro 兼容性
 
 ## License
 

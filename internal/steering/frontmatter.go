@@ -12,7 +12,7 @@
 //
 // This package deliberately has no external deps: the frontmatter parser
 // is a tiny recursive-descent over `key: value` lines, the glob matcher is
-// a hand-rolled scanner. Same shape as kiro-clone, in idiomatic Go.
+// a hand-rolled scanner. Same shape as the kiro engine, in idiomatic Go.
 package steering
 
 import (

@@ -58,7 +58,7 @@ func (s *Store) LoadAll() []models.SteeringDoc {
 			doc, err := loadDoc(filepath.Join(s.globalDir, ent.Name()), "global")
 			if err != nil {
 				// Skip malformed files rather than abort the whole load;
-				// this matches kiro-clone's lenient behaviour.
+				// this matches kiro's lenient behaviour.
 				continue
 			}
 			merged[doc.Name] = doc

@@ -4,7 +4,7 @@
 // the nearest ancestor containing .kiro; if none exists, they fall back to
 // the current directory so `free-kiro init` can bootstrap a fresh layout.
 //
-// The layout mirrors kiro-clone / Kiro exactly:
+// The layout mirrors Kiro exactly:
 //
 //	.kiro/
 //	├── settings.json   (created by init)

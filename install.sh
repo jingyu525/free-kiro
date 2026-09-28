@@ -9,10 +9,10 @@
 #   FREE_KIRO_DIR       Install location (default: ~/.local/bin)
 #   FREE_KIRO_REPO      GitHub repo (default: jingyu525/free-kiro)
 #
-# This script is modelled on kiro-clone / Kiro CLI install scripts: it
-# detects the platform, downloads the matching binary from GitHub
-# Releases, verifies the SHA256, and drops it in ~/.local/bin (or
-# FREE_KIRO_DIR). Idempotent — re-running overwrites the previous binary.
+# This script detects the platform, downloads the matching binary
+# from GitHub Releases, verifies the SHA256, and drops it in
+# ~/.local/bin (or FREE_KIRO_DIR). Idempotent — re-running
+# overwrites the previous binary.
 
 set -euo pipefail
 

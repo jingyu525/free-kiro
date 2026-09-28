@@ -57,7 +57,7 @@ const (
 // required for all but the ubiquitous form, which starts with "THE SYSTEM
 // SHALL" itself).
 //
-// The case-insensitive flag mirrors kiro-clone's Python regex so both tools
+// The case-insensitive flag mirrors kiro's Python regex so both tools
 // produce the same lint verdict on the same document.
 var EARSRe = regexp.MustCompile(`(?i)(?:` +
 	`WHEN\s+.+?\s+THE\s+SYSTEM\s+SHALL` +

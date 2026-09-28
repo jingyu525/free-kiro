@@ -1,6 +1,6 @@
 // Package cli assembles the cobra command tree for free-kiro.
 //
-// Subcommand mirrors kiro-clone / Kiro's mental model:
+// Subcommand mirrors Kiro's mental model:
 //
 //	free-kiro init                    bootstrap .kiro workspace + sample steering
 //	free-kiro spec {new,generate,quick,show,list,approve,status,next,sync,start,complete,analyze}

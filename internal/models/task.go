@@ -2,7 +2,7 @@ package models
 
 // Task is a single executable task parsed from tasks.md.
 //
-// Format (matches kiro-clone / Kiro exactly):
+// Format (matches Kiro exactly):
 //
 //	- [ ] #1 Title
 //	- [x] #2 Implement core [deps: #1]

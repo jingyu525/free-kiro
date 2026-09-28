@@ -7,7 +7,7 @@ package lint
 // "THE SYSTEM SHALL" — defects are wrong, not "should". The corrective
 // acceptance criteria (Expected and Unchanged Behavior) MUST use "THE
 // SYSTEM SHALL" (Unchanged uses the "… SHALL CONTINUE TO" regression-
-// prevention form). This mirrors kiro-clone / Kiro's bug-fix contract:
+// prevention form). This mirrors Kiro's bug-fix contract:
 //
 //   - `## Expected Behavior` is mandatory and must contain a SHALL (ERROR
 //     if missing).
