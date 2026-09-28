@@ -65,11 +65,19 @@ func specListCmd() *cobra.Command {
 			sort.Slice(rows, func(i, j int) bool {
 				return rows[i]["name"].(string) < rows[j]["name"].(string)
 			})
-			fmt.Fprintf(cmd.OutOrStdout(), "%-24s %-14s %-9s\n", "NAME", "PHASE", "APPROVED")
+			fmt.Fprintf(cmd.OutOrStdout(), "%-24s %-14s %-9s %s\n", "NAME", "PHASE", "APPROVED", "ACTIVE")
 			for _, r := range rows {
-				fmt.Fprintf(cmd.OutOrStdout(), "%-24s %-14s %-9s\n",
-					r["name"], r["phase"], yesNo(r["approved"].(bool)))
+				marker := ""
+				if active, _ := r["active"].(bool); active {
+					marker = "*"
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "%-24s %-14s %-9s %s\n",
+					r["name"], r["phase"], yesNo(r["approved"].(bool)), marker)
 			}
+			// Hint about how to switch.
+			fmt.Fprintln(cmd.OutOrStdout(),
+				"\n(* = active spec, used by IDE SessionStart hook. "+
+					"To switch: edit .kiro/.current.)")
 			return nil
 		},
 	}

@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 
 	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
@@ -32,6 +33,10 @@ const (
 	HooksDirName = "hooks"
 	// SettingsFileName lives at the top of KiroDir; generator configuration.
 	SettingsFileName = "settings.json"
+	// CurrentFileName marks the spec currently in focus. Single line,
+	// contents = spec name. Written by `spec new` / `spec start`; cleared
+	// by `spec complete`. Read by the IDE SessionStart hook.
+	CurrentFileName = ".current"
 )
 
 // Workspace owns a project root and its .kiro subdirectory.
@@ -100,11 +105,47 @@ func (w *Workspace) HooksDir() string { return filepath.Join(w.root, KiroDir, Ho
 // SettingsPath is <root>/.kiro/settings.json.
 func (w *Workspace) SettingsPath() string { return filepath.Join(w.root, KiroDir, SettingsFileName) }
 
+// CurrentPath is <root>/.kiro/.current — a one-line file holding the
+// name of the spec the user is actively working on. Used by the
+// IDE SessionStart hook to print the right `free-kiro spec next`
+// suggestion (no more head-1 guessing).
+func (w *Workspace) CurrentPath() string { return filepath.Join(w.root, KiroDir, CurrentFileName) }
+
 // SpecDir is <root>/.kiro/specs/<name>.
 func (w *Workspace) SpecDir(name string) string { return filepath.Join(w.SpecsDir(), name) }
 
 // Exists returns true if .kiro is present at the root.
 func (w *Workspace) Exists() bool { return isDir(w.KiroDir()) }
+
+// ReadCurrent returns the name of the active spec, or "" if no spec is
+// marked current (or the file is unreadable for any reason — callers
+// treat empty as "no current spec").
+func (w *Workspace) ReadCurrent() string {
+	data, err := os.ReadFile(w.CurrentPath())
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
+}
+
+// WriteCurrent marks the given spec name as active. Writes a single
+// line (no trailing newline). Empty name clears the marker.
+func (w *Workspace) WriteCurrent(name string) error {
+	if name == "" {
+		return w.ClearCurrent()
+	}
+	return os.WriteFile(w.CurrentPath(), []byte(name+"\n"), 0o644)
+}
+
+// ClearCurrent removes the .current file. Idempotent — missing file
+// is not an error.
+func (w *Workspace) ClearCurrent() error {
+	err := os.Remove(w.CurrentPath())
+	if err != nil && !os.IsNotExist(err) {
+		return ferrors.Wrap("workspace.current", err, "remove .current")
+	}
+	return nil
+}
 
 // Require returns the workspace if .kiro exists; otherwise raises a
 // WorkspaceError pointing the user at `free-kiro init`.

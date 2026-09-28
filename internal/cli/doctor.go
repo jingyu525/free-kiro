@@ -25,9 +25,14 @@ const GitHubRepo = "jingyu525/free-kiro"
 // that should be addressed, 2 when something is fatally broken (e.g.
 // the binary can't be located). Exit codes match the lint convention
 // so IDE hooks can route them consistently.
+//
+// By default doctor only reports on IDEs that are actually installed
+// (no warnings for Claude Code / CodeBuddy directories that simply
+// don't exist on this machine). Use --verbose to see every supported
+// IDE regardless of installation status.
 func doctorCmdFactory() *cobra.Command {
-	var strict bool
-	return &cobra.Command{
+	var strict, verbose bool
+	c := &cobra.Command{
 		Use:   "doctor",
 		Short: "一键诊断 free-kiro 安装与配置",
 		Long: `诊断以下项目并打印人类可读报告：
@@ -40,9 +45,10 @@ func doctorCmdFactory() *cobra.Command {
   ✓ GitHub 最新 release 版本（可选）
 
 --strict 启用更严格检查（如有警告也返回 exit 1）。
+--verbose 报告所有受支持的 IDE（即使本机未安装也显示）。
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rep := runDoctorChecks(cmd.OutOrStdout(), strict)
+			rep := runDoctorChecks(cmd.OutOrStdout(), verbose)
 			if rep.FatalCount > 0 {
 				return fmt.Errorf("%d fatal issue(s) — run the fixes listed above", rep.FatalCount)
 			}
@@ -52,9 +58,9 @@ func doctorCmdFactory() *cobra.Command {
 			return nil
 		},
 	}
-	cmdFlag := doctorCmdFactory()
-	cmdFlag.Flags().BoolVar(&strict, "strict", false, "treat warnings as failures")
-	return cmdFlag
+	c.Flags().BoolVar(&strict, "strict", false, "treat warnings as failures")
+	c.Flags().BoolVar(&verbose, "verbose", false, "report all supported IDEs even when not installed")
+	return c
 }
 
 // doctorReport aggregates the per-check results.
@@ -62,11 +68,12 @@ type doctorReport struct {
 	OK         int
 	WarnCount  int
 	FatalCount int
+	InfoCount  int
 	Issues     []doctorIssue
 }
 
 type doctorIssue struct {
-	Severity string // "ok" | "warn" | "fatal"
+	Severity string // "ok" | "info" | "warn" | "fatal"
 	Title    string
 	Detail   string
 	Fix      string // optional one-line fix hint
@@ -75,6 +82,8 @@ type doctorIssue struct {
 func (i doctorIssue) render() string {
 	prefix := "✓"
 	switch i.Severity {
+	case "info":
+		prefix = "ℹ"
 	case "warn":
 		prefix = "⚠"
 	case "fatal":
@@ -92,7 +101,7 @@ func (i doctorIssue) render() string {
 
 // runDoctorChecks executes every check and writes a formatted report.
 // Exported so tests (and the install.sh script, in spirit) can reuse it.
-func runDoctorChecks(w io.Writer, strict bool) doctorReport {
+func runDoctorChecks(w io.Writer, verbose bool) doctorReport {
 	rep := doctorReport{}
 
 	add := func(issue doctorIssue) {
@@ -100,6 +109,8 @@ func runDoctorChecks(w io.Writer, strict bool) doctorReport {
 		switch issue.Severity {
 		case "ok":
 			rep.OK++
+		case "info":
+			rep.InfoCount++
 		case "warn":
 			rep.WarnCount++
 		case "fatal":
@@ -141,7 +152,8 @@ func runDoctorChecks(w io.Writer, strict bool) doctorReport {
 		}
 	}
 
-	// 4. Installed IDEs.
+	// 4. Installed IDEs — summarise. Detailed per-IDE hook state
+	// appears in section 5.
 	ides := ide.DetectAll("")
 	installed := 0
 	for _, d := range ides {
@@ -160,7 +172,7 @@ func runDoctorChecks(w io.Writer, strict bool) doctorReport {
 		var names []string
 		for _, d := range ides {
 			if d.DirExists {
-				names = append(names, fmt.Sprintf("%s (%s)", d.ID, d.ConfigPath))
+				names = append(names, string(d.ID))
 			}
 		}
 		add(doctorIssue{
@@ -170,9 +182,18 @@ func runDoctorChecks(w io.Writer, strict bool) doctorReport {
 		})
 	}
 
-	// 5. Hook configuration per IDE.
+	// 5. Hook configuration — only for INSTALLED IDEs by default.
+	// Uninstalled IDEs are reported as info (or skipped entirely
+	// without --verbose) so users don't get noise they can't act on.
 	for _, d := range ides {
 		if !d.DirExists {
+			if verbose {
+				add(doctorIssue{
+					Severity: "info",
+					Title:    string(d.ID) + " not installed",
+					Detail:   "skipping hook check for " + d.ConfigPath,
+				})
+			}
 			continue
 		}
 		ok, hookCount, err := countFreeKiroHooks(d.ConfigPath)
@@ -223,8 +244,8 @@ func runDoctorChecks(w io.Writer, strict bool) doctorReport {
 		w.Write([]byte(issue.render()))
 		w.Write([]byte("\n\n"))
 	}
-	fmt.Fprintf(w, "summary: %d ok, %d warn, %d fatal\n",
-		rep.OK, rep.WarnCount, rep.FatalCount)
+	fmt.Fprintf(w, "summary: %d ok, %d info, %d warn, %d fatal\n",
+		rep.OK, rep.InfoCount, rep.WarnCount, rep.FatalCount)
 
 	return rep
 }

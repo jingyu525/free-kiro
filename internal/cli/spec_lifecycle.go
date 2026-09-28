@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/spf13/cobra"
 )
@@ -103,12 +104,14 @@ func specSyncCmd() *cobra.Command {
 	}
 }
 
-// specStatusCmd prints a JSON snapshot of the spec's lifecycle position
-// plus drift signals. Designed to be piped to `jq` by IDE hooks.
+// specStatusCmd prints a snapshot of the spec's lifecycle position plus
+// drift signals. Default output is a flat, human-readable block; pass
+// --json to get the original nested JSON for piping into jq / hooks.
 func specStatusCmd() *cobra.Command {
-	return &cobra.Command{
+	var asJSON bool
+	c := &cobra.Command{
 		Use:   "status <name>",
-		Short: "查看 spec 状态 + 漂移（JSON）",
+		Short: "查看 spec 状态 + 漂移（默认人类可读，--json 取嵌套 JSON）",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			eng, err := engineForSpec()
@@ -119,14 +122,93 @@ func specStatusCmd() *cobra.Command {
 			if err != nil {
 				return exitWithError(err)
 			}
-			out, err := json.MarshalIndent(status, "", "  ")
-			if err != nil {
-				return exitWithError(err)
+			if asJSON {
+				out, err := json.MarshalIndent(status, "", "  ")
+				if err != nil {
+					return exitWithError(err)
+				}
+				fmt.Fprintln(cmd.OutOrStdout(), string(out))
+				return nil
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), string(out))
+			renderHumanStatus(cmd.OutOrStdout(), args[0], status)
 			return nil
 		},
 	}
+	c.Flags().BoolVar(&asJSON, "json", false, "emit nested JSON (for piping into jq / IDE hooks)")
+	return c
+}
+
+// renderHumanStatus flattens the spec status into a top-level view.
+// Drift signals are surfaced prominently at the top — they're the
+// reason most users run `status`.
+func renderHumanStatus(w io.Writer, name string, s map[string]any) {
+	fmt.Fprintf(w, "%s\n", name)
+	fmt.Fprintf(w, "  phase:      %s\n", s["phase"])
+	fmt.Fprintf(w, "  workflow:   %s\n", s["workflow"])
+	fmt.Fprintf(w, "  spec_type:  %s\n", s["spec_type"])
+	if approved, _ := s["approved"].(bool); approved {
+		fmt.Fprintln(w, "  approved:   yes")
+	} else {
+		fmt.Fprintln(w, "  approved:   no")
+	}
+
+	// Tasks line (handy quick view).
+	if t, ok := s["tasks"].(map[string]any); ok {
+		done, _ := t["done"].(int)
+		total, _ := t["total"].(int)
+		waves, _ := t["waves"].(int)
+		fmt.Fprintf(w, "  tasks:      %d/%d done, %d wave(s)\n", done, total, waves)
+	}
+
+	// Drift — promoted to the top because it's the action item.
+	if drift, ok := s["drift"].([]any); ok && len(drift) > 0 {
+		fmt.Fprintln(w, "")
+		fmt.Fprintln(w, "  DRIFT (baseline → current):")
+		for _, item := range drift {
+			d, ok := item.(map[string]any)
+			if !ok {
+				continue
+			}
+			key, _ := d["key"].(string)
+			base, _ := d["baseline"].(int)
+			cur, _ := d["current"].(int)
+			delta, _ := d["delta"].(int)
+			sign := " "
+			if delta > 0 {
+				sign = "+"
+			} else if delta < 0 {
+				sign = "-"
+			}
+			fmt.Fprintf(w, "    %s: %d → %d  (%s%d)\n",
+				key, base, cur, sign, absDelta(delta))
+		}
+		fmt.Fprintln(w, "")
+		fmt.Fprintln(w, "  fix: either revert the change, or run `free-kiro spec sync <name>` to accept it as the new baseline")
+	} else {
+		fmt.Fprintln(w, "  drift:      none")
+	}
+
+	// Baseline / current snapshot at the bottom (for context).
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "  baseline:")
+	if b, ok := s["baseline"].(map[string]int); ok {
+		for k, v := range b {
+			fmt.Fprintf(w, "    %s: %d\n", k, v)
+		}
+	}
+	fmt.Fprintln(w, "  current:")
+	if c, ok := s["current"].(map[string]int); ok {
+		for k, v := range c {
+			fmt.Fprintf(w, "    %s: %d\n", k, v)
+		}
+	}
+}
+
+func absDelta(d int) int {
+	if d < 0 {
+		return -d
+	}
+	return d
 }
 
 // specNextCmd prints the oracle's recommendation for the next action.

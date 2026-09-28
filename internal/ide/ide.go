@@ -157,7 +157,7 @@ func freeKiroHooks() []FreeKiroHookSpec {
 		{
 			Event:   "SessionStart",
 			Matcher: "",
-			Command: marker + "session-next: free-kiro spec next $(free-kiro spec list 2>/dev/null | head -1 | awk '{print $1}')",
+			Command: marker + "session-next: free-kiro spec next $(cat .kiro/.current 2>/dev/null) || free-kiro spec list 2>/dev/null | awk 'NR==2{print $1}'",
 		},
 	}
 }

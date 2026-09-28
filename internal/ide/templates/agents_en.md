@@ -16,10 +16,13 @@ documents. Every change should be spec-first.
 
 ## Before every tool call (except Read)
 
-    free-kiro spec next $(free-kiro spec list 2>/dev/null | head -1 | awk '{print $1}')
+    SPEC=$(cat .kiro/.current 2>/dev/null) && free-kiro spec next "$SPEC"
 
 This tells you the recommended next command. If lint is failing, fix it
-before continuing.
+before continuing. The SessionStart hook runs the same command.
+
+If `.kiro/.current` is missing (no active spec), run `free-kiro spec new
+<name>` to start one — it auto-marks the new spec as active.
 
 ## Before every Edit / Write
 

@@ -70,6 +70,12 @@ func (e *Engine) NewSpec(name, prompt, workflow, specType string, quick bool) (*
 	if err := meta.Save(dir); err != nil {
 		return nil, err
 	}
+	// Mark as the active spec so the IDE SessionStart hook prints the
+	// right `next` action. Best-effort: failure here doesn't block
+	// spec creation (the user can pick the spec manually).
+	if err := e.ws.WriteCurrent(name); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not mark %q as active: %v\n", name, err)
+	}
 	return meta, nil
 }
 
@@ -178,6 +184,8 @@ func (e *Engine) Start(specName string) (*models.SpecMeta, error) {
 }
 
 // Complete marks the spec done. Phase moves IMPLEMENTING → DONE.
+// Clears .current so the SessionStart hook doesn't keep recommending
+// actions for a finished spec.
 func (e *Engine) Complete(specName string) (*models.SpecMeta, error) {
 	meta, err := e.loadMeta(specName)
 	if err != nil {
@@ -189,6 +197,9 @@ func (e *Engine) Complete(specName string) (*models.SpecMeta, error) {
 	meta.Phase = models.PhaseDone
 	if err := meta.Save(e.ws.SpecDir(specName)); err != nil {
 		return nil, err
+	}
+	if e.ws.ReadCurrent() == specName {
+		_ = e.ws.ClearCurrent()
 	}
 	return meta, nil
 }
@@ -434,17 +445,21 @@ func splitLines(text string) []string {
 
 // StatusForList returns one row per spec for `spec list`. Kept separate
 // from Status() to avoid mixing the JSON-shape needs of the two callers.
+// Adds an "active" flag so the CLI can highlight the spec the user is
+// currently working on (read from .kiro/.current).
 func (e *Engine) StatusForList() ([]map[string]any, error) {
 	specs, err := e.ListSpecs()
 	if err != nil {
 		return nil, err
 	}
+	current := e.ws.ReadCurrent()
 	var out []map[string]any
 	for _, m := range specs {
 		out = append(out, map[string]any{
 			"name":     m.Name,
 			"phase":    string(m.Phase),
 			"approved": m.Approved,
+			"active":   m.Name == current,
 		})
 	}
 	return out, nil

@@ -15,9 +15,13 @@
 
 ## 每个工具调用前（除 Read）
 
-    free-kiro spec next $(free-kiro spec list 2>/dev/null | head -1 | awk '{print $1}')
+    SPEC=$(cat .kiro/.current 2>/dev/null) && free-kiro spec next "$SPEC"
 
 这是 oracle 的下一步动作建议。如果 lint 失败，先修再继续。
+SessionStart hook 会自动跑同样的命令。
+
+如果 `.kiro/.current` 不存在（没活跃 spec），先跑 `free-kiro spec new <name>`，
+新 spec 会自动被标记为活跃。
 
 ## 每次 Edit / Write 之前
 
