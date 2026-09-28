@@ -2,12 +2,12 @@
 # install.sh — one-line installer for free-kiro.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/liujingyu/free-kiro/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/jingyu525/free-kiro/main/install.sh | bash
 #
 # Environment variables:
 #   FREE_KIRO_VERSION   Specific version to install (default: latest)
 #   FREE_KIRO_DIR       Install location (default: ~/.local/bin)
-#   FREE_KIRO_REPO      GitHub repo (default: liujingyu/free-kiro)
+#   FREE_KIRO_REPO      GitHub repo (default: jingyu525/free-kiro)
 #
 # This script is modelled on kiro-clone / Kiro CLI install scripts: it
 # detects the platform, downloads the matching binary from GitHub
@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-REPO="${FREE_KIRO_REPO:-liujingyu/free-kiro}"
+REPO="${FREE_KIRO_REPO:-jingyu525/free-kiro}"
 INSTALL_DIR="${FREE_KIRO_DIR:-$HOME/.local/bin}"
 VERSION="${FREE_KIRO_VERSION:-latest}"
 BINARY="free-kiro"

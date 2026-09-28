@@ -58,13 +58,13 @@ checksum:
 
 brews:
   - tap:
-      owner: liujingyu
+      owner: jingyu525
       name: homebrew-tap
     commit_author:
-      name: liujingyu
+      name: jingyu525
       email: liujingyu@local
     folder: Formula
-    homepage: https://github.com/liujingyu/free-kiro
+    homepage: https://github.com/jingyu525/free-kiro
     description: "Spec-driven development workflow engine (Kiro clone in Go)"
     license: MIT
 

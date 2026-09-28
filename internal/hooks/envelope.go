@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	ferrors "github.com/liujingyu/free-kiro/internal/errors"
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 
-	"github.com/liujingyu/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/models"
 )
 
 // rawHook is the loose on-disk shape accepted by the loader. Either

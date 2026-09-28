@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/liujingyu/free-kiro/internal/workspace"
+	"github.com/jingyu525/free-kiro/internal/workspace"
 )
 
 // writeSteering writes a steering file with frontmatter + body.

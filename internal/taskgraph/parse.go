@@ -15,7 +15,7 @@ package taskgraph
 import (
 	"regexp"
 
-	"github.com/liujingyu/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/models"
 )
 
 // lineRe matches `- [ ] #1 Title [deps: #2,#3]` and friends.

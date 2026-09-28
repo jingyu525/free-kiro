@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	ferrors "github.com/liujingyu/free-kiro/internal/errors"
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
 
 // Workflow constants. A spec picks one at creation; it only changes the

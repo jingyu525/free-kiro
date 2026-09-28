@@ -4,10 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
-	ferrors "github.com/liujingyu/free-kiro/internal/errors"
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 
-	"github.com/liujingyu/free-kiro/internal/models"
-	"github.com/liujingyu/free-kiro/internal/workspace"
+	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/workspace"
 )
 
 // GlobalDirName is the conventional name of the user's global steering

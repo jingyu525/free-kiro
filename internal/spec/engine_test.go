@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/liujingyu/free-kiro/internal/lint"
-	"github.com/liujingyu/free-kiro/internal/models"
-	"github.com/liujingyu/free-kiro/internal/workspace"
+	"github.com/jingyu525/free-kiro/internal/lint"
+	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/workspace"
 )
 
 func newTestEngine(t *testing.T) (*Engine, string) {

@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/liujingyu/free-kiro/internal/cli"
+	"github.com/jingyu525/free-kiro/internal/cli"
 )
 
 func main() {

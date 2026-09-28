@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/liujingyu/free-kiro/internal/models"
-	"github.com/liujingyu/free-kiro/internal/spec"
+	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/spec"
 )
 
 // engineHelper builds a SpecEngine on demand. Kept here (not next to

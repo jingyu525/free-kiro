@@ -25,7 +25,7 @@ package lint
 import (
 	"regexp"
 
-	"github.com/liujingyu/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/models"
 )
 
 // LintIssue is a single finding from the lint gate.

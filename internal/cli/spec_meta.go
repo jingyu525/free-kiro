@@ -1,8 +1,8 @@
 package cli
 
 import (
-	"github.com/liujingyu/free-kiro/internal/models"
-	"github.com/liujingyu/free-kiro/internal/spec"
+	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/spec"
 )
 
 // loadMetaViaEngine reads .meta.json via the engine's workspace. Used by

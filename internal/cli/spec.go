@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/liujingyu/free-kiro/internal/workspace"
+	"github.com/jingyu525/free-kiro/internal/workspace"
 )
 
 // specCmd groups the 12 spec lifecycle subcommands. The actual command

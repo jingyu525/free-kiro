@@ -7,10 +7,10 @@ import (
 	"regexp"
 	"strings"
 
-	ferrors "github.com/liujingyu/free-kiro/internal/errors"
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 
-	"github.com/liujingyu/free-kiro/internal/models"
-	"github.com/liujingyu/free-kiro/internal/workspace"
+	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/workspace"
 )
 
 // Registry loads, normalises, matches, and dispatches hooks. Each

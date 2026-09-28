@@ -18,7 +18,7 @@ package steering
 import (
 	"regexp"
 
-	ferrors "github.com/liujingyu/free-kiro/internal/errors"
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
 
 // ValidModes are the four inclusion modes a steering doc can declare.

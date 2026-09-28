@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/liujingyu/free-kiro/internal/models"
-	"github.com/liujingyu/free-kiro/internal/workspace"
+	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/workspace"
 )
 
 // setup creates a temp workspace with .kiro/hooks and returns a Registry.

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/liujingyu/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/models"
 )
 
 // Assemble builds the steering context block for a generation request.

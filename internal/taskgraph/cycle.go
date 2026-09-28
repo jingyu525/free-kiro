@@ -1,7 +1,7 @@
 package taskgraph
 
 import (
-	"github.com/liujingyu/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/models"
 )
 
 // DetectCycle returns the cycle path (task ids) if tasks has a dependency

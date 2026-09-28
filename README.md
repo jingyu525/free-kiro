@@ -37,10 +37,10 @@ Claude Code / CodeBuddy / Cursor / Continue 这些主流 AI coding 工具
 ## 安装
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/liujingyu/free-kiro/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/jingyu525/free-kiro/main/install.sh | bash
 ```
 
-或从 [GitHub Releases](https://github.com/liujingyu/free-kiro/releases)
+或从 [GitHub Releases](https://github.com/jingyu525/free-kiro/releases)
 下载对应平台的二进制。
 
 ## 30 秒上手
@@ -144,4 +144,4 @@ free-kiro 是其 1:1 Go 重写，专注于跨平台单二进制分发。
 
 ## License
 
-MIT © 2026 liujingyu
+MIT © 2026 jingyu525

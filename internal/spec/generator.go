@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"text/template"
 
-	ferrors "github.com/liujingyu/free-kiro/internal/errors"
-	"github.com/liujingyu/free-kiro/internal/models"
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
+	"github.com/jingyu525/free-kiro/internal/models"
 )
 
 //go:embed templates/*.md.tmpl

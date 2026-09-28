@@ -8,11 +8,11 @@ import (
 	"regexp"
 	"strings"
 
-	ferrors "github.com/liujingyu/free-kiro/internal/errors"
-	"github.com/liujingyu/free-kiro/internal/lint"
-	"github.com/liujingyu/free-kiro/internal/models"
-	"github.com/liujingyu/free-kiro/internal/taskgraph"
-	"github.com/liujingyu/free-kiro/internal/workspace"
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
+	"github.com/jingyu525/free-kiro/internal/lint"
+	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/taskgraph"
+	"github.com/jingyu525/free-kiro/internal/workspace"
 )
 
 // Engine is the spec lifecycle orchestrator. All state-machine transitions

@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/liujingyu/free-kiro/internal/hooks"
-	"github.com/liujingyu/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/hooks"
+	"github.com/jingyu525/free-kiro/internal/models"
 )
 
 // hookCmdFactory replaces the Wave 1 stub with three subcommands:

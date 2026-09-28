@@ -18,7 +18,7 @@ import (
 	"os"
 	"path/filepath"
 
-	ferrors "github.com/liujingyu/free-kiro/internal/errors"
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
 
 const (

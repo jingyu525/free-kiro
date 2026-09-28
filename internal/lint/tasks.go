@@ -3,8 +3,8 @@ package lint
 import (
 	"fmt"
 
-	"github.com/liujingyu/free-kiro/internal/models"
-	"github.com/liujingyu/free-kiro/internal/taskgraph"
+	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/taskgraph"
 )
 
 // LintTasks checks tasks.md for parseability, dangling/self deps, and

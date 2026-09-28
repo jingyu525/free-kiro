@@ -1,7 +1,7 @@
 package taskgraph
 
 import (
-	"github.com/liujingyu/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/models"
 )
 
 // ExecutionWaves groups tasks into parallel execution waves (level 1, 2,

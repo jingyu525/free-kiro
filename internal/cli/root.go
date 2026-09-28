@@ -17,7 +17,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	ferrors "github.com/liujingyu/free-kiro/internal/errors"
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
 
 // rootCmd is the base command. Subcommands attach themselves in init() or

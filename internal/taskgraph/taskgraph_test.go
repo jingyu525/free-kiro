@@ -3,7 +3,7 @@ package taskgraph
 import (
 	"testing"
 
-	"github.com/liujingyu/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/models"
 )
 
 func TestParseTasks_BasicAndDone(t *testing.T) {

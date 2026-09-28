@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/liujingyu/free-kiro/internal/steering"
+	"github.com/jingyu525/free-kiro/internal/steering"
 )
 
 // steeringCmd replaces the Wave 1 stub with three subcommands:

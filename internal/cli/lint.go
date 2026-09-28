@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/liujingyu/free-kiro/internal/lint"
-	"github.com/liujingyu/free-kiro/internal/workspace"
+	"github.com/jingyu525/free-kiro/internal/lint"
+	"github.com/jingyu525/free-kiro/internal/workspace"
 )
 
 // lintCmd runs the offline spec-quality gate. Exits 0 when no ERROR is

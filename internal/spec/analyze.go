@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/liujingyu/free-kiro/internal/lint"
-	"github.com/liujingyu/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/lint"
+	"github.com/jingyu525/free-kiro/internal/models"
 )
 
 // AnalysisFinding is one advisory consistency issue raised by Analyze.
