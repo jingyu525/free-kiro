@@ -82,8 +82,8 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	initSpecSubcommands(specCmd)
 	rootCmd.AddCommand(specCmd)
-	rootCmd.AddCommand(stubFor("steering", "查看项目约定文档（list / show / context）"))
-	rootCmd.AddCommand(stubFor("task", "查看 tasks.md 的并行 wave 视图（list）"))
+	rootCmd.AddCommand(steeringCmdFactory())
+	rootCmd.AddCommand(taskCmdFactory())
 	rootCmd.AddCommand(stubFor("hook", "管理事件驱动 hook（list / add / run）"))
 	rootCmd.AddCommand(lintCmdFactory())
 }
