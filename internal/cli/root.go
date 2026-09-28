@@ -86,4 +86,5 @@ func init() {
 	rootCmd.AddCommand(taskCmdFactory())
 	rootCmd.AddCommand(hookCmdFactory())
 	rootCmd.AddCommand(lintCmdFactory())
+	rootCmd.AddCommand(doctorCmdFactory())
 }

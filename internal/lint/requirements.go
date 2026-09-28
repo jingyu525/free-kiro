@@ -26,7 +26,7 @@ func LintRequirements(text string) []LintIssue {
 		out = append(out, LintIssue{
 			Severity: SeverityError,
 			Code:     "empty-requirements",
-			Message:  "requirements.md is empty",
+			Message:  "requirements.md is empty — fill in user stories + acceptance criteria",
 			Location: "requirements.md",
 		})
 		return out
@@ -35,10 +35,10 @@ func LintRequirements(text string) []LintIssue {
 		out = append(out, LintIssue{
 			Severity: SeverityError,
 			Code:     "no-ears",
-			Message: "no EARS acceptance criteria found (use WHEN/WHILE/WHERE/UNLESS/" +
-				"IF…THEN … THE SYSTEM SHALL …, or the ubiquitous " +
-				"\"The system shall …\" form)",
+			Message: "no EARS acceptance criteria found — write at least one AC using " +
+				"WHEN/WHILE/WHERE/UNLESS/IF…THEN … THE SYSTEM SHALL … (or 'The system shall …')",
 			Location: "requirements.md",
+			Hint:     "see docs/EARS.md#five-templates for the 5 templates + ubiquitous form",
 		})
 	} else if placeholderRe.MatchString(text) {
 		// EARS regex matched only because of `<TODO:…>` placeholders inside
@@ -47,8 +47,9 @@ func LintRequirements(text string) []LintIssue {
 		out = append(out, LintIssue{
 			Severity: SeverityError,
 			Code:     "placeholder-ac",
-			Message:  "acceptance criteria still contain <TODO…> placeholders — fill them in with real content before approving",
+			Message:  "acceptance criteria still contain <TODO…> placeholders — replace each <TODO:…> with real, measurable content",
 			Location: "requirements.md",
+			Hint:     "run `free-kiro spec show <name> --phase requirements` to see the full template",
 		})
 	}
 	if !UserStoryRe.MatchString(text) {
@@ -57,6 +58,7 @@ func LintRequirements(text string) []LintIssue {
 			Code:     "no-user-stories",
 			Message:  "no User Stories section found",
 			Location: "requirements.md",
+			Hint:     "add at least one 'As a <role> I want <capability> so that <benefit>'",
 		})
 	}
 	return out

@@ -1,25 +1,34 @@
 # {{.Name}} — Bug Fix
 
+<!--
+bugfix.md 用三段式契约：
+  ## Current Behavior    描述观察到的缺陷（禁止用 THE SYSTEM SHALL — 缺陷是错的）
+  ## Expected Behavior   正确行为（必须含 THE SYSTEM SHALL）
+  ## Unchanged Behavior  回归预防（必须用 THE SYSTEM SHALL CONTINUE TO）
+
+详见 docs/EARS.md#bugfix-spec-bugfixmd
+-->
+
 ## Current Behavior (Defect)
 
-<!-- TODO: 描述观察到的缺陷。**禁止**使用 THE SYSTEM SHALL —— 缺陷是错误的，不是"应当" -->
+<!-- 描述观察到的错误行为。不要用 SHALL（缺陷是错的，不是"应当"） -->
 
 - <TODO:describe what currently happens (wrong)>
 
 ## Expected Behavior (Correct)
 
-<!-- TODO: 正确行为；必须含 THE SYSTEM SHALL -->
+<!-- 正确行为；必须含 THE SYSTEM SHALL -->
 
 - WHEN <TODO:trigger> THE SYSTEM SHALL <TODO:correct response>.
 
 ## Unchanged Behavior (Regression Prevention)
 
-<!-- TODO: 必须保留的行为；推荐用 THE SYSTEM SHALL CONTINUE TO 形式 -->
+<!-- 必须保留的行为；用 THE SYSTEM SHALL CONTINUE TO 形式 -->
 
 - WHEN <TODO:existing trigger> THE SYSTEM SHALL CONTINUE TO <TODO:existing response>.
 
 ## Root Cause (optional)
 
-<!-- TODO: 简要分析根因，方便 design.md / tasks.md 落地修复 -->
+<!-- 简要分析根因，方便 design.md / tasks.md 落地修复 -->
 
 - <TODO:root cause analysis>

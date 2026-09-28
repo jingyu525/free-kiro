@@ -42,6 +42,7 @@ func LintTasks(text string) []LintIssue {
 				Code:     "self-dep",
 				Message:  fmt.Sprintf("task #%d depends on itself", t.ID),
 				Location: fmt.Sprintf("tasks.md:#%d", t.ID),
+				Hint:     "remove the self-reference; a task cannot depend on itself",
 			})
 		}
 		for _, d := range t.Deps {
@@ -51,6 +52,7 @@ func LintTasks(text string) []LintIssue {
 					Code:     "dangling-dep",
 					Message:  fmt.Sprintf("task #%d depends on missing #%d", t.ID, d),
 					Location: fmt.Sprintf("tasks.md:#%d", t.ID),
+					Hint:     fmt.Sprintf("either add a task #%d or remove this dependency", d),
 				})
 			}
 		}
@@ -62,6 +64,7 @@ func LintTasks(text string) []LintIssue {
 			Code:     "cycle",
 			Message:  "dependency cycle detected: " + formatCycle(cycle),
 			Location: "tasks.md",
+			Hint:     "break the cycle by removing one dependency; run `free-kiro task list <spec>` to visualise the graph",
 		})
 	}
 	return out

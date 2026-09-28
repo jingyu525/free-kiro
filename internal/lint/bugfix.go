@@ -41,6 +41,7 @@ func LintBugfix(text string) []LintIssue {
 			Code:     "missing-expected",
 			Message:  "no '## Expected Behavior' section — the correct behavior MUST use THE SYSTEM SHALL",
 			Location: "bugfix.md",
+			Hint:     "see docs/EARS.md#bugfix-spec-bugfixmd for the 3-section contract",
 		})
 	} else if !SHALLRe.MatchString(expected) {
 		out = append(out, LintIssue{
@@ -48,6 +49,7 @@ func LintBugfix(text string) []LintIssue {
 			Code:     "no-ears-expected",
 			Message:  "Expected Behavior section has no 'THE SYSTEM SHALL' acceptance criterion",
 			Location: "bugfix.md:Expected Behavior",
+			Hint:     "use 'WHEN <trigger> THE SYSTEM SHALL <correct response>'",
 		})
 	}
 
@@ -58,6 +60,7 @@ func LintBugfix(text string) []LintIssue {
 			Code:     "missing-unchanged",
 			Message:  "no '## Unchanged Behavior' section — regression prevention MUST use THE SYSTEM SHALL CONTINUE TO",
 			Location: "bugfix.md",
+			Hint:     "list every behavior that must NOT change; use 'SHALL CONTINUE TO' form",
 		})
 	} else if !SHALLContinueRe.MatchString(unchanged) {
 		out = append(out, LintIssue{
@@ -65,6 +68,7 @@ func LintBugfix(text string) []LintIssue {
 			Code:     "no-shall-continue",
 			Message:  "Unchanged Behavior section does not use 'THE SYSTEM SHALL CONTINUE TO'",
 			Location: "bugfix.md:Unchanged Behavior",
+			Hint:     "prefer 'WHEN … THE SYSTEM SHALL CONTINUE TO …' for regression prevention",
 		})
 	}
 
@@ -83,6 +87,7 @@ func LintBugfix(text string) []LintIssue {
 			Code:     "defect-uses-shall",
 			Message:  "Current Behavior (Defect) uses 'THE SYSTEM SHALL' — the defect is incorrect behavior and must NOT use SHALL",
 			Location: "bugfix.md:Current Behavior",
+			Hint:     "describe the wrong behavior as plain prose; only Expected/Unchanged use SHALL",
 		})
 	}
 

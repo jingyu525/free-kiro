@@ -1,11 +1,17 @@
 # {{.Name}} — Tasks
 
-<!-- TODO: 严格按下面格式补全。lint 强约束：环/悬挂/自引用直接拦截 -->
+<!--
+任务行格式（lint 强约束格式正确性）：
+  - [ ] #N Title           待办
+  - [x] #N Title           已完成
+  - [ ] #N Title [deps: #A,#B]   依赖任务 A、B
 
-<!-- 格式：
-- [ ] #N Title  (待办)
-- [x] #N Title  (已完成)
-- [ ] #N Title [deps: #A,#B]  (依赖 A、B)
+依赖不能：
+  - 自引用（#1 不能依赖 #1）
+  - 指向不存在的任务
+  - 形成循环
+
+完成后把 [ ] 改成 [x]；wave 视图用 `free-kiro task list <spec>`。
 -->
 
 - [ ] #1 <TODO:first task>

@@ -34,15 +34,21 @@ type LintIssue struct {
 	Code     string // short machine-readable id (e.g. "no-ears")
 	Message  string // human-readable explanation (English, for tooling)
 	Location string // optional filename:section hint
+	Hint     string // optional fix hint (URL or guidance)
 }
 
-// String renders the issue for CLI output (severity-prefixed, location-suffixed).
+// String renders the issue for CLI output (severity-prefixed, location-suffixed,
+// hint-appended). Used by both `lint` and `spec analyze`.
 func (i LintIssue) String() string {
-	s := i.Severity + ":" + i.Code + " " + i.Message
+	out := i.Severity + ":" + i.Code
 	if i.Location != "" {
-		s += " [" + i.Location + "]"
+		out += " [" + i.Location + "]"
 	}
-	return s
+	out += " " + i.Message
+	if i.Hint != "" {
+		out += "  →  " + i.Hint
+	}
+	return out
 }
 
 // Severity constants — pass through to LintIssue.Severity.
