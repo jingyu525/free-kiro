@@ -67,23 +67,15 @@ brews:
     repository:
       owner: jingyu525
       name: homebrew-tap
-    # Per-platform download URLs (Homebrew needs separate URLs per
-    # arch/os; macOS arm64 vs amd64, Linux same split, no Windows).
-    url: "https://github.com/jingyu525/homebrew-tap.git"
-    # Skip Windows — Homebrew doesn't ship for Windows. GoReleaser
-    # auto-skips any platform/arch the brew block doesn't support.
-    skip: "{{ .IsSnapshot }}"
     commit_author:
       name: github-actions[bot]
       email: noreply@github.com
     commit_msg_template: "brew formula update for {{ .ProjectName }} {{ .Tag }}"
-    folder: Formula
     homepage: "https://github.com/jingyu525/free-kiro"
     description: "Spec-driven development workflow CLI (Kiro Spec workflow in Go)"
     license: "MIT"
     test: |
       assert_match "free-kiro", shell_output("#{bin}/free-kiro --version")
-    dependencies: []
 
 snapshot:
   name_template: "{{ incpatch .Version }}-snapshot"
