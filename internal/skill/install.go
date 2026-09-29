@@ -3,8 +3,10 @@ package skill
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/upgrade"
@@ -39,17 +41,13 @@ type InstallResult struct {
 // surfaces in `result.Status`.
 func InstallOne(ctx context.Context, opts InstallOptions) InstallResult {
 	res := InstallResult{App: opts.App}
-	if opts.Subdir == "" {
-		opts.Subdir = "free-kiro"
+	opts.Subdir = resolveSubdir(opts.Subdir)
+	h, err := resolveHome(opts.Home)
+	if err != nil {
+		res.Err = err
+		return res
 	}
-	if opts.Home == "" {
-		h, err := HomeDir()
-		if err != nil {
-			res.Err = err
-			return res
-		}
-		opts.Home = h
-	}
+	opts.Home = h
 	res.SkillsDir = SkillsDir(opts.App, opts.Home, opts.Subdir)
 
 	// Detect existing install.
@@ -116,15 +114,10 @@ func InstallOne(ctx context.Context, opts InstallOptions) InstallResult {
 // UninstallOne removes the installed bundle directory for `app`. Returns
 // the list of files removed (best-effort).
 func UninstallOne(app App, home, subdir string) (removed []string, err error) {
-	if subdir == "" {
-		subdir = "free-kiro"
-	}
-	if home == "" {
-		h, err := HomeDir()
-		if err != nil {
-			return nil, err
-		}
-		home = h
+	subdir = resolveSubdir(subdir)
+	home, err = resolveHome(home)
+	if err != nil {
+		return nil, err
 	}
 	dir := SkillsDir(app, home, subdir)
 	if dir == "" {
@@ -190,7 +183,7 @@ func resolveBundle(ctx context.Context, opts InstallOptions) (string, error) {
 }
 
 func isZipURL(s string) bool {
-	return len(s) >= 7 && (s[:7] == "http://" || s[:8] == "https://")
+	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")
 }
 
 // copyTree recursively copies files from src to dst. Returns the count
@@ -215,7 +208,11 @@ func copyTree(src, dst string) (int, error) {
 		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 			return err
 		}
-		return copyFile(path, target)
+		if err := copyFile(path, target); err != nil {
+			return err
+		}
+		count++
+		return nil
 	})
 	return count, err
 }
@@ -231,6 +228,6 @@ func copyFile(src, dst string) error {
 		return err
 	}
 	defer out.Close()
-	_, err = out.ReadFrom(in)
+	_, err = io.Copy(out, in)
 	return err
 }

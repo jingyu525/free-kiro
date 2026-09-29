@@ -44,6 +44,23 @@ func HomeDir() (string, error) {
 	return h, nil
 }
 
+// resolveHome returns home if non-empty, else the user's home directory.
+// Shared by install / uninstall / show entry points.
+func resolveHome(home string) (string, error) {
+	if home != "" {
+		return home, nil
+	}
+	return HomeDir()
+}
+
+// resolveSubdir returns subdir if non-empty, else the default bundle name.
+func resolveSubdir(subdir string) string {
+	if subdir != "" {
+		return subdir
+	}
+	return "free-kiro"
+}
+
 // DetectInstalledApps reports which apps appear to be installed
 // (have their config root directory on the filesystem). Returns the
 // apps that pass detection, in canonical order.

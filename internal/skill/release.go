@@ -29,18 +29,25 @@ func AssetName(version string) string {
 	return "free-kiro-skill_" + v + ".zip"
 }
 
-// AssetURL returns the GitHub Releases URL for the skill bundle zip.
-func AssetURL(version string) string {
+// releaseFileURL returns the GitHub Releases download URL for a file
+// pinned to `version` (e.g. "0.7.0" or "v0.7.0"). Both AssetURL and
+// SHA256SUMSURL build on top of this so the URL template lives in one
+// place.
+func releaseFileURL(version, name string) string {
 	v := strings.TrimPrefix(version, "v")
 	return fmt.Sprintf("https://github.com/%s/releases/download/v%s/%s",
-		upgrade.GitHubRepo, v, AssetName(v))
+		upgrade.GitHubRepo, v, name)
+}
+
+// AssetURL returns the GitHub Releases URL for the skill bundle zip.
+func AssetURL(version string) string {
+	return releaseFileURL(version, AssetName(version))
 }
 
 // SHA256SUMSURL returns the GitHub Releases URL for the SHA256SUMS file.
 func SHA256SUMSURL(version string) string {
 	v := strings.TrimPrefix(version, "v")
-	return fmt.Sprintf("https://github.com/%s/releases/download/v%s/%s_%s_SHA256SUMS",
-		upgrade.GitHubRepo, v, "free-kiro", v)
+	return releaseFileURL(version, fmt.Sprintf("free-kiro_%s_SHA256SUMS", v))
 }
 
 // LatestRelease returns the latest published tag (no "v" prefix).

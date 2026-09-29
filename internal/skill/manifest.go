@@ -12,34 +12,16 @@ import (
 	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
 
-// Manifest is the parsed contents of skill.json. It tells the installer
-// which app skills directories to target, which files the bundle contains,
-// and the sha256 of every file (populated at release time by
-// contrib/skills/scripts/compute-skill-sha.sh).
+// Manifest is the parsed contents of skill.json. SHA256 is populated at
+// release time by contrib/skills/scripts/compute-skill-sha.sh and used
+// by VerifyBundle to check the bundle after download/extract.
 type Manifest struct {
-	Name               string           `json:"name"`
-	Version            string           `json:"version"`
-	FreeKiroMinVersion string           `json:"free_kiro_min_version"`
-	License            string           `json:"license"`
-	Repository         string           `json:"repository"`
-	SkillsRootSubdir   string           `json:"skills_root_subdir"`
-	Apps               []AppSpec        `json:"apps"`
-	Files              []FileSpec       `json:"files"`
+	Name               string            `json:"name"`
+	Version            string            `json:"version"`
+	FreeKiroMinVersion string            `json:"free_kiro_min_version"`
+	License            string            `json:"license"`
+	Repository         string            `json:"repository"`
 	SHA256             map[string]string `json:"sha256"`
-}
-
-// AppSpec describes one supported target app.
-type AppSpec struct {
-	ID          string `json:"id"`
-	SkillsDir   string `json:"skills_dir"`
-	DetectedBy  string `json:"detected_by"`
-	Experimental bool   `json:"experimental,omitempty"`
-}
-
-// FileSpec describes one file in the bundle.
-type FileSpec struct {
-	Path     string `json:"path"`
-	Required bool   `json:"required"`
 }
 
 // LoadManifest parses skill.json at `dir/skill.json`.

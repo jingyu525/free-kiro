@@ -78,7 +78,7 @@ func skillInstallCmd() *cobra.Command {
 			return runSkillInstall(ctx, cmd, appFlag, from, version, dryRun, force)
 		},
 	}
-	c.Flags().StringVar(&appFlag, "app", "all", "目标 app: all | claude-code | opencode | codex | codebuddy")
+	addAppFlag(c, &appFlag, "all")
 	c.Flags().StringVar(&from, "from", "", "本地目录或 zip URL（跳过 GitHub 下载）")
 	c.Flags().StringVar(&version, "version", "", "bundle 版本（默认 latest）")
 	c.Flags().BoolVar(&dryRun, "dry-run", false, "只打印计划，不写盘")
@@ -166,7 +166,7 @@ func skillUninstallCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.Flags().StringVar(&appFlag, "app", "all", "目标 app: all | claude-code | opencode | codex | codebuddy")
+	addAppFlag(c, &appFlag, "all")
 	return c
 }
 
@@ -241,7 +241,7 @@ func skillUpdateCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.Flags().StringVar(&appFlag, "app", "all", "目标 app: all | claude-code | opencode | codex | codebuddy")
+	addAppFlag(c, &appFlag, "all")
 	c.Flags().BoolVar(&check, "check", false, "只检查；不实际安装")
 	c.Flags().BoolVar(&force, "force", false, "强制重装（即使已是最新）")
 	return c
@@ -309,7 +309,7 @@ func skillPathCmd() *cobra.Command {
 			return nil
 		},
 	}
-	c.Flags().StringVar(&appFlag, "app", "", "目标 app (必填)")
+	addAppFlag(c, &appFlag, "")
 	return c
 }
 
@@ -377,4 +377,12 @@ func sourceLabel(from, version string) string {
 		return "v" + version + " (GitHub release)"
 	}
 	return "latest (GitHub release)"
+}
+
+// addAppFlag wires the `--app` flag onto cmd. defaultVal should be "all"
+// for install/uninstall/update and "" for path (where a specific app is
+// required).
+func addAppFlag(cmd *cobra.Command, target *string, defaultVal string) {
+	cmd.Flags().StringVar(target, "app", defaultVal,
+		"目标 app: all | claude-code | opencode | codex | codebuddy")
 }

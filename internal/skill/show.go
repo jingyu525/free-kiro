@@ -20,16 +20,10 @@ type InstalledState struct {
 // one InstalledState per app. apps is the list to inspect (e.g. from
 // ParseApp("all") → AllApps()).
 func ShowInstalled(home, subdir string) []InstalledState {
-	if home == "" {
-		h, err := HomeDir()
-		if err != nil {
-			h = ""
-		}
+	if h, err := resolveHome(home); err == nil {
 		home = h
 	}
-	if subdir == "" {
-		subdir = "free-kiro"
-	}
+	subdir = resolveSubdir(subdir)
 	out := make([]InstalledState, 0, 4)
 	for _, app := range AllApps() {
 		dir := SkillsDir(app, home, subdir)
