@@ -1,0 +1,15 @@
+{
+  "name": "free-kiro",
+  "version": "0.7.0-dev",
+  "free_kiro_min_version": "0.7.0",
+  "license": "MIT",
+  "repository": "https://github.com/jingyu525/free-kiro",
+  "sha256": {
+    "SKILL.md": "f94d18928f9d71db911d77aeed0d7c52745241c89aa7d72c6eff51bbb9bfd778",
+    "references/hooks.md": "2ad182ceff12b1bab96bd4b99da8d2692314568ce1a1ca5ca3032e64cb6231d9",
+    "references/ops.md": "c54015f8a4a1d5adaa590f37e6326ee0189b36c0c506827fc6337456ffd1607f",
+    "references/prd-fetch.md": "6fd5b5a854a0836243b4b02fa77669a3b592359782d712923a8ac6246d66b873",
+    "references/spec.md": "0f2896d43da69bcb50f46d257d948356e035d574ed1f42956424a27d09c8e999",
+    "references/troubleshooting.md": "01aec311af85d724595c94960053d019b25140e0340fc425fbfdb75ff0b77b34"
+  }
+}

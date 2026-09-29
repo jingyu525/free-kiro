@@ -25,9 +25,10 @@ if [ ! -f "$MANIFEST" ]; then
   exit 1
 fi
 
-# Collect files: SKILL.md, skill.json, references/*.md. Use find so we
-# pick up nested files automatically. Sort for stable output.
-mapfile -t FILES < <(cd "$SKILL_SRC" && find . -type f \( -name '*.md' -o -name '*.json' -o -name '*.sh' \) | LC_ALL=C sort)
+# Collect files: SKILL.md, references/*.md. Exclude skill.json from the
+# sha256 map — its content includes the map itself, so its hash would
+# differ after we splice the new map in (self-referential chicken/egg).
+mapfile -t FILES < <(cd "$SKILL_SRC" && find . -type f \( -name '*.md' -o -name '*.sh' \) ! -path './skill.json' | LC_ALL=C sort)
 
 # Build the sha256 map with jq (present on every CI image + macOS dev box).
 TMP="$(mktemp)"
