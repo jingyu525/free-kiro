@@ -25,8 +25,44 @@ jobs:
           version: latest
           args: release --clean
         env:
-          # HOMEBREW_TAP_TOKEN (a PAT with `repo` scope) is required so
-          # GoReleaser can push the Formula to the homebrew-tap repo.
-          # The default GITHUB_TOKEN can't push cross-repo. Set this in
-          # https://github.com/jingyu525/free-kiro/settings/secrets/actions
+          # Used by BOTH the goreleaser step (to push the GitHub Release)
+          # and the custom Formula step below (to push to homebrew-tap).
+          # The default GITHUB_TOKEN can't push cross-repo; this PAT
+          # (with `repo` scope) can.
           GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      - name: Push Homebrew Formula to homebrew-tap
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          # extract version from "refs/tags/v0.6.0" → "0.6.0"
+          TAG_VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG_VERSION#v}"
+          if [ ! -f dist/homebrew/free-kiro.rb ]; then
+            echo "::error::GoReleaser did not produce dist/homebrew/free-kiro.rb"
+            exit 1
+          fi
+          echo "→ pushing Formula for v${VERSION} to jingyu525/homebrew-tap"
+
+          # Fetch current file SHA so the update goes through Contents API
+          CURRENT_SHA=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            repos/jingyu525/homebrew-tap/contents/Formula/free-kiro.rb \
+            --jq .sha)
+          echo "current tap HEAD SHA: $CURRENT_SHA"
+
+          # Encode the new content + commit via Contents API
+          B64=$(base64 -w 0 dist/homebrew/free-kiro.rb)
+          gh api \
+            --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            repos/jingyu525/homebrew-tap/contents/Formula/free-kiro.rb \
+            -f message="brew formula update for free-kiro v${VERSION}" \
+            -f content="$B64" \
+            -f sha="$CURRENT_SHA" \
+            -f branch="main"
+
+          echo "✓ Formula pushed successfully"
+          echo "→ verify: https://github.com/jingyu525/homebrew-tap/blob/main/Formula/free-kiro.rb"

@@ -58,22 +58,29 @@ checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
 
-# Homebrew tap integration. Auto-updates the Formula on every release
-# (requires HOMEBREW_TAP_TOKEN PAT in repo secrets).
-brews:
-  - name: free-kiro
-    repository:
-      owner: jingyu525
-      name: homebrew-tap
-    commit_author:
-      name: github-actions[bot]
-      email: noreply@github.com
-    commit_msg_template: "brew formula update for {{ .ProjectName }} {{ .Tag }}"
-    homepage: "https://github.com/jingyu525/free-kiro"
-    description: "Spec-driven development workflow CLI (Kiro Spec workflow in Go)"
-    license: "MIT"
-    test: |
-      assert_match "free-kiro", shell_output("#{bin}/free-kiro --version")
+# Homebrew tap integration is intentionally NOT handled by
+# GoReleaser's `brews:` block — v2.18.2 has a bug where the auto-commit
+# succeeds but writes stale/placeholder content. We disable the
+# built-in push here and let the release workflow do the Formula push
+# via a custom step using the generated `dist/homebrew/free-kiro.rb`
+# artifact (which has the correct content + real sha256s).
+#
+# See `.github/workflows/release.yml` → "Push Homebrew Formula".
+#
+# brews:
+#   - name: free-kiro
+#     repository:
+#       owner: jingyu525
+#       name: homebrew-tap
+#     commit_author:
+#       name: github-actions[bot]
+#       email: noreply@github.com
+#     commit_msg_template: "brew formula update for {{ .ProjectName }} {{ .Tag }}"
+#     homepage: "https://github.com/jingyu525/free-kiro"
+#     description: "Spec-driven development workflow CLI (Kiro Spec workflow in Go)"
+#     license: "MIT"
+#     test: |
+#       assert_match "free-kiro", ball_output("#{bin}/free-kiro --version")
 
 snapshot:
   name_template: "{{ incpatch .Version }}-snapshot"
