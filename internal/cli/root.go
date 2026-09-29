@@ -89,4 +89,5 @@ func init() {
 	rootCmd.AddCommand(doctorCmdFactory())
 	rootCmd.AddCommand(reportCmdFactory())
 	rootCmd.AddCommand(serveCmdFactory())
+	rootCmd.AddCommand(upgradeCmdFactory())
 }

@@ -169,6 +169,17 @@
 
     loadAll();
     setInterval(loadAll, 5000);
+
+    // Server-Sent Events: receive a 'change' signal whenever the
+    // workspace files are touched (spec generate / edit / etc.).
+    // EventSource auto-reconnects on disconnect.
+    try {
+      const es = new EventSource('/api/events');
+      es.addEventListener('change', () => loadAll());
+      es.onerror = () => { /* EventSource handles reconnect */ };
+    } catch (e) {
+      console.warn('SSE unavailable, falling back to polling only');
+    }
   </script>
 </body>
 </html>

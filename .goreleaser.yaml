@@ -38,9 +38,9 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X main.version={{.Version}}
-      - -X main.commit={{.Commit}}
-      - -X main.date={{.Date}}
+      - -X github.com/jingyu525/free-kiro/internal/cli.buildVersion={{.Version}}
+      - -X github.com/jingyu525/free-kiro/internal/cli.buildCommit={{.Commit}}
+      - -X github.com/jingyu525/free-kiro/internal/cli.buildDate={{.Date}}
 
 archives:
   - id: default
