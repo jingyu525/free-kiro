@@ -23,7 +23,9 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
-          args: release --clean
+          # NOTE: do NOT pass --clean — the next step reads dist/homebrew/
+          # free-kiro.rb. --clean deletes the dist/ directory.
+          args: release
         env:
           # Used by BOTH the goreleaser step (to push the GitHub Release)
           # and the custom Formula step below (to push to homebrew-tap).
