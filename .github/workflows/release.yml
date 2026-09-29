@@ -25,9 +25,8 @@ jobs:
           version: latest
           args: release --clean
         env:
-          # Default GITHUB_TOKEN can push to this repo but NOT to the
-          # cross-repo homebrew-tap. To enable auto Formula updates,
-          # add a PAT with `repo` scope as `HOMEBREW_TAP_TOKEN` in
-          # Settings → Secrets, then uncomment the line below.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          # HOMEBREW_TAP_TOKEN (a PAT with `repo` scope) is required so
+          # GoReleaser can push the Formula to the homebrew-tap repo.
+          # The default GITHUB_TOKEN can't push cross-repo. Set this in
+          # https://github.com/jingyu525/free-kiro/settings/secrets/actions
+          GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

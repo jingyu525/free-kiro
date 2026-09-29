@@ -58,30 +58,22 @@ checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
 
-# Homebrew tap integration: disabled at v0.5.0 — GoReleaser can build
-# the formula locally but the default GITHUB_TOKEN can't push it to
-# the cross-repo homebrew-tap (returns 403). To re-enable:
-#   1. Add HOMEBREW_TAP_TOKEN PAT (repo scope) as a secret
-#   2. Uncomment the `brews:` block below
-#   3. Switch release.yml's GITHUB_TOKEN env to that secret
-#
-# Until then users install via the curl|bash script (or brew tap + a
-# manually-pinned formula URL).
-#
-# brews:
-#   - name: free-kiro
-#     repository:
-#       owner: jingyu525
-#       name: homebrew-tap
-#     commit_author:
-#       name: github-actions[bot]
-#       email: noreply@github.com
-#     commit_msg_template: "brew formula update for {{ .ProjectName }} {{ .Tag }}"
-#     homepage: "https://github.com/jingyu525/free-kiro"
-#     description: "Spec-driven development workflow CLI (Kiro Spec workflow in Go)"
-#     license: "MIT"
-#     test: |
-#       assert_match "free-kiro", shell_output("#{bin}/free-kiro --version")
+# Homebrew tap integration. Auto-updates the Formula on every release
+# (requires HOMEBREW_TAP_TOKEN PAT in repo secrets).
+brews:
+  - name: free-kiro
+    repository:
+      owner: jingyu525
+      name: homebrew-tap
+    commit_author:
+      name: github-actions[bot]
+      email: noreply@github.com
+    commit_msg_template: "brew formula update for {{ .ProjectName }} {{ .Tag }}"
+    homepage: "https://github.com/jingyu525/free-kiro"
+    description: "Spec-driven development workflow CLI (Kiro Spec workflow in Go)"
+    license: "MIT"
+    test: |
+      assert_match "free-kiro", shell_output("#{bin}/free-kiro --version")
 
 snapshot:
   name_template: "{{ incpatch .Version }}-snapshot"
