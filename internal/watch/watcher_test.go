@@ -18,14 +18,14 @@ func TestNew_RequiresCommand(t *testing.T) {
 }
 
 func TestNew_RequiresRoots(t *testing.T) {
-	_, err := New(Options{Command: "echo"})
+	_, err := New(Options{Commands: []string{"echo"}})
 	if err == nil {
 		t.Fatal("expected error when Roots is empty")
 	}
 }
 
 func TestNew_AppliesDefaultDebounce(t *testing.T) {
-	w, err := New(Options{Command: "echo", Roots: []string{"."}})
+	w, err := New(Options{Commands: []string{"echo"}, Roots: []string{"."}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func TestNew_AppliesDefaultDebounce(t *testing.T) {
 
 func TestNew_ResolvesAbsolute(t *testing.T) {
 	dir := t.TempDir()
-	w, err := New(Options{Command: "echo", Roots: []string{dir}})
+	w, err := New(Options{Commands: []string{"echo"}, Roots: []string{dir}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func TestRun_CommandFiresOnChange(t *testing.T) {
 	dir := t.TempDir()
 	marker := filepath.Join(dir, "fired")
 	w, err := New(Options{
-		Command:  "touch " + marker,
+		Commands: []string{"touch " + marker},
 		Roots:    []string{dir},
 		Debounce: 50 * time.Millisecond,
 	})
@@ -76,8 +76,6 @@ func TestRun_CommandFiresOnChange(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	// Write a file in the watched dir from another goroutine so the
-	// watcher picks up the event.
 	go func() {
 		time.Sleep(150 * time.Millisecond)
 		_ = os.WriteFile(filepath.Join(dir, "trigger.txt"), []byte("x"), 0o644)
@@ -85,5 +83,62 @@ func TestRun_CommandFiresOnChange(t *testing.T) {
 	_ = w.Run(ctx)
 	if _, err := os.Stat(marker); err != nil {
 		t.Errorf("command did not fire: %v", err)
+	}
+}
+
+func TestRun_MultipleCommandsAllFire(t *testing.T) {
+	dir := t.TempDir()
+	marker1 := filepath.Join(dir, "fired1")
+	marker2 := filepath.Join(dir, "fired2")
+	marker3 := filepath.Join(dir, "fired3")
+	w, err := New(Options{
+		Commands: []string{
+			"touch " + marker1,
+			"touch " + marker2,
+			"touch " + marker3,
+		},
+		Roots:    []string{dir},
+		Debounce: 50 * time.Millisecond,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	go func() {
+		time.Sleep(150 * time.Millisecond)
+		_ = os.WriteFile(filepath.Join(dir, "trigger.txt"), []byte("x"), 0o644)
+	}()
+	_ = w.Run(ctx)
+	for _, m := range []string{marker1, marker2, marker3} {
+		if _, err := os.Stat(m); err != nil {
+			t.Errorf("command %s did not fire: %v", m, err)
+		}
+	}
+}
+
+func TestRun_OneCommandFailureDoesNotStopOthers(t *testing.T) {
+	dir := t.TempDir()
+	marker := filepath.Join(dir, "fired-after-fail")
+	w, err := New(Options{
+		Commands: []string{
+			"false", // exits non-zero
+			"touch " + marker,
+		},
+		Roots:    []string{dir},
+		Debounce: 50 * time.Millisecond,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	go func() {
+		time.Sleep(150 * time.Millisecond)
+		_ = os.WriteFile(filepath.Join(dir, "trigger.txt"), []byte("x"), 0o644)
+	}()
+	_ = w.Run(ctx)
+	if _, err := os.Stat(marker); err != nil {
+		t.Errorf("command after failure should still fire: %v", err)
 	}
 }

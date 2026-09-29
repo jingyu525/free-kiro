@@ -29,9 +29,11 @@ import (
 type Options struct {
 	// Roots to watch. Defaults to .kiro/ when empty.
 	Roots []string
-	// Command is the shell snippet executed on every quiet-period fire.
-	// Required.
-	Command string
+	// Commands is the list of shell snippets executed on every quiet-period
+	// fire, one after another. At least one command is required.
+	// Each runs in its own shell; non-zero exit is logged but does not
+	// stop subsequent commands.
+	Commands []string
 	// Debounce is the quiet period after the last change before
 	// triggering the command. Default 200ms.
 	Debounce time.Duration
@@ -48,8 +50,8 @@ type Watcher struct {
 
 // New constructs a Watcher with defaults applied.
 func New(opts Options) (*Watcher, error) {
-	if opts.Command == "" {
-		return nil, ferrors.New("watch.new", "Options.Command is required")
+	if len(opts.Commands) == 0 {
+		return nil, ferrors.New("watch.new", "Options.Commands must include at least one command")
 	}
 	if len(opts.Roots) == 0 {
 		return nil, ferrors.New("watch.new", "Options.Roots must include at least one directory")
@@ -119,9 +121,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 			timerCh = timer.C
 		case <-timerCh:
 			timerCh = nil
-			if err := w.runCommand(ctx, lastPath); err != nil {
-				fmt.Fprintf(stderr(), "[watch] command error: %v\n", err)
-			}
+			w.runCommands(ctx, lastPath)
 		case err, ok := <-fs.Errors:
 			if !ok {
 				return ferrors.New("watch.run", "fsnotify errors channel closed")
@@ -131,25 +131,35 @@ func (w *Watcher) Run(ctx context.Context) error {
 	}
 }
 
-// runCommand executes the configured shell snippet with the changed
+// runCommand executes one configured shell snippet with the changed
 // file's path exported as $FILE. Returns an error if the command
 // itself failed (non-zero exit) — but the watcher keeps running for
 // future events.
-func (w *Watcher) runCommand(ctx context.Context, file string) error {
-	fmt.Fprintf(stderr(), "[watch] change → %s\n", runLabel(file))
-	cmd := exec.CommandContext(ctx, "sh", "-c", w.opts.Command)
-	cmd.Env = append(cmd.Environ(), "FILE="+file)
-	cmd.Stdout = stderr() // echo output so the user sees it inline
-	cmd.Stderr = stderr()
-	if err := cmd.Run(); err != nil {
+func (w *Watcher) runCommand(ctx context.Context, cmd string, file string) error {
+	c := exec.CommandContext(ctx, "sh", "-c", cmd)
+	c.Env = append(c.Environ(), "FILE="+file)
+	c.Stdout = stderr() // echo output so the user sees it inline
+	c.Stderr = stderr()
+	if err := c.Run(); err != nil {
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {
 			return ferrors.New("watch.cmd",
-				fmt.Sprintf("command exited with code %d", ee.ExitCode()))
+				fmt.Sprintf("'%s' exited with code %d", cmd, ee.ExitCode()))
 		}
 		return err
 	}
 	return nil
+}
+
+// runCommands runs every command in order, logging non-zero results
+// but never stopping the watcher.
+func (w *Watcher) runCommands(ctx context.Context, file string) {
+	fmt.Fprintf(stderr(), "[watch] change → %s\n", runLabel(file))
+	for _, cmd := range w.opts.Commands {
+		if err := w.runCommand(ctx, cmd, file); err != nil {
+			fmt.Fprintf(stderr(), "[watch] %v\n", err)
+		}
+	}
 }
 
 // shouldReact filters events: ignore chmod / non-write events and
