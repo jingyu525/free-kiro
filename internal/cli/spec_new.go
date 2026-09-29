@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -17,10 +18,11 @@ func newSpecCmd() *cobra.Command {
 		specType  string
 		quick     bool
 		fromIssue string
+		fromPRD   string
 	)
 	c := &cobra.Command{
 		Use:   "new [<name>]",
-		Short: "新建 spec（含 workflow / type / quick / from-issue 变体）",
+		Short: "新建 spec（含 workflow / type / quick / from-issue / from-prd 变体）",
 		Args:  cobra.MaximumNArgs(1),
 		Long: `创建一个新的 spec：
 
@@ -29,11 +31,15 @@ func newSpecCmd() *cobra.Command {
                             URL 形式: https://github.com/<o>/<r>/issues/<n>
                             或简写: <o>/<r>#<n>
                             配合 --type bugfix 可快速生成修复 spec
+  --from-prd <url>          从任意网页（HTML / Markdown）拉取 PRD 内容
+                            适合 Notion / Confluence / Google Docs / 公司 wiki
+                            走 'free-kiro spec new <name> --from-prd <url>'
   --workflow <wf>          requirements-first（默认）| design-first
   --type <type>            feature（默认）| bugfix
   --quick                  免审批变体（Quick Spec）
 
-当 --from-issue 被使用时，<name> 可省略 —— 会从 issue 标题自动生成 kebab-case slug。
+当 --from-* 被使用时，<name> 可省略 —— 会自动生成 kebab-case slug。
+--from-issue 和 --from-prd 互斥。
 
 下一步：kiro spec generate <name> --phase all`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -43,7 +49,7 @@ func newSpecCmd() *cobra.Command {
 			}
 
 			// Resolve prompt + name from various input modes.
-			p, resolvedName, err := resolvePromptAndName(prompt, fromIssue, args)
+			p, resolvedName, source, err := resolvePromptAndNameEx(cmd.Context(), prompt, fromIssue, fromPRD, args)
 			if err != nil {
 				return exitWithError(err)
 			}
@@ -53,8 +59,11 @@ func newSpecCmd() *cobra.Command {
 				return exitWithError(err)
 			}
 			tag := "created"
-			if fromIssue != "" {
+			switch source {
+			case "from-issue":
 				tag = "created (from issue)"
+			case "from-prd":
+				tag = "created (from PRD)"
 			}
 			if quick {
 				tag = "created (quick)"
@@ -72,53 +81,67 @@ func newSpecCmd() *cobra.Command {
 	}
 	c.Flags().StringVar(&prompt, "prompt", "", "spec prompt text (or pipe via stdin)")
 	c.Flags().StringVar(&fromIssue, "from-issue", "", "GitHub issue URL to derive prompt from (requires `gh` CLI)")
+	c.Flags().StringVar(&fromPRD, "from-prd", "", "PRD URL (HTML/Markdown) to derive prompt from")
 	c.Flags().StringVar(&workflow, "workflow", "requirements-first", "planning order: requirements-first or design-first")
 	c.Flags().StringVar(&specType, "type", "feature", "spec type: feature or bugfix")
 	c.Flags().BoolVar(&quick, "quick", false, "quick spec: waive the formal approve gate")
 	return c
 }
 
-// resolvePromptAndName centralizes the input resolution logic for
-// `spec new`. Three modes are supported:
+// resolvePromptAndNameEx is the unified input resolver. Returns the
+// resolved prompt, the final spec name, and a source label so the
+// caller can print an accurate "created (from ...)" tag.
 //
-//  1. --from-issue: fetch the issue title + body via `gh`. The spec
-//     name defaults to a kebab-case slug from the title (or stays as
-//     the explicit positional arg when provided).
-//  2. --prompt + positional name: classic path.
-//  3. stdin pipe (read by readPrompt) + positional name: classic path.
+// Source precedence (mutually exclusive):
 //
-// Returns the resolved prompt text and the final spec name.
-func resolvePromptAndName(promptFlag, fromIssue string, args []string) (string, string, error) {
+//  1. --from-issue   fetch GitHub issue title + body via `gh`
+//  2. --from-prd     fetch any web page (HTML/Markdown), extract title
+//                    + visible text
+//  3. --prompt / stdin with positional name
+func resolvePromptAndNameEx(ctx context.Context, promptFlag, fromIssue, fromPRD string, args []string) (string, string, string, error) {
+	if fromIssue != "" && fromPRD != "" {
+		return "", "", "", fmt.Errorf("--from-issue and --from-prd are mutually exclusive")
+	}
 	if fromIssue != "" {
 		ref, err := ParseGitHubIssueURL(fromIssue)
 		if err != nil {
-			return "", "", err
+			return "", "", "", err
 		}
 		body, err := FetchIssueTitleAndBody(ref)
 		if err != nil {
-			return "", "", err
+			return "", "", "", err
 		}
-		// Derive name from first line of body when caller didn't pass one.
-		var name string
-		if len(args) >= 1 {
-			name = args[0]
-		} else {
-			name = slugFromText(firstLine(body))
-		}
-		return body, name, nil
+		name := nameFromArgsOrSlug(args, firstLine(body))
+		return body, name, "from-issue", nil
 	}
-
+	if fromPRD != "" {
+		title, body, err := FetchPRD(ctx, fromPRD)
+		if err != nil {
+			return "", "", "", err
+		}
+		name := nameFromArgsOrSlug(args, title)
+		// Prefix the prompt with the source URL so the author has the
+		// reference handy while filling in requirements.
+		full := "# Source: " + fromPRD + "\n\n# " + title + "\n\n" + body
+		return full, name, "from-prd", nil
+	}
 	p, err := readPrompt(promptFlag)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
-	var name string
+	if len(args) < 1 {
+		return "", "", "", fmt.Errorf("spec name is required when --from-* is not used")
+	}
+	return p, args[0], "", nil
+}
+
+// nameFromArgsOrSlug returns the explicit positional name when given,
+// otherwise a kebab-case slug derived from `source`.
+func nameFromArgsOrSlug(args []string, source string) string {
 	if len(args) >= 1 {
-		name = args[0]
-	} else {
-		return "", "", fmt.Errorf("spec name is required when --from-issue is not used")
+		return args[0]
 	}
-	return p, name, nil
+	return slugFromText(firstLine(source))
 }
 
 // firstLine returns the first non-empty line of text.
