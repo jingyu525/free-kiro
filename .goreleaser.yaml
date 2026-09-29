@@ -67,20 +67,20 @@ checksum:
 #
 # See `.github/workflows/release.yml` → "Push Homebrew Formula".
 #
-# brews:
-#   - name: free-kiro
-#     repository:
-#       owner: jingyu525
-#       name: homebrew-tap
-#     commit_author:
-#       name: github-actions[bot]
-#       email: noreply@github.com
-#     commit_msg_template: "brew formula update for {{ .ProjectName }} {{ .Tag }}"
-#     homepage: "https://github.com/jingyu525/free-kiro"
-#     description: "Spec-driven development workflow CLI (Kiro Spec workflow in Go)"
-#     license: "MIT"
-#     test: |
-#       assert_match "free-kiro", ball_output("#{bin}/free-kiro --version")
+brews:
+  - name: free-kiro
+    repository:
+      owner: jingyu525
+      name: homebrew-tap
+    commit_author:
+      name: github-actions[bot]
+      email: noreply@github.com
+    commit_msg_template: "brew formula update for {{ .ProjectName }} {{ .Tag }}"
+    homepage: "https://github.com/jingyu525/free-kiro"
+    description: "Spec-driven development workflow CLI (Kiro Spec workflow in Go)"
+    license: "MIT"
+    test: |
+      assert_match "free-kiro", ball_output("#{bin}/free-kiro --version")
 
 snapshot:
   name_template: "{{ incpatch .Version }}-snapshot"
