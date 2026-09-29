@@ -24,6 +24,7 @@ package lint
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/jingyu525/free-kiro/internal/models"
 )
@@ -139,52 +140,19 @@ func rangeLines(text string) []string {
 	return out
 }
 
+// joinAndTrim joins lines with newlines and trims surrounding blank lines.
 func joinAndTrim(lines []string) string {
-	// Trim leading/trailing blank lines.
-	for len(lines) > 0 && lines[0] == "" {
-		lines = lines[1:]
-	}
-	for len(lines) > 0 && lines[len(lines)-1] == "" {
-		lines = lines[:len(lines)-1]
-	}
-	out := ""
-	for i, l := range lines {
-		if i > 0 {
-			out += "\n"
-		}
-		out += l
-	}
-	return out
+	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
 
 // normaliseHeading strips a trailing `(...)` qualifier, trims whitespace,
 // and lowercases. Used to make lint section lookups case- and qualifier-
 // insensitive.
 func normaliseHeading(h string) string {
-	out := ""
-	for _, r := range h {
-		if r == '(' {
-			break
-		}
-		out += string(r)
+	if i := strings.Index(h, "("); i >= 0 {
+		h = h[:i]
 	}
-	// trim leading + trailing whitespace manually.
-	for len(out) > 0 && (out[0] == ' ' || out[0] == '\t' || out[0] == '\n' || out[0] == '\r') {
-		out = out[1:]
-	}
-	for len(out) > 0 && (out[len(out)-1] == ' ' || out[len(out)-1] == '\t' || out[len(out)-1] == '\n' || out[len(out)-1] == '\r') {
-		out = out[:len(out)-1]
-	}
-	// lower-case via a tiny ASCII loop (no strings.ToLower allocation).
-	lower := ""
-	for _, r := range out {
-		if r >= 'A' && r <= 'Z' {
-			lower += string(r + 32)
-		} else {
-			lower += string(r)
-		}
-	}
-	return lower
+	return strings.ToLower(strings.TrimSpace(h))
 }
 
 // SpecTypeFor loads .meta.json and returns spec_type ("feature" by default).

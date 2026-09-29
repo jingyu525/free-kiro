@@ -2,6 +2,7 @@ package lint
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/jingyu525/free-kiro/internal/models"
 	"github.com/jingyu525/free-kiro/internal/taskgraph"
@@ -36,7 +37,7 @@ func LintTasks(text string) []LintIssue {
 		ids[t.ID] = true
 	}
 	for _, t := range tasks {
-		if containsInt(t.Deps, t.ID) {
+		if slices.Contains(t.Deps, t.ID) {
 			out = append(out, LintIssue{
 				Severity: SeverityError,
 				Code:     "self-dep",
@@ -68,15 +69,6 @@ func LintTasks(text string) []LintIssue {
 		})
 	}
 	return out
-}
-
-func containsInt(xs []int, x int) bool {
-	for _, v := range xs {
-		if v == x {
-			return true
-		}
-	}
-	return false
 }
 
 func formatCycle(cycle []int) string {

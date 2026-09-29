@@ -3,6 +3,7 @@ package lint
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/jingyu525/free-kiro/internal/models"
 )
@@ -85,26 +86,17 @@ func LintGate(specDir string) []LintIssue {
 	return gate
 }
 
+// isMissingCode reports whether a lint code marks a missing-doc finding.
+// `missing-` findings are excluded from the advance/approve gate (see
+// LintGate) — you cannot be failed for a document that does not exist.
 func isMissingCode(code string) bool {
-	if len(code) < 8 {
-		return false
-	}
-	return code[:8] == "missing-"
+	return strings.HasPrefix(code, "missing-")
 }
 
 func stem(p string) string {
 	base := filepath.Base(p)
-	if dot := indexByte(base, '.'); dot >= 0 {
+	if dot := strings.IndexByte(base, '.'); dot >= 0 {
 		return base[:dot]
 	}
 	return base
-}
-
-func indexByte(s string, b byte) int {
-	for i := 0; i < len(s); i++ {
-		if s[i] == b {
-			return i
-		}
-	}
-	return -1
 }
