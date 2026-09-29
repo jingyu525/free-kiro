@@ -38,7 +38,8 @@ var rootCmd = &cobra.Command{
   steering  查看项目约定文档（自动注入生成上下文）
   task      查看 tasks.md 的并行 wave 视图
   hook      管理事件驱动 hook（写出的 JSON 兼容 Kiro v1 信封）
-  lint      离线质量门禁（exit 1 = ERROR，可被 IDE PreToolUse 拦截）`,
+  lint      离线质量门禁（exit 1 = ERROR，可被 IDE PreToolUse 拦截）
+  status    聚合展示 workspace 状态（人类 / --json）`,
 	SilenceUsage:  true, // don't dump help on engine errors
 	SilenceErrors: true, // we print errors ourselves via Execute
 }
@@ -80,6 +81,17 @@ func exitWithError(err error) error {
 // init wires the subcommands onto rootCmd. Each command file (init.go,
 // spec.go, etc.) registers itself here.
 func init() {
+	// Wire `--version` once the build-time vars from upgrade.go are
+	// resolved. The Version string embeds commit + build date so a
+	// single `--version` invocation reports everything a bug report
+	// needs; the template only adds the `free-kiro version ` prefix.
+	//
+	// dev builds (no ldflags injected) get the literal `dev` token and
+	// `unknown` for commit / date — those are the zero values defined
+	// in upgrade.go.
+	rootCmd.Version = fmt.Sprintf("%s (commit %s, built %s)",
+		buildVersion, buildCommit, buildDate)
+	rootCmd.SetVersionTemplate("free-kiro version {{.Version}}\n")
 	rootCmd.AddCommand(initCmd)
 	initSpecSubcommands(specCmd)
 	rootCmd.AddCommand(specCmd)
@@ -93,4 +105,5 @@ func init() {
 	rootCmd.AddCommand(upgradeCmdFactory())
 	rootCmd.AddCommand(watchCmdFactory())
 	rootCmd.AddCommand(skillCmdFactory())
+	rootCmd.AddCommand(statusCmdFactory())
 }
