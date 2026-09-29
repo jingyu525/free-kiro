@@ -72,12 +72,17 @@ func InstallOne(ctx context.Context, opts InstallOptions) InstallResult {
 	}
 
 	// Resolve the bundle.
-	bundleDir, err := resolveBundle(ctx, opts)
+	bundleDir, bundleOwned, err := resolveBundle(ctx, opts)
 	if err != nil {
 		res.Err = err
 		return res
 	}
-	defer os.RemoveAll(bundleDir) // cleanup temp extraction dir
+	if bundleOwned {
+		// Only remove dirs we created (temp extraction dirs). When
+		// Source is a local path, resolveBundle returns it as-is — it
+		// belongs to the user and must not be deleted.
+		defer os.RemoveAll(bundleDir)
+	}
 
 	// Verify sha256 if manifest has them populated.
 	m, err := LoadManifest(bundleDir)
@@ -132,53 +137,56 @@ func UninstallOne(app App, home, subdir string) (removed []string, err error) {
 	return []string{dir}, nil
 }
 
-// resolveBundle returns the bundle's extracted directory. When opts.Source
-// is empty, fetches from GitHub. Otherwise reads from a local path or
-// downloads from a URL.
-func resolveBundle(ctx context.Context, opts InstallOptions) (string, error) {
+// resolveBundle returns the bundle's extracted directory and an `owned`
+// flag indicating whether the caller may remove it. When opts.Source is
+// empty or a zip URL, the bundle is extracted into a fresh temp dir
+// (owned=true, safe to RemoveAll). When opts.Source is a local path,
+// that path is returned as-is (owned=false) — deleting it would destroy
+// the user's source files.
+func resolveBundle(ctx context.Context, opts InstallOptions) (string, bool, error) {
 	if opts.Source == "" {
 		// Latest release path.
 		version := opts.Version
 		if version == "" {
 			v, err := LatestRelease(ctx)
 			if err != nil {
-				return "", err
+				return "", false, err
 			}
 			version = v
 		}
 		opts.Version = version
 		dest, err := os.MkdirTemp("", "free-kiro-skill-*")
 		if err != nil {
-			return "", err
+			return "", false, err
 		}
 		if err := DownloadAndExtract(ctx, version, dest); err != nil {
 			os.RemoveAll(dest)
-			return "", err
+			return "", false, err
 		}
-		return dest, nil
+		return dest, true, nil
 	}
 	// Source given: treat as a local path or zip URL.
 	if isZipURL(opts.Source) {
 		dest, err := os.MkdirTemp("", "free-kiro-skill-*")
 		if err != nil {
-			return "", err
+			return "", false, err
 		}
 		body, err := upgrade.Download(ctx, opts.Source)
 		if err != nil {
 			os.RemoveAll(dest)
-			return "", err
+			return "", false, err
 		}
 		if err := unzip(body, dest); err != nil {
 			os.RemoveAll(dest)
-			return "", ferrors.Wrap("skill.install", err, "extract "+opts.Source)
+			return "", false, ferrors.Wrap("skill.install", err, "extract "+opts.Source)
 		}
-		return dest, nil
+		return dest, true, nil
 	}
 	// Local path: must already be an extracted directory.
 	if st, err := os.Stat(opts.Source); err == nil && st.IsDir() {
-		return opts.Source, nil
+		return opts.Source, false, nil
 	}
-	return "", ferrors.New("skill.install",
+	return "", false, ferrors.New("skill.install",
 		"unsupported --from value: "+opts.Source+" (must be local dir or http(s) zip URL)")
 }
 
