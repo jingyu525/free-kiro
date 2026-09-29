@@ -13,12 +13,13 @@ import (
 
 func newSpecCmd() *cobra.Command {
 	var (
-		prompt    string
-		workflow  string
-		specType  string
-		quick     bool
-		fromIssue string
-		fromPRD   string
+		prompt      string
+		workflow    string
+		specType    string
+		quick       bool
+		fromIssue   string
+		fromPRD     string
+		fromBrowser string
 	)
 	c := &cobra.Command{
 		Use:   "new [<name>]",
@@ -34,12 +35,15 @@ func newSpecCmd() *cobra.Command {
   --from-prd <url>          从任意网页（HTML / Markdown）拉取 PRD 内容
                             适合 Notion / Confluence / Google Docs / 公司 wiki
                             走 'free-kiro spec new <name> --from-prd <url>'
+  --from-browser <url>     用 browser-skill 的 bsk CLI 抓 JS 渲染页
+                            适合 Notion 私有页 / SPA / 需登录态的页面
+                            走 'free-kiro spec new <name> --from-browser <url>'
   --workflow <wf>          requirements-first（默认）| design-first
   --type <type>            feature（默认）| bugfix
   --quick                  免审批变体（Quick Spec）
 
 当 --from-* 被使用时，<name> 可省略 —— 会自动生成 kebab-case slug。
---from-issue 和 --from-prd 互斥。
+--from-issue / --from-prd / --from-browser 三者互斥。
 
 下一步：kiro spec generate <name> --phase all`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -49,7 +53,7 @@ func newSpecCmd() *cobra.Command {
 			}
 
 			// Resolve prompt + name from various input modes.
-			p, resolvedName, source, err := resolvePromptAndNameEx(cmd.Context(), prompt, fromIssue, fromPRD, args)
+			p, resolvedName, source, err := resolvePromptAndNameEx(cmd.Context(), prompt, fromIssue, fromPRD, fromBrowser, args)
 			if err != nil {
 				return exitWithError(err)
 			}
@@ -64,6 +68,8 @@ func newSpecCmd() *cobra.Command {
 				tag = "created (from issue)"
 			case "from-prd":
 				tag = "created (from PRD)"
+			case "from-browser":
+				tag = "created (from browser)"
 			}
 			if quick {
 				tag = "created (quick)"
@@ -82,6 +88,7 @@ func newSpecCmd() *cobra.Command {
 	c.Flags().StringVar(&prompt, "prompt", "", "spec prompt text (or pipe via stdin)")
 	c.Flags().StringVar(&fromIssue, "from-issue", "", "GitHub issue URL to derive prompt from (requires `gh` CLI)")
 	c.Flags().StringVar(&fromPRD, "from-prd", "", "PRD URL (HTML/Markdown) to derive prompt from")
+	c.Flags().StringVar(&fromBrowser, "from-browser", "", "URL to render via browser-skill `bsk` (requires `bsk` CLI on PATH)")
 	c.Flags().StringVar(&workflow, "workflow", "requirements-first", "planning order: requirements-first or design-first")
 	c.Flags().StringVar(&specType, "type", "feature", "spec type: feature or bugfix")
 	c.Flags().BoolVar(&quick, "quick", false, "quick spec: waive the formal approve gate")
@@ -94,13 +101,26 @@ func newSpecCmd() *cobra.Command {
 //
 // Source precedence (mutually exclusive):
 //
-//  1. --from-issue   fetch GitHub issue title + body via `gh`
-//  2. --from-prd     fetch any web page (HTML/Markdown), extract title
-//                    + visible text
-//  3. --prompt / stdin with positional name
-func resolvePromptAndNameEx(ctx context.Context, promptFlag, fromIssue, fromPRD string, args []string) (string, string, string, error) {
-	if fromIssue != "" && fromPRD != "" {
-		return "", "", "", fmt.Errorf("--from-issue and --from-prd are mutually exclusive")
+//  1. --from-issue    fetch GitHub issue title + body via `gh`
+//  2. --from-prd      fetch any web page (HTML/Markdown), extract title
+//                     + visible text
+//  3. --from-browser  fetch JS-rendered page via browser-skill's `bsk`,
+//                     extract title + visible text from rendered HTML
+//  4. --prompt / stdin with positional name
+func resolvePromptAndNameEx(ctx context.Context, promptFlag, fromIssue, fromPRD, fromBrowser string, args []string) (string, string, string, error) {
+	// Mutually exclusive check across all three --from-* flags.
+	n := 0
+	if fromIssue != "" {
+		n++
+	}
+	if fromPRD != "" {
+		n++
+	}
+	if fromBrowser != "" {
+		n++
+	}
+	if n > 1 {
+		return "", "", "", fmt.Errorf("--from-issue, --from-prd, and --from-browser are mutually exclusive")
 	}
 	if fromIssue != "" {
 		ref, err := ParseGitHubIssueURL(fromIssue)
@@ -124,6 +144,16 @@ func resolvePromptAndNameEx(ctx context.Context, promptFlag, fromIssue, fromPRD 
 		// reference handy while filling in requirements.
 		full := "# Source: " + fromPRD + "\n\n# " + title + "\n\n" + body
 		return full, name, "from-prd", nil
+	}
+	if fromBrowser != "" {
+		title, body, err := FetchBrowserHTML(ctx, fromBrowser)
+		if err != nil {
+			return "", "", "", err
+		}
+		name := nameFromArgsOrSlug(args, title)
+		// Same prefix shape as --from-prd for downstream consistency.
+		full := "# Source (browser-rendered): " + fromBrowser + "\n\n# " + title + "\n\n" + body
+		return full, name, "from-browser", nil
 	}
 	p, err := readPrompt(promptFlag)
 	if err != nil {
