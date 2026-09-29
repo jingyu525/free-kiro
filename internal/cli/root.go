@@ -8,6 +8,7 @@
 //	free-kiro task list               parallel-wave view of tasks.md
 //	free-kiro hook {list,add,run}     event-driven automations
 //	free-kiro lint [name]             offline spec-quality checks (exit 1 on ERROR)
+//	free-kiro skill                   manage SKILL.md bundle install/uninstall/update
 package cli
 
 import (
@@ -91,4 +92,5 @@ func init() {
 	rootCmd.AddCommand(serveCmdFactory())
 	rootCmd.AddCommand(upgradeCmdFactory())
 	rootCmd.AddCommand(watchCmdFactory())
+	rootCmd.AddCommand(skillCmdFactory())
 }

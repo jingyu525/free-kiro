@@ -16,6 +16,9 @@ before:
     # go.sum + go.mod aligned with the imported packages.
     - go mod tidy
     - go test ./...
+    # Populate sha256 map in contrib/skills/free-kiro/skill.json so the
+    # installer can verify each file at install time. Idempotent.
+    - cmd: ./contrib/skills/scripts/compute-skill-sha.sh
 
 builds:
   - id: free-kiro
@@ -53,6 +56,23 @@ archives:
       - README.md
       - LICENSE
       - docs/*
+
+  # Skill bundle: a separate zip published alongside the binary
+  # tarballs. Contains SKILL.md + references/ + skill.json. The
+  # installer scripts (`free-kiro skill install`, curl|bash, npx)
+  # fetch this asset and write it into ~/.{app}/skills/free-kiro/.
+  - id: skill
+    formats:
+      - zip
+    name_template: "{{ .ProjectName }}-skill_{{ .Version }}"
+    files:
+      - src: "contrib/skills/free-kiro/*"
+        dst: "free-kiro"
+      - src: "contrib/skills/free-kiro/**/*"
+        dst: "free-kiro"
+    # Strip the leading "free-kiro/" prefix from zip entries so the
+    # extracted layout is `dest/SKILL.md`, `dest/references/*.md`, etc.
+    strip_parent_dir: false
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
