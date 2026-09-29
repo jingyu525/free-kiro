@@ -1,0 +1,17 @@
+{
+  "name": "add-status-subcommand",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "给 free-kiro CLI 加 status 子命令（free-kiro status），聚合展示 workspace 里所有 spec 的状态：每个 spec 的 name / phase / approved / drift / tasks 进度（done/total/waves），并标记当前活跃 spec（读 .kiro/.current）。默认人类可读输出（带表格或 emoji），加 --json 输出机器可读（供 watch / serve / 自动化工具复用）。这样 free-kiro watch --preset reactive 不再依赖不存在的 status 子命令。",
+  "created_at": "2026-09-29T13:22:30Z",
+  "updated_at": "2026-09-29T13:32:21Z",
+  "baseline": {
+    "ac_count": 5,
+    "design_sections": 6,
+    "task_count": 6
+  }
+}
