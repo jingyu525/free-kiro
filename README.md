@@ -37,8 +37,9 @@ Claude Code / CodeBuddy / Cursor / Continue 这些主流 AI coding 工具
 | **跨多 spec 状态** | `.kiro/.current` 自动标记活跃 spec；SessionStart hook 准度提升 |
 | **issue → spec** | `free-kiro spec new --from-issue <url>` 一键从 GitHub issue 生成 spec |
 | **PRD → spec** | `free-kiro spec new --from-prd <url>` 从任意网页（HTML/Markdown）拉取 PRD 内容 |
+| **实时 watch** | `free-kiro watch --preset reactive` 监听 .kiro/ 变化自动跑 lint + status |
 | **自升级** | `free-kiro upgrade` 下载最新 release + SHA256 校验 + re-exec |
-| **零新外部依赖** | 全部用 Go 标准库 + `golang.org/x/net/html`（唯一新 dep） |
+| **零新外部依赖** | 全部用 Go 标准库 + `golang.org/x/net/html` + `fsnotify` |
 
 ## 安装（三种方式任选）
 
@@ -92,6 +93,7 @@ free-kiro spec show demo --tree             # ASCII 树
 free-kiro spec show demo --graph | pbcopy   # Mermaid 图（贴 GitHub 自动渲染）
 free-kiro report                            # 完整 markdown 报告 → .kiro/REPORT.md
 free-kiro serve                             # 启动本地 web dashboard
+free-kiro watch --preset reactive           # 实时监听：lint + status
 free-kiro spec complete demo                # 收尾
 ```
 
@@ -123,6 +125,45 @@ free-kiro spec new login-v2 --from-prd https://confluence.company.com/x/login-v2
 - 1 MB body cap + 30s timeout
 - 用 title 生成 kebab-case slug
 - 输出 "created (from PRD)" 标签
+
+## 杀手路径：实时 watch（IDE 风格）
+
+打开 IDE 终端跑：
+
+```bash
+$ free-kiro watch --preset reactive
+free-kiro watch: running 2 command(s) on .kiro/ changes.
+  → free-kiro lint
+  → free-kiro status --human
+```
+
+每次保存 `.kiro/specs/*/requirements.md` 之类的文件 → debounce 500ms →
+自动跑 lint + 显示 status 摘要。再也不用手动跑 `free-kiro lint` 了。
+
+预设：
+
+| Preset | 命令 | 用途 |
+|---|---|---|
+| `default` / `lint` | `free-kiro lint` | 只 lint（最轻量） |
+| `status` | `free-kiro status --human` | 只看状态变化 |
+| `reactive` | `lint + status` | **推荐 IDE 终端** |
+| `full` | `lint + status + report` | 完整反馈（每次都重写 .kiro/REPORT.md） |
+
+完全自定义：
+
+```bash
+# 多次 --command
+$ free-kiro watch --command "make" --command "go test" --command "echo done"
+
+# 自定义路径 + 长安静期
+$ free-kiro watch --root ./docs --command "mkdocs build" --debounce 2s
+
+# 看每个 fs event（调试用）
+$ free-kiro watch --verbose
+```
+
+**注意**：watcher 子进程可能不继承 parent 的 PATH。如果 `free-kiro: command
+not found`，可以传绝对路径或用 `which free-kiro` 取得。
 
 ## 接入 AI coding 工具（以 Claude Code 为例）
 
@@ -190,6 +231,12 @@ free-kiro lint [<name>]                                  离线质量门禁
 
 # Dashboard
 free-kiro serve [--bind 127.0.0.1] [--port 7373]         本地 web dashboard
+
+# 实时 watch
+free-kiro watch [--preset default|status|reactive|full]  监听 .kiro/ 变化
+                [--command "cmd"] [--command "cmd"]        自定义命令（可多次）
+                [--root ./docs] [--debounce 500ms]          配置
+                [--verbose]
 ```
 
 完整命令参考见 [docs/CLI.md](docs/CLI.md)。
