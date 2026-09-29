@@ -49,7 +49,7 @@ type Plan struct {
 // what `upgrade` (or `upgrade --check`) would do. No filesystem writes
 // happen here.
 func Check(ctx context.Context, currentVersion string) (*Plan, error) {
-	release, err := fetchLatestRelease(ctx)
+	release, err := FetchLatestRelease(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -92,15 +92,15 @@ func Apply(ctx context.Context, p *Plan, force bool) error {
 			fmt.Sprintf("already on v%s; use --force to reinstall", p.Latest))
 	}
 	// Download tarball + SHA256SUMS.
-	tarball, err := download(ctx, p.Download)
+	tarball, err := Download(ctx, p.Download)
 	if err != nil {
 		return err
 	}
-	sumsFile, err := download(ctx, p.Checksum)
+	sumsFile, err := Download(ctx, p.Checksum)
 	if err != nil {
 		return err
 	}
-	expected, err := lookupSHA256(string(sumsFile), p.Binary)
+	expected, err := LookupSHA256(string(sumsFile), p.Binary)
 	if err != nil {
 		return err
 	}
@@ -158,17 +158,22 @@ func reexec(bin string) error {
 
 // --- GitHub API + tarball extraction ---
 
-type githubRelease struct {
-	TagName string            `json:"tag_name"`
-	Assets  []githubReleaseAsset `json:"assets"`
+// Release is the public subset of the GitHub release JSON we care about.
+// Exported so other packages (e.g. internal/skill) can reuse the fetch
+// without re-parsing the same struct.
+type Release struct {
+	TagName string         `json:"tag_name"`
+	Assets  []ReleaseAsset `json:"assets"`
 }
 
-type githubReleaseAsset struct {
+// ReleaseAsset is one entry in the release's `assets` list.
+type ReleaseAsset struct {
 	Name               string `json:"name"`
 	BrowserDownloadURL string `json:"browser_download_url"`
 }
 
-func fetchLatestRelease(ctx context.Context) (*githubRelease, error) {
+// FetchLatestRelease queries GitHub for the latest published tag.
+func FetchLatestRelease(ctx context.Context) (*Release, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET",
 		"https://api.github.com/repos/"+GitHubRepo+"/releases/latest", nil)
 	if err != nil {
@@ -184,7 +189,7 @@ func fetchLatestRelease(ctx context.Context) (*githubRelease, error) {
 		return nil, ferrors.New("upgrade.check",
 			fmt.Sprintf("GitHub API returned HTTP %d (rate limit?)", resp.StatusCode))
 	}
-	var rel githubRelease
+	var rel Release
 	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
 		return nil, ferrors.Wrap("upgrade.check", err, "decode release JSON")
 	}
@@ -203,9 +208,10 @@ func findAssets(tag string) (tarball, sums, binary string) {
 	return
 }
 
-// download fetches a URL into memory (returns bytes). Tarballs are
-// ~2-4 MB so a 16 MB cap is comfortable; SHA256SUMS is tiny.
-func download(ctx context.Context, url string) ([]byte, error) {
+// Download fetches a URL into memory (returns bytes). Tarballs are
+// ~2-4 MB so a 32 MB cap is comfortable; SHA256SUMS is tiny. Exported
+// for reuse by internal/skill.
+func Download(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -227,10 +233,12 @@ func download(ctx context.Context, url string) ([]byte, error) {
 	return data, nil
 }
 
-// lookupSHA256 finds the expected hash for `tarball` in the SHA256SUMS
+// LookupSHA256 finds the expected hash for `tarball` in the SHA256SUMS
 // file format used by GoReleaser: each line is `<hex>  <filename>`.
-func lookupSHA256(sums, tarball string) (string, error) {
-	for _, line := range strings.Split(sums, "\n") {
+// Matches by exact filename; the caller can pre-resolve the canonical
+// name. Falls back to "free-kiro" for the binary inside a tarball.
+func LookupSHA256(sums, tarball string) (string, error) {
+	for line := range strings.SplitSeq(sums, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue

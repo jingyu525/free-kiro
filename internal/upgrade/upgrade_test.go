@@ -9,7 +9,7 @@ import (
 func TestLookupSHA256_ExactMatch(t *testing.T) {
 	sums := "abc123  free-kiro_0.1.0_darwin_arm64.tar.gz\n" +
 		"def456  free-kiro_0.1.0_darwin_amd64.tar.gz\n"
-	got, err := lookupSHA256(sums, "free-kiro_0.1.0_darwin_arm64.tar.gz")
+	got, err := LookupSHA256(sums, "free-kiro_0.1.0_darwin_arm64.tar.gz")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func TestLookupSHA256_FallbackToBinaryName(t *testing.T) {
 	// When the SHA256SUMS file uses just the binary name, the lookup
 	// should still match.
 	sums := "deadbeef  free-kiro\n"
-	got, err := lookupSHA256(sums, "free-kiro_0.1.0_linux_amd64.tar.gz")
+	got, err := LookupSHA256(sums, "free-kiro_0.1.0_linux_amd64.tar.gz")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,7 @@ func TestLookupSHA256_FallbackToBinaryName(t *testing.T) {
 
 func TestLookupSHA256_NotFound(t *testing.T) {
 	sums := "abc123  some-other-binary.tar.gz\n"
-	_, err := lookupSHA256(sums, "free-kiro_0.1.0_darwin_arm64.tar.gz")
+	_, err := LookupSHA256(sums, "free-kiro_0.1.0_darwin_arm64.tar.gz")
 	if err == nil {
 		t.Fatal("expected not-found error")
 	}
@@ -46,7 +46,7 @@ func TestLookupSHA256_HandlesBlankLines(t *testing.T) {
 	// The SHA256SUMS format allows blank lines and comments; verify
 	// we tolerate them.
 	sums := "\n\nabc123  free-kiro_0.1.0_darwin_arm64.tar.gz\n\n"
-	got, err := lookupSHA256(sums, "free-kiro_0.1.0_darwin_arm64.tar.gz")
+	got, err := LookupSHA256(sums, "free-kiro_0.1.0_darwin_arm64.tar.gz")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,8 +74,8 @@ func TestFindAssets_PlatformSuffix(t *testing.T) {
 	}
 }
 
-func TestSliceReader_EOFAndPartial(t *testing.T) {
-	r := &sliceReader{b: []byte("hello")}
+func TestBytesReader_EOFAndPartial(t *testing.T) {
+	r := bytes.NewReader([]byte("hello"))
 	buf := make([]byte, 3)
 	n, err := r.Read(buf)
 	if err != nil || n != 3 || string(buf) != "hel" {

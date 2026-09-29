@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/jingyu525/free-kiro/internal/lint"
@@ -85,7 +86,7 @@ func (e *Engine) Analyze(specName string) []AnalysisFinding {
 			findings = append(findings, AnalysisFinding{
 				Severity: "warning",
 				Code:     "duplicate-acceptance-criteria",
-				Message:  "duplicate acceptance criterion appears " + itoa(n) + " times: " + truncate(norm, 80),
+				Message:  "duplicate acceptance criterion appears " + strconv.Itoa(n) + " times: " + truncate(norm, 80),
 				Location: doc,
 			})
 		}
@@ -98,7 +99,7 @@ func (e *Engine) Analyze(specName string) []AnalysisFinding {
 		findings = append(findings, AnalysisFinding{
 			Severity: "warning",
 			Code:     "uncovered-acceptance-criteria",
-			Message:  "spec has " + itoa(len(earss)) + " acceptance criteria but no tasks (every AC should map to at least one task)",
+			Message:  "spec has " + strconv.Itoa(len(earss)) + " acceptance criteria but no tasks (every AC should map to at least one task)",
 			Location: "tasks.md",
 		})
 	}
@@ -140,19 +141,6 @@ func truncate(s string, n int) string {
 		return s
 	}
 	return s[:n] + "…"
-}
-
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	digits := "0123456789"
-	out := ""
-	for n > 0 {
-		out = string(digits[n%10]) + out
-		n /= 10
-	}
-	return out
 }
 
 func isEmptyTasks(text string) bool {

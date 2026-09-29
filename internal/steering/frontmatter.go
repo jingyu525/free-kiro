@@ -17,6 +17,7 @@ package steering
 
 import (
 	"regexp"
+	"strings"
 
 	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
@@ -48,7 +49,7 @@ func ParseFrontmatter(text string) (map[string]string, string) {
 	i := 1
 	for i < len(lines) {
 		if fmOpen.MatchString(lines[i]) {
-			body := joinLines(lines[i+1:])
+			body := strings.Join(lines[i+1:], "\n")
 			return meta, body
 		}
 		m := fmKey.FindStringSubmatch(lines[i])
@@ -113,17 +114,6 @@ func splitLinesForSteering(text string) []string {
 	}
 	if start < len(text) {
 		out = append(out, text[start:])
-	}
-	return out
-}
-
-func joinLines(lines []string) string {
-	if len(lines) == 0 {
-		return ""
-	}
-	out := lines[0]
-	for i := 1; i < len(lines); i++ {
-		out += "\n" + lines[i]
 	}
 	return out
 }

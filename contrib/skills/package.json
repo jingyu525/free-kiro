@@ -1,0 +1,25 @@
+{
+  "name": "@jingyu525/free-kiro-skill",
+  "version": "0.7.0",
+  "description": "Installs the free-kiro SKILL.md bundle into Claude Code / OpenCode / Codex CLI / CodeBuddy. Thin wrapper over contrib/skills/install.sh.",
+  "license": "MIT",
+  "repository": "github:jingyu525/free-kiro",
+  "bin": {
+    "free-kiro-skill": "bin/add-skill.js"
+  },
+  "scripts": {
+    "install-skill": "bash ../install.sh"
+  },
+  "files": [
+    "bin/add-skill.js",
+    "../install.sh"
+  ],
+  "keywords": [
+    "free-kiro",
+    "skill",
+    "claude-code",
+    "opencode",
+    "codex",
+    "codebuddy"
+  ]
+}

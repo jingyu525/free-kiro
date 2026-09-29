@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Stub bsk CLI for --from-browser tests. Mimics the two commands
+# spec_from_browser.go calls: `bsk navigate <url>` and
+# `bsk get-html --out <path>`.
+#
+# Behavior:
+#   - navigate <url>     → exits 0 if URL starts with "https://", else 1
+#   - get-html --out <p> → writes canned HTML to <p>, exits 0
+#   - anything else      → exits 2 with diagnostic message
+#
+# Tests set FREE_KIRO_BSK_BIN to this script so they don't depend on a
+# real bsk install.
+
+set -euo pipefail
+
+case "${1:-}" in
+  navigate)
+    url="${2:-}"
+    if [[ "$url" == https://* ]]; then
+      echo "navigated to $url"
+      exit 0
+    fi
+    echo "bsk stub: refusing to navigate non-https url: $url" >&2
+    exit 1
+    ;;
+  get-html)
+    # find --out <path>
+    out=""
+    prev=""
+    for arg in "$@"; do
+      if [[ "$prev" == "--out" ]]; then
+        out="$arg"
+        break
+      fi
+      prev="$arg"
+    done
+    if [[ -z "$out" ]]; then
+      echo "bsk stub: get-html missing --out" >&2
+      exit 2
+    fi
+    cat > "$out" <<'HTML'
+<!doctype html>
+<html>
+<head><title>Browser PRD Title</title></head>
+<body>
+<h1>Browser Rendered Spec</h1>
+<p>This content only appears after JS execution.</p>
+<nav>skip me — navigation chrome</nav>
+<script>ignored()</script>
+</body>
+</html>
+HTML
+    exit 0
+    ;;
+  *)
+    echo "bsk stub: unknown subcommand: ${1:-}" >&2
+    exit 2
+    ;;
+esac

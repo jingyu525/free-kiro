@@ -77,6 +77,42 @@ go install github.com/jingyu525/free-kiro/cmd/free-kiro@latest
 - run: free-kiro doctor --strict
 ```
 
+## 给 AI 编码助手装 SKILL.md bundle
+
+把 free-kiro 的能力以 SKILL.md 形式发布到 Claude Code / OpenCode /
+Codex CLI / CodeBuddy 的 skills 目录，AI 在用户谈到"spec / EARS /
+lint / PRD / wave"等意图时**自动调用**（model-invoked），不用手敲命令。
+
+### `free-kiro skill install`（推荐）
+
+```bash
+free-kiro skill install                       # 装到全部 detected apps
+free-kiro skill install --app claude-code      # 只装 Claude Code
+free-kiro skill update                        # 检查 / 应用更新
+free-kiro skill show                          # 查看安装状态
+```
+
+### `curl | bash`
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jingyu525/free-kiro/main/contrib/skills/install.sh | bash
+```
+
+### `npx`
+
+```bash
+npx @jingyu525/free-kiro-skill
+```
+
+### 手动
+
+下载 [GitHub Releases](https://github.com/jingyu525/free-kiro/releases)
+里的 `free-kiro-skill_<version>.zip`，解压到 `~/.claude/skills/free-kiro/`
+（或其他 app 的 skills 目录）。
+
+装完后开新会话，谈到"我想规划一个功能"或"从 PRD 起个 spec"，
+AI 助手就会主动调 `free-kiro`，不用你手敲命令。
+
 ## 30 秒上手
 
 ```bash
