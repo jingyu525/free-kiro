@@ -90,4 +90,5 @@ func init() {
 	rootCmd.AddCommand(reportCmdFactory())
 	rootCmd.AddCommand(serveCmdFactory())
 	rootCmd.AddCommand(upgradeCmdFactory())
+	rootCmd.AddCommand(watchCmdFactory())
 }
