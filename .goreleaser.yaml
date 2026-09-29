@@ -58,10 +58,32 @@ checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
 
-# Homebrew tap is intentionally omitted for v0.1.0 — it requires a
-# separate repository (jingyu525/homebrew-tap) to push the formula
-# to, and we don't have one yet. When the tap repo exists, add the
-# `brews:` block here per GoReleaser v2 schema.
+brews:
+  - name: free-kiro
+    # Tap repo must exist at github.com/jingyu525/homebrew-tap. The
+    # release workflow has GITHUB_TOKEN, which has write access to the
+    # tap if `homebrew-tap` is public — otherwise grant the token by
+    # adding a workflow permission + secret.
+    repository:
+      owner: jingyu525
+      name: homebrew-tap
+    # Per-platform download URLs (Homebrew needs separate URLs per
+    # arch/os; macOS arm64 vs amd64, Linux same split, no Windows).
+    url: "https://github.com/jingyu525/homebrew-tap.git"
+    # Skip Windows — Homebrew doesn't ship for Windows. GoReleaser
+    # auto-skips any platform/arch the brew block doesn't support.
+    skip: "{{ .IsSnapshot }}"
+    commit_author:
+      name: github-actions[bot]
+      email: noreply@github.com
+    commit_msg_template: "brew formula update for {{ .ProjectName }} {{ .Tag }}"
+    folder: Formula
+    homepage: "https://github.com/jingyu525/free-kiro"
+    description: "Spec-driven development workflow CLI (Kiro Spec workflow in Go)"
+    license: "MIT"
+    test: |
+      assert_match "free-kiro", shell_output("#{bin}/free-kiro --version")
+    dependencies: []
 
 snapshot:
   name_template: "{{ incpatch .Version }}-snapshot"

@@ -1,0 +1,98 @@
+# GitHub Composite Action: jingyu525/free-kiro/.github/actions/setup-free-kiro
+#
+# Installs the free-kiro binary on the runner and adds it to PATH.
+# Use this in any workflow that needs to run `free-kiro lint`, `free-kiro
+# spec sync`, etc. — typically PreToolUse gates for Claude Code or as a
+# required check on PRs that touch .kiro/.
+#
+# Usage:
+#
+#   steps:
+#     - uses: actions/checkout@v4
+#     - uses: jingyu525/free-kiro/.github/actions/setup-free-kiro@v0.5.0
+#       with:
+#         version: v0.5.0    # optional; defaults to latest
+#     - run: free-kiro lint
+#     - run: free-kiro doctor --strict
+#
+# Or pin to a major version:
+#
+#     - uses: jingyu525/free-kiro/.github/actions/setup-free-kiro@v1
+
+name: 'Setup free-kiro'
+description: 'Install free-kiro (spec-driven development workflow CLI) on the runner'
+author: 'jingyu525'
+
+inputs:
+  version:
+    description: 'free-kiro release tag (e.g. v0.5.0). Omit to fetch latest.'
+    required: false
+    default: ''
+  install-dir:
+    description: 'Where to install the binary on the runner'
+    required: false
+    default: '${{ runner.temp }}/free-kiro-bin'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Detect platform
+      id: detect
+      shell: bash
+      run: |
+        echo "os=$(uname -s | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+        arch="$(uname -m)"
+        case "$arch" in
+          x86_64|amd64)  arch=amd64 ;;
+          aarch64|arm64) arch=arm64 ;;
+          *) echo "::error::unsupported architecture $arch"; exit 1 ;;
+        esac
+        echo "arch=$arch" >> "$GITHUB_OUTPUT"
+
+    - name: Resolve version
+      id: version
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.version }}" ]; then
+          ver="${{ inputs.version }}"
+        else
+          ver=$(curl -fsSL "https://api.github.com/repos/jingyu525/free-kiro/releases/latest" \
+                | grep -oE '"tag_name":\s*"v[^"]+"' | head -1 \
+                | sed -E 's/.*"v([^"]+)".*/\1/')
+          if [ -z "$ver" ]; then
+            echo "::error::could not resolve latest free-kiro version"
+            exit 1
+          fi
+        fi
+        echo "version=v$ver" >> "$GITHUB_OUTPUT"
+        echo "resolved: v$ver"
+
+    - name: Download + verify + install
+      shell: bash
+      run: |
+        set -euo pipefail
+        VER="v${{ steps.version.outputs.version }}"
+        OS="${{ steps.detect.outputs.os }}"
+        ARCH="${{ steps.detect.outputs.arch }}"
+        TARBALL="free-kiro_${VER#v}_${OS}_${ARCH}.tar.gz"
+        BASE="https://github.com/jingyu525/free-kiro/releases/download/${VER}"
+        INSTALL="${{ inputs.install-dir }}"
+        mkdir -p "$INSTALL"
+        cd "$RUNNER_TEMP"
+        echo "→ downloading $TARBALL"
+        curl -fsSL -o "$TARBALL" "$BASE/$TARBALL"
+        curl -fsSL -o SHA256SUMS "$BASE/free-kiro_${VER#v}_SHA256SUMS"
+        echo "→ verifying checksum"
+        grep "  $TARBALL" SHA256SUMS | sha256sum -c -
+        tar -xzf "$TARBALL"
+        install -m 0755 free-kiro "$INSTALL/free-kiro"
+        echo "$INSTALL" >> "$GITHUB_PATH"
+        echo "✓ free-kiro ${VER} installed to $INSTALL"
+        "$INSTALL/free-kiro" --version || true
+
+    - name: Cache the binary (best-effort)
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.install-dir }}
+        key: free-kiro-${{ steps.version.outputs.version }}-${{ runner.os }}-${{ runner.arch }}
+      if: success()
