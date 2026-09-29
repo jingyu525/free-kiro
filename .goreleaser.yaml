@@ -18,7 +18,11 @@ before:
     - go test ./...
     # Populate sha256 map in contrib/skills/free-kiro/skill.json so the
     # installer can verify each file at install time. Idempotent.
-    - cmd: ./contrib/skills/scripts/compute-skill-sha.sh
+    # Note: before.hooks is `[]string`, so no `cmd:` key — just the
+    # command line. (The structured Hook form is only for build hooks.)
+    # Call the script directly so its `#!/usr/bin/env bash` shebang
+    # picks the right shell (the script uses `mapfile`, a bash builtin).
+    - ./contrib/skills/scripts/compute-skill-sha.sh
 
 builds:
   - id: free-kiro
@@ -61,18 +65,34 @@ archives:
   # tarballs. Contains SKILL.md + references/ + skill.json. The
   # installer scripts (`free-kiro skill install`, curl|bash, npx)
   # fetch this asset and write it into ~/.{app}/skills/free-kiro/.
+  # Note: the leading "free-kiro/" prefix in the zip entries is
+  # intentional — every entry is placed under a `free-kiro/` dir so
+  # that `unzip free-kiro-skill_<version>.zip -d ~/.claude/skills/`
+  # lands SKILL.md + references at the correct per-app path.
   - id: skill
     formats:
       - zip
     name_template: "{{ .ProjectName }}-skill_{{ .Version }}"
+    # Goreleaser's `dst` rule:
+    #   - For a single-file `src:`, `dst:` is the EXACT archive path
+    #     (no basename auto-append). So both SKILL.md and skill.json
+    #     need their full destination filenames.
+    #   - For a glob `src:`, `dst:` is a directory prefix and the
+    #     source basename is appended. That's why references/*.md
+    #     works with `dst: free-kiro/references`.
+    # `meta: true` makes this a metadata-only archive — built binaries
+    # are NOT included. Without it, goreleaser auto-includes every
+    # build's binary in every archive, adding a 10 MB `free-kiro`
+    # entry to the skill zip. (`ids: []` alone does not work; it
+    # falls back to including all builds.)
+    meta: true
     files:
-      - src: "contrib/skills/free-kiro/*"
-        dst: "free-kiro"
-      - src: "contrib/skills/free-kiro/**/*"
-        dst: "free-kiro"
-    # Strip the leading "free-kiro/" prefix from zip entries so the
-    # extracted layout is `dest/SKILL.md`, `dest/references/*.md`, etc.
-    strip_parent_dir: false
+      - src: contrib/skills/free-kiro/SKILL.md
+        dst: free-kiro/SKILL.md
+      - src: contrib/skills/free-kiro/skill.json
+        dst: free-kiro/skill.json
+      - src: contrib/skills/free-kiro/references/*.md
+        dst: free-kiro/references
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
