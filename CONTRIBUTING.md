@@ -27,9 +27,16 @@ free-kiro spec complete my-feature
 
 ## 2. 编码规范（必读）
 
-**所有 Go 代码（含 AI agent 生成）必须遵守 [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md)**。
+**所有 Go 代码（含 AI agent 生成）必须遵守以下三份文档**：
 
-文档覆盖 8 个章节：
+- [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md) — Go 社区通用编码规范
+  （命名 / 错误处理 / 并发 / 接口 / 测试 / 注释 / 依赖），共 7 章。
+- [`docs/AGENT_RULES.md`](docs/AGENT_RULES.md) — AI agent 协作硬性要求 +
+  零豁免 / 零死代码政策（违反任意一条 = PR 拒收）。
+- [`docs/POLICY.md`](docs/POLICY.md) — free-kiro 项目特定策略（覆盖率门槛、
+  TODO 注释 owner、协议合规、commit 格式、代码规模上限、PR 范围约束）。
+
+`CODING_STYLE.md` 关键章节速览：
 
 | # | 章节 | 关键约束 |
 |---|---|---|
@@ -39,8 +46,7 @@ free-kiro spec complete my-feature
 | 4 | 接口设计 | 使用方定义；小接口；返回具体类型 |
 | 5 | 测试 | 表驱动；`-race` 必跑；`t.TempDir()` |
 | 6 | 注释与文档 | 解释"为什么"；导出符号必 godoc |
-| 7 | 依赖管理 | 最小依赖；锁版本；不引 GPL |
-| 8 | AI agent 协作 | 零 TODO、零吞错误、零 magic number |
+| 7 | 依赖管理 | 最小依赖；锁版本 |
 
 可机器检查的规则由 `.golangci.yml` 启用 6 个 linter（`govet` / `staticcheck` /
 `errcheck` / `gofmt` / `goimports` / `revive`），CI `lint-go` job 会强制

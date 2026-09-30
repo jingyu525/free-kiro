@@ -1,0 +1,17 @@
+{
+  "name": "separate-codestyle-projectspecific",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "把 docs/CODING_STYLE.md 中混入的项目特定策略从'Go 编码规范'中分离：CODING_STYLE.md 只保留 1–7 章通用 Go 规范；项目特定策略（原第 8 章 AI agent 协作 + 8.6 零豁免政策 + 8.7 零死代码政策 + 第 5/6/7 章里散落的覆盖率门槛/TODO owner/协议合规/内部依赖路径/commit 中文/函数与文件行数上限）拆到 docs/AGENT_RULES.md（AI 协作政策）与 docs/POLICY.md（项目策略）。CLAUDE.md 的硬约束摘录改为指向 AGENT_RULES.md + POLICY.md。",
+  "created_at": "2026-09-30T13:05:03Z",
+  "updated_at": "2026-09-30T13:25:36Z",
+  "baseline": {
+    "ac_count": 13,
+    "design_sections": 6,
+    "task_count": 7
+  }
+}
