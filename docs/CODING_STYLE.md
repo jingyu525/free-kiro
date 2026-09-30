@@ -777,6 +777,26 @@ go get -u ./...   # 难以 review，可能引入不可控 breaking change
 
 **当前 `//nolint` 总数**：0。
 
+### 8.7 零死代码（zero-dead-code policy）
+
+> 由 `enforce-golang-standards-zero-dead-code` spec 落地（2026-Q4）。
+> 与 8.6 零 `//nolint` 豁免并列适用。
+
+**核心条款**：
+
+1. `staticcheck U1000`（unused）必须被 `.golangci.yml` 的
+   `linters-settings.staticcheck.checks: ["unused"]` 显式开启——CI 命中
+   即视为硬门禁违规，与 errcheck / revive / gofmt 同等待遇。
+2. 任何新增未引用的 package-level 函数、常量、类型、变量，都必须在
+   PR 阶段就清理掉，不允许"先写后删"的过渡状态进入 main 分支。
+3. 删除前必须 `grep -rn '<符号名>' .` 全仓库确认无 caller；删除后
+   再跑一遍 `go test ./...` + `golangci-lint run ./...` 确认无回归。
+4. build tag 隔离的文件（`//go:build !xxx`）默认不视为死代码；但如果
+   该文件最终被实际 build tag 包含进入二进制，则其内部所有符号必须被
+   引用，否则视为死代码清理对象。
+
+**当前死代码（U1000）总数**：0。
+
 ---
 
 > 文档结束。变更请联系 `.kiro/specs/golang-coding-standards/` 的维护者，

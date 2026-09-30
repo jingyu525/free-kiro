@@ -28,6 +28,10 @@ linters:
     - staticcheck
     - errcheck
     - revive
+    # U1000（unused）—— 由 enforce-golang-standards-zero-dead-code spec
+    # 落地。golangci-lint v2 的 staticcheck 集成不含 U1000，必须作为独立
+    # linter 显式启用；命中即视为硬门禁违规。
+    - unused
 
 # v2 schema：gofmt / goimports 从 linters 拆到 formatters
 formatters:

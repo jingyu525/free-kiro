@@ -1,0 +1,17 @@
+{
+  "name": "enforce-golang-standards-zero-dead-code",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "free-kiro v2.14.0 + staticcheck 全仓库扫描发现 16 处 lint 问题（1 errcheck + 13 gofmt + 2 revive）和 19 处死代码（U1000）。本 spec 收尾遗留违规：① 修剩余 16 处；② 在 .golangci.yml 的 staticcheck 配置启用 U1000（unused）；③ 删 19 处死代码并跑测试无回归；④ 不改 CI 硬门禁策略。",
+  "created_at": "2026-09-30T11:18:31Z",
+  "updated_at": "2026-09-30T11:39:04Z",
+  "baseline": {
+    "ac_count": 10,
+    "design_sections": 6,
+    "task_count": 16
+  }
+}
