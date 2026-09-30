@@ -60,6 +60,25 @@ WHEN the session expires THE SYSTEM SHALL CONTINUE TO redirect to /login.
 
 - 至少一条 AC 用以上六种 EARS 模板之一（缺则 `no-ears` ERROR）
 - AC 行里**禁止**残留 `<TODO:...>` 占位符（缺则 `placeholder-ac` ERROR）
+- 必须包含 `User Stories` 段（缺则 `no-user-stories` **ERROR**，从 WARNING 升级）
+
+#### 语义质量门禁（新增 10 条）
+
+| Code | 严重级别 | 触发条件 | ❌ 反例 |
+|---|---|---|---|
+| `ears-etc-list` | ERROR | AC 行内出现 `\b(etc\|and/or)\b` | `WHEN user configures foo THE SYSTEM SHALL validate etc. inputs.` |
+| `ears-multi-shall-line` | WARNING | 单行内 SHALL 出现 ≥ 2 次（跨行续行不算） | `WHEN login THE SYSTEM SHALL redirect AND WHEN token expires THE SYSTEM SHALL refresh.` |
+| `ears-few-ac` | WARNING | EARSRe 命中行数 < `models.MinAcceptanceCriteria`（默认 3） | 只有 1 条 AC 的 spec |
+| `ears-low-template-diversity` | WARNING | 6 种模板命中种类数 < 2 | 8 条 AC 全是 WHEN + ubiquitous,无 WHERE/UNLESS/IF |
+| `ears-ac-missing-id` | WARNING | AC 行未匹配 `^\s*-\s*\[AC-\d+\]\s+` | `WHEN foo THE SYSTEM SHALL bar.`（无 `[AC-1]` 前缀） |
+| `ears-response-immeasurable` | WARNING | SHALL 之后子串不含数字/时间单位/状态码/百分比/`within`/`at most` | `WHEN user clicks login THE SYSTEM SHALL respond fast.` |
+| `ears-trigger-unobservable` | WARNING | WHEN/WHILE 触发词含 `busy\|slow\|normal\|large\|small\|many\|recently\|soon\|fast\|robust\|flexible\|seamless\|intuitive` | `WHEN system is busy THE SYSTEM SHALL ...` |
+| `ears-keyword-misuse-while-as-when` | WARNING | WHILE 行状态子串以过去式动词（`logged`/`submitted`/`clicked`/...）结尾 | `WHILE user logs in THE SYSTEM SHALL ...`（应为 WHEN） |
+| `ears-passive-response` | WARNING | SHALL 之后子串以 `be`/`is`/`are`/`been` 开头 | `THE SYSTEM SHALL be fast.` |
+
+> 模板多样性检查使用 `WHENRe` / `WHILERe` / `WHERERe` / `UNLESSRe` + `UsesIFTHEN()` 独立判定
+> （RE2 不支持跨两个 `.+?\s+` 的反向引用,IF-THEN 必须用 prefix+suffix 拼接）,
+> 无条件基线（`THE SYSTEM SHALL`）也算一种模板。
 
 ### bugfix.md（bugfix spec）
 
@@ -83,16 +102,19 @@ WHEN the session expires THE SYSTEM SHALL CONTINUE TO redirect to /login.
 
 7. **UNLESS 写默认**：UNLESS 用于说明"例外之外"的行为，等价于默认行为 + 豁免条件。
 
-## 模糊词黑名单（`spec analyze` 检测）
+## 模糊词黑名单
 
-advisory 检查，列出但**不拦截**：
+`etc` 和 `and/or` 由 lint `ears-etc-list` **ERROR** 拦截（直接阻断 advance/approve）；
+其余 9 个词仍由 `spec analyze` 以 **info** 提示（advisory，不阻断）。
 
-- `etc` — 用具体列表替代
-- `and/or` — 拆成两条 AC
-- `maybe` / `some` — 给出确定值
-- `user-friendly` / `seamless` / `intuitive` — 用具体指标（点击数、响应时间）
-- `robust` / `flexible` — 描述容错场景或扩展点
-- `tbd` / `todo` — 删掉或补完
+| 词 | 处理 |
+|---|---|
+| `etc` | lint ERROR（拒绝） |
+| `and/or` | lint ERROR（拒绝） |
+| `maybe` / `some` | analyze info |
+| `user-friendly` / `seamless` / `intuitive` | analyze info |
+| `robust` / `flexible` | analyze info |
+| `tbd` / `todo` | analyze info |
 
 ## 自动化校验
 
@@ -102,10 +124,36 @@ free-kiro lint my-spec
 
 # Advisory 一致性分析（vague / 重复 AC / 可追溯性）
 free-kiro spec analyze my-spec
+
+# 强制忽略 .baseline.json（严格模式）
+free-kiro lint my-spec --strict-baseline
 ```
 
 Lint 失败的 ERROR 会阻止 `spec approve` / `spec generate` 的前向转移。这是 free-kiro
 的核心约束：可能性空间收敛。
+
+## Baseline 白名单机制
+
+历史 spec 在新增规则上线时不应瞬时变红。`.kiro/specs/<name>/.baseline.json`
+提供一份该 spec 的 lint 白名单，schema 为：
+
+```json
+{
+  "schema_version": 1,
+  "spec_name": "my-spec",
+  "ignored_issues": ["ears-few-ac", "ears-low-template-diversity"]
+}
+```
+
+- `schema_version`: 必填，当前为 1；不匹配时报错（不静默忽略）
+- `spec_name`: 可选；填写时必须与所在目录名一致，防止误粘贴
+- `ignored_issues`: Issue Code 数组；命中的 issue 在 `free-kiro lint` 输出中
+  仍列出但 prefix 为 `[baseline]`，且不计入 `Gate()` 的 ERROR 阻断集合
+
+`--strict-baseline` flag 临时禁用白名单（用于历史 spec 真正想"重新审视"时）。
+
+空 `ignored_issues` 的 baseline 也是合法的——它让历史 spec 文件存在以接入
+机制，同时不放过任何新发现的 issue。
 
 ---
 

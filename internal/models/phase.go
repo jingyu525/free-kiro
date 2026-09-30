@@ -167,6 +167,13 @@ func FirstPlanningDoc(specType string) string {
 	return "requirements.md"
 }
 
+// MinAcceptanceCriteria is the minimum number of EARS-formatted acceptance
+// criteria a feature spec's requirements.md must contain. Enforced by the
+// `ears-few-ac` lint rule (see internal/lint/quality.go). Authors wanting a
+// stricter or looser floor for their own spec can override the constant at
+// call sites; the default here is the gate the codebase enforces.
+const MinAcceptanceCriteria = 3
+
 // PlanningOrder returns the ordered list of planning-document filenames for
 // a spec, respecting the chosen workflow (requirements-first / design-first)
 // and spec type. Both workflows converge on tasks.md.

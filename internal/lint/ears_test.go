@@ -1,6 +1,9 @@
 package lint
 
-import "testing"
+import (
+	"regexp"
+	"testing"
+)
 
 func TestEARSRe_AllTemplates(t *testing.T) {
 	cases := []struct {
@@ -208,6 +211,54 @@ everything else stays the same.
 	}
 	if !found {
 		t.Error("expected no-shall-continue WARNING")
+	}
+}
+
+func TestEARSRe_PerTemplateRegex(t *testing.T) {
+	cases := []struct {
+		name  string
+		re    *regexp.Regexp
+		input string
+		want  bool
+	}{
+		{"WHEN matches its own template", WHENRe, "WHEN user logs in THE SYSTEM SHALL redirect", true},
+		{"WHEN does not match WHILE template", WHENRe, "WHILE session active THE SYSTEM SHALL refresh", false},
+		{"WHILE matches its own template", WHILERe, "WHILE session active THE SYSTEM SHALL refresh", true},
+		{"WHILE does not match WHEN template", WHILERe, "WHEN user logs in THE SYSTEM SHALL redirect", false},
+		{"WHERE matches its own template", WHERERe, "WHERE flag X is on THE SYSTEM SHALL show banner", true},
+		{"UNLESS matches its own template", UNLESSRe, "UNLESS user is admin THE SYSTEM SHALL hide button", true},
+		{"case-insensitive WHEN", WHENRe, "when foo the system shall bar", true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := c.re.MatchString(c.input)
+			if got != c.want {
+				t.Errorf("%s.MatchString(%q) = %v, want %v", c.re, c.input, got, c.want)
+			}
+		})
+	}
+}
+
+func TestUsesIFTHEN(t *testing.T) {
+	cases := []struct {
+		name  string
+		input string
+		want  bool
+	}{
+		{"IF THEN SHALL on one line", "IF rate limit exceeded THEN THE SYSTEM SHALL return 429", true},
+		{"IF without THEN", "IF user is admin THE SYSTEM SHALL show", false},
+		{"THEN without IF", "WHEN foo THEN THE SYSTEM SHALL bar", false},
+		{"lowercase", "if foo then the system shall bar", true},
+		{"case-insensitive IF", "If foo THEN the system shall bar", true},
+		{"multi-word condition", "IF user submits form 3 times within 1 minute THEN rate limit THE SYSTEM SHALL return 429", true},
+		{"plain prose", "users should be able to login", false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := UsesIFTHEN(c.input); got != c.want {
+				t.Errorf("UsesIFTHEN(%q) = %v, want %v", c.input, got, c.want)
+			}
+		})
 	}
 }
 

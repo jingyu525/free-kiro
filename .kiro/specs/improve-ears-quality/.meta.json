@@ -1,0 +1,17 @@
+{
+  "name": "improve-ears-quality",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "把 EARS 验收标准的质量门禁全面提升：新增 10 条 lint checker（etc/and/or 升级 ERROR、单行单 SHALL、最小 AC 数、模板多样性、AC ID、响应可测量、触发词可观测、关键字混用、被动语态），把 no-user-stories 升 ERROR，给历史 spec 提供 baseline 白名单机制。所有 AC 必须带 [AC-N] 编号便于双向追溯。",
+  "created_at": "2026-09-30T04:12:40Z",
+  "updated_at": "2026-09-30T04:37:32Z",
+  "baseline": {
+    "ac_count": 12,
+    "design_sections": 7,
+    "task_count": 18
+  }
+}

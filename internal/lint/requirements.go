@@ -1,6 +1,10 @@
 package lint
 
-import "regexp"
+import (
+	"regexp"
+
+	"github.com/jingyu525/free-kiro/internal/models"
+)
 
 // placeholderRe matches free-kiro's `<TODO:…>` and `<TODO …>` template
 // placeholders. When a placeholder appears inside what would otherwise
@@ -54,13 +58,25 @@ func Requirements(text string) []Issue {
 	}
 	if !UserStoryRe.MatchString(text) {
 		out = append(out, Issue{
-			Severity: SeverityWarning,
+			Severity: SeverityError,
 			Code:     "no-user-stories",
 			Message:  "no User Stories section found",
 			Location: "requirements.md",
 			Hint:     "add at least one 'As a <role> I want <capability> so that <benefit>'",
 		})
 	}
+	// Quality rules (Wave 2 of improve-ears-quality). Orchestrated here so
+	// Requirements() is the single entry point for feature-spec lint. Each
+	// Check is a pure function returning its own []Issue; we concatenate.
+	out = append(out, CheckEtcList(text)...)
+	out = append(out, CheckSingleSHALLLine(text)...)
+	out = append(out, CheckFewAC(text, models.MinAcceptanceCriteria)...)
+	out = append(out, CheckTemplateDiversity(text)...)
+	out = append(out, CheckACMissingID(text)...)
+	out = append(out, CheckMeasurableResponse(text)...)
+	out = append(out, CheckTriggerObservable(text)...)
+	out = append(out, CheckKeywordMisuse(text)...)
+	out = append(out, CheckPassiveResponse(text)...)
 	return out
 }
 

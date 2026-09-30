@@ -208,3 +208,12 @@ func equalStrings(a, b []string) bool {
 	}
 	return true
 }
+
+func TestMinAcceptanceCriteria(t *testing.T) {
+	if MinAcceptanceCriteria < 1 {
+		t.Errorf("MinAcceptanceCriteria must be positive; got %d", MinAcceptanceCriteria)
+	}
+	if MinAcceptanceCriteria != 3 {
+		t.Errorf("MinAcceptanceCriteria default is 3; got %d — call sites may rely on this", MinAcceptanceCriteria)
+	}
+}

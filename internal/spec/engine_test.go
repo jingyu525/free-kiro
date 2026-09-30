@@ -221,6 +221,9 @@ func TestApprove_QuickWaivesNothing(t *testing.T) {
 	}
 	writeFile(t, filepath.Join(dir, ".kiro/specs/demo/requirements.md"), `# demo
 
+## User Stories
+As a user I want X so that Y.
+
 ## Acceptance Criteria
 WHEN foo THE SYSTEM SHALL bar.
 `)
@@ -239,6 +242,9 @@ func TestStartAndComplete(t *testing.T) {
 		t.Fatal(err)
 	}
 	writeFile(t, filepath.Join(dir, ".kiro/specs/demo/requirements.md"), `# demo
+
+## User Stories
+As a user I want X so that Y.
 
 ## Acceptance Criteria
 WHEN foo THE SYSTEM SHALL bar.
@@ -266,6 +272,9 @@ func TestStatus_JSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	writeFile(t, filepath.Join(dir, ".kiro/specs/demo/requirements.md"), `# demo
+
+## User Stories
+As a user I want X so that Y.
 
 ## Acceptance Criteria
 WHEN foo THE SYSTEM SHALL bar.
@@ -307,14 +316,15 @@ func TestSync_RefreshesBaseline(t *testing.T) {
 	if _, err := eng.GenerateAll("demo", false); err != nil {
 		t.Fatal(err)
 	}
-	writeFile(t, filepath.Join(dir, ".kiro/specs/demo/requirements.md"), "# demo\nWHEN foo THE SYSTEM SHALL bar.\n")
+	writeFile(t, filepath.Join(dir, ".kiro/specs/demo/requirements.md"),
+		"# demo\n\n## User Stories\nAs a user I want X so that Y.\n\n## Acceptance Criteria\nWHEN foo THE SYSTEM SHALL bar.\n")
 	writeFile(t, filepath.Join(dir, ".kiro/specs/demo/tasks.md"), "- [ ] #1 a\n")
 	if _, err := eng.Approve("demo"); err != nil {
 		t.Fatal(err)
 	}
 	// Edit AC (legitimate change).
 	writeFile(t, filepath.Join(dir, ".kiro/specs/demo/requirements.md"),
-		"# demo\nWHEN foo THE SYSTEM SHALL bar.\nWHEN baz THE SYSTEM SHALL qux.\n")
+		"# demo\n\n## User Stories\nAs a user I want X so that Y.\n\n## Acceptance Criteria\nWHEN foo THE SYSTEM SHALL bar.\nWHEN baz THE SYSTEM SHALL qux.\n")
 	// Pre-sync drift should be non-empty.
 	pre, _ := eng.Status("demo")
 	if len(pre["drift"].([]DriftSignal)) == 0 {

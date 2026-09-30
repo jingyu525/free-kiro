@@ -86,6 +86,40 @@ var SHALLContinueRe = regexp.MustCompile(`(?i)THE\s+SYSTEM\s+SHALL\s+CONTINUE\s+
 // UserStoryRe matches a User Stories heading or "user stor…" token.
 var UserStoryRe = regexp.MustCompile(`(?i)user\s+stor`)
 
+// Per-template EARS regexes — split out from EARSRe so callers can ask
+// "did this doc actually use WHEN?" or "what trigger phrase follows
+// WHILE?" without re-deriving the alternation. Used by quality.go and
+// (read-only) by spec analyze for per-template coverage stats.
+//
+// Each regex matches the same EARS template as the corresponding branch
+// in EARSRe, anchored at the trigger keyword and requiring the
+// mandatory `THE SYSTEM SHALL` tail. Case-insensitive to mirror EARSRe.
+//
+// The IF-THEN template is exposed as a function (UsesIFTHEN) rather
+// than a regex because RE2 cannot backtrack across two lazy `.+?\s+`
+// segments — the IF prefix and SHALL suffix are matched independently
+// and combined. (The IF branch inside EARSRe itself relies on the
+// alternation falling through to the ubiquitous `THE SYSTEM SHALL`
+// branch.)
+var (
+	WHENRe    = regexp.MustCompile(`(?i)WHEN\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
+	WHILERe   = regexp.MustCompile(`(?i)WHILE\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
+	WHERERe   = regexp.MustCompile(`(?i)WHERE\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
+	UNLESSRe  = regexp.MustCompile(`(?i)UNLESS\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
+
+	ifThenPrefixRe = regexp.MustCompile(`(?i)\bIF\s+.+?\s+THEN\b`)
+	ifThenSuffixRe = regexp.MustCompile(`(?i)\bTHEN\s+(?:.+?\s+)?THE\s+SYSTEM\s+SHALL`)
+)
+
+// UsesIFTHEN reports whether text uses the IF-THEN EARS template. Both
+// halves must match for the doc to count as IF-THEN, because the full
+// `IF ... THEN ... THE SYSTEM SHALL` regex is not expressible as a
+// single RE2 expression (two `.+?\s+` lazy segments cannot backtrack
+// across each other).
+func UsesIFTHEN(text string) bool {
+	return ifThenPrefixRe.MatchString(text) && ifThenSuffixRe.MatchString(text)
+}
+
 // sectionRe splits a markdown doc on `## <heading>` lines.
 var sectionRe = regexp.MustCompile(`^##\s+(.*)$`)
 
