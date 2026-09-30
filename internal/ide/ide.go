@@ -25,6 +25,7 @@
 package ide
 
 import (
+	"bufio"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -135,6 +136,47 @@ const FreeKiroHookPrefix = "free-kiro-"
 // command in the IDE's settings. Lets us identify our entries on
 // subsequent installs.
 const freeKiroMarker = "# free-kiro-managed:"
+
+// freeKiroInstructionMarker is the marker prepended on the first line of every
+// free-kiro-written IDE instruction file (CLAUDE.md, .cursorrules, AGENTS.md,
+// etc.). Lets us identify our files on subsequent installs without clobbering
+// user-managed files at the same path.
+const freeKiroInstructionMarker = "# free-kiro-managed:"
+
+// instructionFiles is the canonical mapping from supported IDE id to the
+// project-root instruction file paths that the IDE's agent loader reads on
+// session start. Adding a new IDE means appending one entry here.
+//
+//	Claude Code — single CLAUDE.md at repo root.
+//	Cursor       — legacy .cursorrules plus modular .cursor/rules/free-kiro.md.
+//	Continue     — legacy .continuerules plus modular .continue/rules/free-kiro.md.
+//	OpenCode     — AGENTS.md at repo root (cross-tool convention).
+//	CodeBuddy    — AGENTS.md at repo root (Tencent domestic convention).
+//
+// Paths intentionally omit leading "./"; `instructionFiles[id]` values are
+// joined to the workspace root by `WriteSingleInstruction`.
+var instructionFiles = map[ID][]string{
+	ClaudeCode: {"CLAUDE.md"},
+	Cursor:     {".cursorrules", ".cursor/rules/free-kiro.md"},
+	Continue:   {".continuerules", ".continue/rules/free-kiro.md"},
+	OpenCode:   {"AGENTS.md"},
+	CodeBuddy:  {"AGENTS.md"},
+}
+
+// InstructionFiles returns a copy of the canonical project-root
+// instruction file paths for the given IDE id. Returns nil for unknown
+// ids; callers should treat that as "this IDE has no per-project
+// instruction files to check". The copy lets callers iterate freely
+// without risking mutation of the package-level table.
+func InstructionFiles(id ID) []string {
+	rels := instructionFiles[id]
+	if len(rels) == 0 {
+		return nil
+	}
+	out := make([]string, len(rels))
+	copy(out, rels)
+	return out
+}
 
 // HookSpec is one event entry in the IDE's settings — what most
 // documentation calls a "hook" (a matcher + a list of commands).
@@ -298,33 +340,20 @@ func marshalSettings(s settingsShape, rawBlob json.RawMessage) ([]byte, error) {
 	return append(out, '\n'), nil
 }
 
-// countFreeKiroHooks reads an IDE's settings.json and counts entries
-// whose first command starts with the free-kiro marker. Returns
-// (true, count, nil) when the file parses successfully.
-func countFreeKiroHooks(path string) (bool, int, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return true, 0, nil
-		}
-		return false, 0, err
-	}
-	var s settingsShape
-	if err := json.Unmarshal(data, &s); err != nil {
-		return false, 0, err
-	}
-	count := 0
-	for _, entries := range s.Hooks {
-		for _, e := range entries {
-			if isFreeKiroEntry(e) {
-				count++
-			}
-		}
-	}
-	return true, count, nil
-}
-
-// WriteAgentsMD creates .kiro/AGENTS.md. Idempotent unless overwrite=true.
+// WriteAgentsMD creates .kiro/AGENTS.md (workspace-level steering doc).
+//
+// Note: prefer WriteAgentInstructions in new code. WriteAgentInstructions
+// writes every canonical project-root file for each selected IDE id
+// (including the AGENTS.md that the OpenCode and CodeBuddy loaders
+// actually read). WriteAgentsMD only covers the .kiro/AGENTS.md path used
+// by the steering store — which is a workspace-level doc, NOT a
+// per-IDE instruction file. The steering-store loader still depends on
+// this path, so the function stays in the API until the steering store
+// migrates off it.
+//
+// Idempotent unless overwrite=true. The first line of the body is
+// guaranteed to start with the free-kiro-managed marker so future
+// readers can identify free-kiro-authored content.
 func WriteAgentsMD(workspaceRoot, lang string, overwrite bool) (string, error) {
 	dest := filepath.Join(workspaceRoot, ".kiro", "AGENTS.md")
 	if !overwrite {
@@ -336,6 +365,10 @@ func WriteAgentsMD(workspaceRoot, lang string, overwrite bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	body = prependMarker(body)
+	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+		return "", ferrors.Wrap("ide.agents", err, "mkdir "+filepath.Dir(dest))
+	}
 	if err := os.WriteFile(dest, []byte(body), 0o644); err != nil {
 		return "", ferrors.Wrap("ide.agents", err, "write "+dest)
 	}
@@ -343,13 +376,31 @@ func WriteAgentsMD(workspaceRoot, lang string, overwrite bool) (string, error) {
 }
 
 func agentsTemplate(lang string) (string, error) {
-	name := "agents_en.md"
+	return instructionTemplate(lang, OpenCode)
+}
+
+// instructionTemplate picks the correct embedded template for the given IDE id
+// and language. OpenCode and CodeBuddy share the AGENTS.md cross-tool
+// convention and so use the original `agents_*.md` template. Claude Code,
+// Cursor, and Continue have their own per-IDE instruction file conventions
+// and use the `instructions_*.md` template addressed at those loaders.
+//
+// Adding a new language: drop `instructions_<lang>.md` or
+// `agents_<lang>.md` next to the existing templates and add a branch on
+// `strings.HasPrefix(strings.ToLower(lang), "<prefix>")`.
+func instructionTemplate(lang string, id ID) (string, error) {
+	prefix := "instructions"
+	switch id {
+	case OpenCode, CodeBuddy:
+		prefix = "agents"
+	}
+	name := prefix + "_en.md"
 	if strings.HasPrefix(strings.ToLower(lang), "zh") {
-		name = "agents_zh.md"
+		name = prefix + "_zh.md"
 	}
 	data, err := templatesFS.ReadFile("templates/" + name)
 	if err != nil {
-		return "", ferrors.Wrap("ide.agents", err, "read template "+name)
+		return "", ferrors.Wrap("ide.template", err, "read template "+name)
 	}
 	return string(data), nil
 }
@@ -357,4 +408,120 @@ func agentsTemplate(lang string) (string, error) {
 // FormatHookReport renders a human-friendly one-liner per installed hook.
 func FormatHookReport(id ID, cfgPath string) string {
 	return fmt.Sprintf("%s: %s", id, cfgPath)
+}
+
+// IsFreeKiroInstruction reports whether the file at path begins with the
+// free-kiro-managed instruction marker. A missing file returns
+// (false, nil); other read errors return (false, err). Used by callers
+// that need to distinguish files free-kiro owns from user-managed files at
+// the same path.
+func IsFreeKiroInstruction(path string) (bool, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, ferrors.Wrap("ide.isInstruction", err, "open "+path)
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	if !scanner.Scan() {
+		if scanErr := scanner.Err(); scanErr != nil {
+			return false, ferrors.Wrap("ide.isInstruction", scanErr, "scan "+path)
+		}
+		return false, nil
+	}
+	return strings.HasPrefix(scanner.Text(), freeKiroInstructionMarker), nil
+}
+
+// WriteSingleInstruction writes every project-root instruction file declared
+// in `instructionFiles[id]` for the given language, creating any missing
+// parent directories. Existing files are skipped unless overwrite is true.
+// Returns the relative paths that were actually written.
+//
+// Caller responsibilities: `root` should be an absolute workspace root (or
+// the cwd); `lang` matches the languages listed in instructionTemplate's
+// godoc.
+func WriteSingleInstruction(root, lang string, overwrite bool, id ID) ([]string, error) {
+	rels, ok := instructionFiles[id]
+	if !ok {
+		return nil, ferrors.New("ide.writeInstruction", "unsupported IDE: "+string(id))
+	}
+	body, err := instructionTemplate(lang, id)
+	if err != nil {
+		return nil, err
+	}
+	body = prependMarker(body)
+	seen := map[string]bool{}
+	var written []string
+	for _, rel := range rels {
+		if seen[rel] {
+			continue
+		}
+		seen[rel] = true
+		abs := filepath.Join(root, rel)
+		if !overwrite {
+			if _, statErr := os.Stat(abs); statErr == nil {
+				continue
+			}
+		}
+		dir := filepath.Dir(abs)
+		if mkdirErr := os.MkdirAll(dir, 0o755); mkdirErr != nil {
+			return written, ferrors.Wrap("ide.writeInstruction", mkdirErr, "mkdir "+dir)
+		}
+		if writeErr := os.WriteFile(abs, []byte(body), 0o644); writeErr != nil {
+			return written, ferrors.Wrap("ide.writeInstruction", writeErr, "write "+abs)
+		}
+		written = append(written, rel)
+	}
+	return written, nil
+}
+
+// WriteAgentInstructions writes the canonical instruction files for every
+// selected IDE id, deduping by absolute path so that the same file targeted
+// by multiple ids (e.g. OpenCode and CodeBuddy both targeting AGENTS.md) is
+// written exactly once. Returns the relative paths that were actually
+// written, in the order they were first attempted.
+//
+// Failures from any single id are returned immediately along with whatever
+// paths had been collected so far; callers can decide whether to abort or
+// continue.
+func WriteAgentInstructions(root, lang string, overwrite bool, ids []ID) ([]string, error) {
+	seen := map[string]bool{}
+	var out []string
+	for _, id := range ids {
+		rels, err := WriteSingleInstruction(root, lang, overwrite, id)
+		if err != nil {
+			return out, err
+		}
+		for _, rel := range rels {
+			abs, absErr := filepath.Abs(filepath.Join(root, rel))
+			if absErr != nil {
+				abs = filepath.Join(root, rel)
+			}
+			if seen[abs] {
+				continue
+			}
+			seen[abs] = true
+			out = append(out, rel)
+		}
+	}
+	return out, nil
+}
+
+// prependMarker ensures the body has the free-kiro-managed marker on its
+// first line. If the template already starts with the marker (new
+// convention), the body is returned unchanged; otherwise the marker is
+// prepended. Used so the legacy `agents_*.md` templates — which predate
+// the marker convention — and the new `instructions_*.md` templates —
+// which already start with the marker — produce identical on-disk files.
+func prependMarker(body string) string {
+	first, rest, hasRest := strings.Cut(body, "\n")
+	if strings.HasPrefix(first, freeKiroInstructionMarker) {
+		return body
+	}
+	if !hasRest {
+		return freeKiroInstructionMarker + "\n"
+	}
+	return freeKiroInstructionMarker + "\n" + first + "\n" + rest
 }

@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/jingyu525/free-kiro/internal/ide"
+	"github.com/jingyu525/free-kiro/internal/workspace"
 )
 
 // checkPath reports whether ~/.local/bin is on PATH.
@@ -71,6 +74,43 @@ func countFreeKiroHooks(path string) (bool, int, error) {
 		}
 	}
 	return true, count, nil
+}
+
+// checkIDEInstructions verifies that every project-root instruction file
+// free-kiro should have written for the given IDE id actually exists and
+// carries the free-kiro-managed marker. Returns nil when every file is
+// present and marked; otherwise returns a single doctorIssue describing
+// the first failure (read error takes priority over missing/unmarked).
+//
+// `cwd` is the doctor's cwd; the actual workspace root is resolved via
+// `workspace.Find` so the check matches what `init --ide` would write.
+func checkIDEInstructions(cwd string, id ide.ID) *doctorIssue {
+	rels := ide.InstructionFiles(id)
+	if len(rels) == 0 {
+		return nil
+	}
+	root := workspace.Find(cwd).Root()
+	for _, rel := range rels {
+		abs := filepath.Join(root, rel)
+		isFK, readErr := ide.IsFreeKiroInstruction(abs)
+		if readErr != nil {
+			return &doctorIssue{
+				Severity: "warn",
+				Title:    string(id) + " instruction file unreadable: " + rel,
+				Detail:   readErr.Error(),
+				Fix:      "re-run `free-kiro init --ide " + string(id) + " --overwrite-instructions`",
+			}
+		}
+		if !isFK {
+			return &doctorIssue{
+				Severity: "info",
+				Title:    string(id) + " instruction file not yet written: " + rel,
+				Detail:   abs,
+				Fix:      "run `free-kiro init --ide " + string(id) + "`",
+			}
+		}
+	}
+	return nil
 }
 
 // fetchLatestVersion queries the GitHub API for the latest release tag

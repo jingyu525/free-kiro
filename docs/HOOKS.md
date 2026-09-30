@@ -233,6 +233,64 @@ free-kiro hook add --id debug --event file.save --action-type shell --action "jq
 free-kiro hook run file.save --file test.go
 ```
 
+## Agent instructions per IDE
+
+`free-kiro init --ide <id>` 在 hook 之外还会写出一组**项目根指令文件**——这些是
+IDE 的 agent loader 在每次会话开始时主动读取的"工作约定"文件。Hook 拦截的是
+**能不能写**，指令文件承载的是**该不该写**。
+
+> 为什么 hooks 不够？Hook 只在事件触发时跑，无法替代"会话开始时一次性注入
+> 上下文"的机制。Claude Code / Cursor / Continue / OpenCode 各自有自己的
+> 指令文件协议约定，互不读取 AGENTS.md / CLAUDE.md / .cursorrules 之外的
+> 文件。free-kiro 写出每个 IDE 真正会读的位置。
+
+### 每只写哪里（v0.8.0+）
+
+| IDE | 项目根写入文件 | agent loader 读取位置 |
+|---|---|---|
+| Claude Code | `CLAUDE.md` | `CLAUDE.md`（项目根 + `~/.claude/CLAUDE.md`） |
+| Cursor | `.cursorrules` + `.cursor/rules/free-kiro.md` | `.cursorrules`（legacy）或 `.cursor/rules/*.md`（模块化规则） |
+| Continue | `.continuerules` + `.continue/rules/free-kiro.md` | `.continuerules`（legacy）或 `.continue/rules/*.md`（YAML frontmatter 触发） |
+| OpenCode | `AGENTS.md` | `./AGENTS.md` → `./CLAUDE.md` → `~/.config/opencode/AGENTS.md` |
+| CodeBuddy | `AGENTS.md` | 项目根 AGENTS.md（国内惯例；具体 loader 待官方文档核实） |
+
+`.kiro/AGENTS.md` 仍然会被 `init` 写入，但仅供**workspace 级 steering store**
+加载（`internal/steering/store.go`），与上面 IDE instruction 文件是两个独立概念。
+
+### Marker 与幂等性
+
+所有 free-kiro 写的指令文件首行都是 `# free-kiro-managed:`。这个标记让
+`free-kiro init` 在重跑时能识别自己写的文件（**只跳过自己写的、不会误伤用户
+手写的同名文件**）。同时 doctor 用这个标记验证"指令文件是否到位"：
+
+```bash
+free-kiro doctor
+# ...
+✓ claude-code instruction files
+    CLAUDE.md
+✓ opencode instruction files
+    AGENTS.md
+```
+
+### 覆盖现有文件
+
+默认行为是**跳过已存在**（无论是否 free-kiro 写的）。要强制覆盖，传
+`--overwrite-instructions`：
+
+```bash
+free-kiro init --ide claude-code --overwrite-instructions
+```
+
+`--overwrite-agents` 仍接受，但已废弃，触发一次会 stderr 警告并自动 forward
+到 `--overwrite-instructions`（下个 minor 移除）。
+
+### 添加新 IDE
+
+在 `internal/ide/ide.go` 的 `instructionFiles` map 加一行；其余路径
+（doctor 检查 + `init` 自动接入）自动跟随。模板按需加
+`internal/ide/templates/instructions_<lang>.md`（非 OpenCode/CodeBuddy）或
+`agents_<lang>.md`（OpenCode/CodeBuddy 复用）。
+
 ## 边界与设计选择
 
 - free-kiro **不主动触发 hook**——只在被 `hook run` 调用时执行。这是"被动规划层"的定位。

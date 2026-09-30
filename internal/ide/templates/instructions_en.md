@@ -1,0 +1,65 @@
+# free-kiro-managed: This file is auto-written by free-kiro. Manual edits will be overwritten by the next `free-kiro init --ide` (unless --overwrite-instructions=false is passed).
+
+# CLAUDE.md / .cursorrules / .continuerules — instructions for AI coding agents in this workspace
+
+This project uses **free-kiro** to manage a spec-driven workflow. free-kiro is a
+single-binary CLI that gates code edits on written spec documents. **Spec first,
+code second.**
+
+## What free-kiro does here
+
+- All specs live under `.kiro/specs/<name>/` as `requirements.md`,
+  `design.md`, `tasks.md` (or `bugfix.md`).
+- Spec phases: `draft → requirements → design → tasks → approved →
+  implementing → done`.
+- Phase transitions are gated by `free-kiro lint` (EARS + structural rules).
+- Tasks in `tasks.md` declare dependencies via `[deps: #N1,#N2]`;
+  `free-kiro task list <name>` shows the parallel wave schedule.
+
+## Before every tool call (except Read)
+
+    SPEC=$(cat .kiro/.current 2>/dev/null) && free-kiro spec next "$SPEC"
+
+This is the next-action suggestion. If lint fails, fix the spec before
+continuing. The SessionStart hook runs the same command automatically.
+
+If `.kiro/.current` is empty (no active spec), run `free-kiro spec new <name>`
+first; the new spec is automatically marked active.
+
+## Coding standards (SessionStart must Read first)
+
+**Before writing any Go code, Read [`docs/CODING_STYLE.md`](../../docs/CODING_STYLE.md).**
+
+The 8 chapters cover naming, error handling, concurrency, interfaces, testing,
+comments, dependencies, and AI agent collaboration. Chapter 8 ("AI agent
+collaboration") is a hard constraint; violating any rule means PR rejection.
+
+Hard constraints summary:
+
+1. Zero `// TODO` / `// FIXME` / `// XXX`. Unfinished features **should not
+   have code written**; first go back to spec and complete
+   requirements/design.
+2. Zero swallowed errors (`_ = doX()` / `log.Print(err)` then continue).
+3. Zero hardcoded magic numbers (ports, timeouts, thresholds must be `const`
+   or live in `internal/config`).
+4. Changes > 50 lines must start with `free-kiro spec new` and wait until all
+   three spec documents pass lint.
+
+## Before every Edit / Write
+
+    free-kiro lint || exit 2
+
+The IDE's PreToolUse hook runs this automatically. If you see a lint ERROR,
+edit the spec documents (not the code) until `free-kiro lint` is fully green.
+
+## When implementation finishes
+
+    free-kiro spec complete <name>
+
+## Help
+
+- `free-kiro --help` — command tree
+- `free-kiro doctor` — diagnose installation + hooks
+- `docs/EARS.md` — EARS pattern reference
+- `docs/HOOKS.md` — hook configuration reference
+- `docs/STEERING.md` — project context injection rules

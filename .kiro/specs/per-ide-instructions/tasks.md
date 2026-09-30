@@ -1,0 +1,9 @@
+- [x] #1 Add `instructionFiles map[ID][]string` constant + `freeKiroInstructionMarker` in internal/ide/ide.go
+- [x] #2 Add `instructions_zh.md` and `instructions_en.md` templates under internal/ide/templates/ + `agentTemplate(lang, id)` selector
+- [x] #3 Implement `WriteAgentInstructions` + `WriteSingleInstruction` with intra-/inter-id dedupe and `IsFreeKiroInstruction` reader [deps: #1,#2]
+- [x] #4 Wire new writer into `runIdeInit`; add `--overwrite-instructions` flag; keep `--overwrite-agents` as deprecated forwarder with stderr warning [deps: #3]
+- [x] #5 Add `DoctorCheckInstructions` and register in `internal/cli/doctor_checks.go` per-IDE file presence + marker check [deps: #3]
+- [x] #6 Update `WriteAgentsMD` godoc with deprecation pointer + prepend marker on body [deps: #3]
+- [x] #7 Add `internal/ide/ide_instructions_test.go` table-driven coverage (5 IDEs × new / skip / overwrite / cross-IDE dedupe / --ide none) [deps: #3,#4,#5,#6]
+- [x] #8 Add docs/HOOKS.md section "Agent instructions per IDE" listing the canonical mapping and the marker [deps: #3,#5]
+- [x] #9 Run `gofmt -l`, `go vet ./...`, `golangci-lint run`, `go test -race ./...`, `free-kiro lint per-ide-instructions` and fix until green [deps: #7,#8]

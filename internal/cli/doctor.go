@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -200,7 +201,32 @@ func runDoctorChecks(w io.Writer, verbose bool) doctorReport {
 		}
 	}
 
-	// 6. Latest release (best-effort, 5s timeout).
+	// 6. Per-IDE project-root instruction files (CLAUDE.md, .cursorrules,
+	// AGENTS.md, …). Only runs when there is a .kiro/ workspace in cwd,
+	// since these files live at the workspace root and are otherwise
+	// meaningless. For each INSTALLED IDE we check every canonical file
+	// listed in `ide.InstructionFiles(id)`; missing files surface as
+	// info (the user may simply not have re-run init yet), read errors
+	// surface as warn.
+	doctorCwd, doctorCwdErr := getwd()
+	if doctorCwdErr == nil && workspace.Find(doctorCwd).Exists() {
+		for _, d := range ides {
+			if !d.DirExists {
+				continue
+			}
+			if issue := checkIDEInstructions(doctorCwd, d.ID); issue != nil {
+				add(*issue)
+			} else {
+				add(doctorIssue{
+					Severity: "ok",
+					Title:    string(d.ID) + " instruction files",
+					Detail:   strings.Join(ide.InstructionFiles(d.ID), ", "),
+				})
+			}
+		}
+	}
+
+	// 7. Latest release (best-effort, 5s timeout).
 	if latest := fetchLatestVersion(); latest != "" {
 		add(doctorIssue{
 			Severity: "ok",

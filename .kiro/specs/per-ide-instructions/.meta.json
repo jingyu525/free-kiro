@@ -1,0 +1,17 @@
+{
+  "name": "per-ide-instructions",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "A档方案：把 free-kiro init --ide 写入的 .kiro/AGENTS.md 升级为 per-IDE 真实加载路径。当前 AGENTS.md 是 Claude Code / Cursor / Continue 的盲区——Claude Code 只读 CLAUDE.md，Cursor 读 .cursorrules/.cursor/rules/*.mdc，Continue 读 .continue/rules/*.md 或 .continuerules，OpenCode 读 AGENTS.md 或 CLAUDE.md，CodeBuddy 待核实但按国内惯例读 AGENTS.md。\n\n要求：\n1. internal/ide/ide.go 新增 InstructionFile map：ClaudeCode→CLAUDE.md；Cursor→.cursorrules + .cursor/rules/free-kiro.md（YAML frontmatter）；Continue→.continuerules + .continue/rules/free-kiro.md（YAML frontmatter）；OpenCode→AGENTS.md；CodeBuddy→AGENTS.md\n2. WriteAgentsMD 改名为 WriteAgentInstructions(wsRoot, lang, overwrite, ids []ID)，按 id 列表写多份，OpenCode+CodeBuddy 共享 AGENTS.md 去重\n3. 保留 .kiro/AGENTS.md 写入（steering store 依赖），主战场移到 IDE 真正加载位置\n4. internal/ide/templates/ 增加 instructions_{zh,en}.md（CLAUDE.md/.cursorrules 用），agents_{zh,en}.md 保留（OpenCode/CodeBuddy 用），内容基本一致\n5. internal/cli/init.go：--ide 同时写指令文件+hook；--overwrite-agents 改 --overwrite-instructions 覆盖所有；旧 flag deprecation warning\n6. internal/cli/doctor_checks.go：升级 IDE 指令文件检查（每个目标 IDE 的指令文件是否存在 + 含 # free-kiro-managed 标记）\n7. 单测覆盖：每 IDE 写文件成功、幂等跳过、覆盖、目录自动创建、AGENTS.md 去重\n8. docs/HOOKS.md 加一节 Agent instructions per IDE\n9. backward compat：保留 WriteAgentsMD 作为 deprecated wrapper 跑一版，确保老调用方不破\n\n非目标：不重写 SKILL.md bundle；不改 free-kiro hook 协议；不引入第三方依赖。",
+  "created_at": "2026-09-30T03:29:57Z",
+  "updated_at": "2026-09-30T03:51:59Z",
+  "baseline": {
+    "ac_count": 11,
+    "design_sections": 6,
+    "task_count": 9
+  }
+}
