@@ -94,6 +94,11 @@ func normaliseHook(raw rawHook) (*models.Hook, error) {
 		enabled = !strings.EqualFold(s, "false")
 	}
 
+	disabled := false
+	if v, ok := raw["disabled"].(bool); ok {
+		disabled = v
+	}
+
 	var timeout *int
 	switch v := raw["timeout"].(type) {
 	case int:
@@ -117,6 +122,7 @@ func normaliseHook(raw rawHook) (*models.Hook, error) {
 		IsRegex:     isRegex,
 		Timeout:     timeout,
 		Enabled:     enabled,
+		Disabled:    disabled,
 	}, nil
 }
 
@@ -147,6 +153,9 @@ func encodeEnvelope(h *models.Hook) ([]byte, error) {
 	}
 	if h.Timeout != nil {
 		entry["timeout"] = *h.Timeout
+	}
+	if h.Disabled {
+		entry["disabled"] = true
 	}
 	env := envelopeFile{Version: "v1", Hooks: []rawHook{entry}}
 	return json.MarshalIndent(env, "", "  ")

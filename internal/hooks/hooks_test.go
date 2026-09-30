@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -321,5 +322,53 @@ func TestGlobMatch(t *testing.T) {
 		if got := globMatch(c.pattern, c.path); got != c.want {
 			t.Errorf("globMatch(%q, %q) = %v, want %v", c.pattern, c.path, got, c.want)
 		}
+	}
+}
+
+// TestDispatch_DisabledShortcut covers AC-4: a hook with Disabled=true
+// must produce an OK=false Result without invoking any shell command.
+// The pre-fix interpretation overloaded Timeout=0 with the same
+// meaning; the new Hook.Disabled field decouples them.
+func TestDispatch_DisabledShortcut(t *testing.T) {
+	reg, root := setup(t)
+	// Sentinel: if the shell runs, it creates the marker file. We
+	// assert the marker does NOT exist after Dispatch.
+	marker := filepath.Join(root, "should-not-exist.txt")
+	writeHook(t, filepath.Join(root, ".kiro/hooks/disabled.json"),
+		fmt.Sprintf(`{"id":"disabled","event":"manual","action_type":"shell","action":"touch %s","disabled":true}`, marker))
+
+	results, err := reg.Dispatch(context.Background(), "manual", "", nil)
+	if err != nil {
+		t.Fatalf("Dispatch: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result; got %d", len(results))
+	}
+	if results[0].OK {
+		t.Errorf("disabled hook should be OK=false; got %+v", results[0])
+	}
+	if !strings.Contains(results[0].Error, "disabled") {
+		t.Errorf("expected 'disabled' in Error; got %q", results[0].Error)
+	}
+	if _, statErr := os.Stat(marker); statErr == nil {
+		t.Errorf("disabled hook should not have invoked its shell action; marker file exists")
+	}
+}
+
+// TestNormaliseHook_DisabledField covers AC-4 round-trip: a rawHook
+// with `"disabled": true` parses into Hook.Disabled == true.
+func TestNormaliseHook_DisabledField(t *testing.T) {
+	raw := rawHook{
+		"id":       "x",
+		"event":    "manual",
+		"action":   map[string]any{"type": "shell", "command": "echo hi"},
+		"disabled": true,
+	}
+	h, err := normaliseHook(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !h.Disabled {
+		t.Error("expected Hook.Disabled == true")
 	}
 }

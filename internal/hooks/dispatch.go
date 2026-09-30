@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	ferrors "github.com/jingyu525/free-kiro/internal/errors"
-
 	"github.com/jingyu525/free-kiro/internal/models"
 )
 
@@ -59,19 +57,17 @@ func (r *Registry) Dispatch(ctx context.Context, event string, file string, agen
 
 func runShellAction(ctx context.Context, h *models.Hook, stdin, cwd string) Result {
 	res := Result{ID: h.ID, Event: h.Event}
-	timeout := 30 * time.Second
-	disabled := false
-	if h.Timeout != nil {
-		if *h.Timeout == 0 {
-			disabled = true
-		} else {
-			timeout = time.Duration(*h.Timeout) * time.Second
-		}
-	}
-	if disabled {
+	if h.Disabled {
+		// Explicit opt-out (was overloaded on Timeout=0 before
+		// housekeeping-cleanup). Distinct from a Timeout that simply
+		// wasn't set, so authors get one knob per intent.
 		res.OK = false
-		res.Error = "hook disabled (timeout=0)"
+		res.Error = "hook disabled"
 		return res
+	}
+	timeout := 30 * time.Second
+	if h.Timeout != nil {
+		timeout = time.Duration(*h.Timeout) * time.Second
 	}
 	tctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -113,6 +109,3 @@ func runAgentAction(fn AgentFn, h *models.Hook) Result {
 	res.Output = out
 	return res
 }
-
-// keep ferrors import referenced (build-only; future expansions will use it).
-var _ = ferrors.New
