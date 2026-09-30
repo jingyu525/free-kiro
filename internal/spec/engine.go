@@ -152,7 +152,7 @@ func (e *Engine) Approve(specName string) (*models.SpecMeta, error) {
 	}
 	// Gate: refuse to approve a spec with structural defects.
 	if gate := lint.LintGate(e.ws.SpecDir(specName)); len(gate) > 0 {
-		return nil, &ferrors.LintGateError{ferrors.Wrap(
+		return nil, &ferrors.LintGateError{KiroError: ferrors.Wrap(
 			"spec.approve",
 			nil,
 			"lint gate blocked approval: "+formatGate(gate),
