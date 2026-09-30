@@ -18,16 +18,6 @@ func atoiLocal(s string) int {
 	return n
 }
 
-// portOnly strips the host part of an "host:port" address, returning
-// just the port number. Used to render the dashboard URL.
-func portOnly(addr string) string {
-	idx := strings.LastIndex(addr, ":")
-	if idx < 0 {
-		return addr
-	}
-	return addr[idx+1:]
-}
-
 // detectBrowserAutoOpen reports whether the platform / env suggests
 // auto-opening a browser on serve. Off by default — the user must
 // pass --open to trigger.

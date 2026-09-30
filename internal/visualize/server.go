@@ -9,9 +9,11 @@
 //
 // All HTML/JS/CSS is embedded via embed.FS so the binary stays
 // self-contained. The server uses only stdlib (net/http) — no
-// third-party deps. Polling is the data refresh mechanism: clients
-// re-fetch /api/summary every 5 seconds. A future enhancement can
-// add fsnotify + SSE for real-time updates.
+// third-party deps. Data refresh uses two complementary mechanisms:
+// the polling fallback (`/api/summary` re-fetched every 5 seconds by
+// the SPA) and the SSE broadcast endpoint (`/api/events`, implemented
+// in server_sse.go) driven by a 2-second file mtime watcher. fsnotify
+// is a future enhancement for sub-second updates.
 //
 // File layout (Wave 5 refactor):
 //
@@ -24,11 +26,16 @@
 package visualize
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"net"
 	"net/http"
 	"os"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/jingyu525/free-kiro/internal/spec"
 )
@@ -40,6 +47,12 @@ type osDirEntry = os.DirEntry
 //go:embed static/*
 var staticFS embed.FS
 
+// shutdownTimeout caps how long Shutdown() waits for the watcher and
+// active SSE connections to drain. Picked so CI / single-tab shutdown
+// completes quickly while multi-tab browser clients have a chance to
+// receive their final refresh.
+const shutdownTimeout = 5 * time.Second
+
 // Server serves the dashboard over HTTP.
 type Server struct {
 	addr string
@@ -47,7 +60,25 @@ type Server struct {
 	eng  *spec.Engine
 	srv  *http.Server
 	stop chan struct{} // signal watcher goroutine to exit
-	done chan struct{} // closed when watcher has exited
+
+	// SSE fan-out state. previously a package-level global with no
+	// locking — concurrent browser clients triggered -race findings
+	// (S1 fix). Moving to per-Server fields keeps multi-tenant
+	// instances independent and serialises access under notifierMu.
+	notifierMu     sync.Mutex
+	subscribers    []chan struct{}
+
+	// watcherOnce ensures watchChanges() is started exactly once per
+	// Server lifetime (S8 fix). watcherRunning is closed by the
+	// watcher when it exits so Shutdown() can wait for it.
+	watcherOnce    sync.Once
+	watcherRunning chan struct{}
+
+	// watcherStartCount is incremented each time watchChanges actually
+	// runs (i.e. once on the first handleEvents call, never again).
+	// Tests read this to assert the S8 dedup invariant without poking
+	// at unexported runtime state.
+	watcherStartCount atomic.Int32
 }
 
 // WorkspacePaths is the subset of workspace.Workspace the Server needs.
@@ -66,11 +97,11 @@ type WorkspacePaths interface {
 // The SSE endpoint + file watcher are added in handleRoutes.
 func NewServer(addr string, ws WorkspacePaths, eng *spec.Engine) *Server {
 	s := &Server{
-		addr: addr,
-		ws:   ws,
-		eng:  eng,
-		stop: make(chan struct{}),
-		done: make(chan struct{}),
+		addr:           addr,
+		ws:             ws,
+		eng:            eng,
+		stop:           make(chan struct{}),
+		watcherRunning: make(chan struct{}),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handleIndex)
@@ -96,6 +127,14 @@ func (s *Server) ServeWith(ln net.Listener) error { return s.srv.Serve(ln) }
 
 // Shutdown gracefully stops the HTTP server and the file-watcher
 // goroutine spawned by handleEvents.
+//
+// Implementation note (V1 fix): previous version blocked forever on
+// `<-s.done` when watchChanges had never been started (no SSE client
+// ever connected). We now wait for watcherRunning with a deadline so
+// Shutdown() always returns within shutdownTimeout even when the
+// watcher was never spawned. We also use http.Server.Shutdown(ctx)
+// instead of Close() so active SSE connections receive a clean
+// close instead of being dropped mid-event.
 func (s *Server) Shutdown() error {
 	select {
 	case <-s.stop:
@@ -103,11 +142,17 @@ func (s *Server) Shutdown() error {
 	default:
 		close(s.stop)
 	}
-	// Wait briefly for the watcher to exit before tearing the HTTP
-	// server down. Best-effort: 200 ms is enough on CI; production
-	// shutdown is bounded by the OS anyway.
-	<-s.done
-	return s.srv.Close()
+	// Drain the watcher with a bounded wait. watcherRunning is closed
+	// by the watcher's defer when it exits, so a never-started watcher
+	// would hang here forever; the time.After fallback guarantees
+	// Shutdown() returns within shutdownTimeout.
+	select {
+	case <-s.watcherRunning:
+	case <-time.After(shutdownTimeout):
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+	return s.srv.Shutdown(ctx)
 }
 
 // Addr returns the bound TCP address (host:port) of the dashboard
@@ -115,10 +160,19 @@ func (s *Server) Shutdown() error {
 func (s *Server) Addr() string { return s.srv.Addr }
 
 // URL returns the dashboard's full HTTP URL, suitable for opening in a
-// browser (e.g. `open http://127.0.0.1:PORT`).
+// browser (e.g. `open http://127.0.0.1:8080`). Handles IPv6 literals
+// (e.g. `[::1]:8080`) by wrapping the host in brackets; falls back to
+// returning the raw `Addr` if it isn't a valid `host:port` pair.
 func (s *Server) URL() string {
-	addr := s.srv.Addr
-	return "http://" + portOnly(addr)
+	host, port, err := net.SplitHostPort(s.srv.Addr)
+	if err != nil {
+		return "http://" + s.srv.Addr
+	}
+	if strings.Contains(host, ":") {
+		// IPv6 literal — must be wrapped in [ ] per RFC 3986.
+		return "http://[" + host + "]:" + port
+	}
+	return "http://" + host + ":" + port
 }
 
 // loadWorkspace re-reads the workspace paths. Used by handlers that
