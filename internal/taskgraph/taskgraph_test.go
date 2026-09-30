@@ -138,25 +138,6 @@ func TestSummary(t *testing.T) {
 	}
 }
 
-func TestAtoi(t *testing.T) {
-	cases := []struct {
-		in   string
-		want int
-	}{
-		{"0", 0},
-		{"1", 1},
-		{"42", 42},
-		{"", 0},
-		{"abc", 0},
-		{"12x", 12}, // stops at non-digit
-	}
-	for _, c := range cases {
-		if got := atoi(c.in); got != c.want {
-			t.Errorf("atoi(%q) = %d, want %d", c.in, got, c.want)
-		}
-	}
-}
-
 func TestParseDepIDs(t *testing.T) {
 	got := parseDepIDs("#1,#2, #3")
 	if len(got) != 3 || got[0] != 1 || got[1] != 2 || got[2] != 3 {

@@ -14,8 +14,10 @@ package taskgraph
 
 import (
 	"regexp"
+	"strconv"
 
 	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/text"
 )
 
 // lineRe matches `- [ ] #1 Title [deps: #2,#3]` and friends.
@@ -24,16 +26,19 @@ var lineRe = regexp.MustCompile(`^\s*-\s*\[( |x|X)\]\s*#(\d+)\s+(.*?)\s*(?:\[dep
 // ParseTasks extracts tasks from a tasks.md document. Lines that don't
 // match the canonical format are silently skipped (they're probably
 // free-form prose — headers, notes, etc.).
-func ParseTasks(text string) []models.Task {
+func ParseTasks(doc string) []models.Task {
 	var out []models.Task
-	for _, line := range splitLines(text) {
+	for _, line := range text.RangeLines(doc) {
 		m := lineRe.FindStringSubmatch(line)
 		if m == nil {
 			continue
 		}
 		mark, idStr, title, depsStr := m[1], m[2], m[3], m[4]
 		deps := parseDepIDs(depsStr)
-		id := atoi(idStr)
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			continue // lineRe guarantees digits, but be defensive
+		}
 		out = append(out, models.Task{
 			ID:    id,
 			Title: title,
@@ -52,46 +57,13 @@ func parseDepIDs(s string) []int {
 	}
 	var out []int
 	for _, m := range depIDRe.FindAllStringSubmatch(s, -1) {
-		out = append(out, atoi(m[1]))
+		id, err := strconv.Atoi(m[1])
+		if err != nil {
+			continue
+		}
+		out = append(out, id)
 	}
 	return out
 }
 
 var depIDRe = regexp.MustCompile(`#(\d+)`)
-
-// atoi parses a small non-negative int. Stops at the first non-digit and
-// returns what was accumulated; returns 0 only when the string has no
-// leading digits.
-func atoi(s string) int {
-	n := 0
-	saw := false
-	for _, r := range s {
-		if r < '0' || r > '9' {
-			if saw {
-				break
-			}
-			continue
-		}
-		n = n*10 + int(r-'0')
-		saw = true
-	}
-	return n
-}
-
-func splitLines(text string) []string {
-	if text == "" {
-		return nil
-	}
-	var out []string
-	start := 0
-	for i := 0; i < len(text); i++ {
-		if text[i] == '\n' {
-			out = append(out, text[start:i])
-			start = i + 1
-		}
-	}
-	if start < len(text) {
-		out = append(out, text[start:])
-	}
-	return out
-}
