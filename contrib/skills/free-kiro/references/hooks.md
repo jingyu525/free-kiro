@@ -39,6 +39,37 @@ free-kiro 有两层 hook：
 - `PreToolUse` 拦截 Edit/Write，写入前跑 `free-kiro lint`；非零退出（lint ERROR）→ 拦截
 - `SessionStart` 在会话开始时引导到当前 spec（`.kiro/.current` 指向的）
 
+## 事件命名（两套命名同时接受）
+
+free-kiro 写出的 hook 同时兼容自家 flat shape 与 Kiro 官方 v1 信封，
+可直接被官方 Kiro IDE 加载。
+
+### free-kiro 内部命名
+
+| 事件 | 触发时机 |
+|---|---|
+| `file.save` | 文件被保存 |
+| `file.create` | 文件被创建 |
+| `file.delete` | 文件被删除 |
+| `prompt.submit` | 用户提交 prompt |
+| `task.run` | task 节点跑完 |
+| `manual` | 手动 `free-kiro hook run` 触发 |
+
+### Kiro 官方 v1 信封
+
+| 事件 | 触发时机 |
+|---|---|
+| `SessionStart` | 会话开始 |
+| `UserPromptSubmit` | 用户提交 prompt |
+| `PreToolUse` | 工具调用前 |
+| `PostToolUse` | 工具调用后 |
+| `PostFileSave` | 文件保存后 |
+| `PostFileCreate` | 文件创建后 |
+| `Stop` | 会话停止 |
+
+定位：free-kiro 是被动的规划层——它从不主动触发 hook，只在被调用
+`hook run <event>` 时执行匹配的动作。
+
 ## 项目 hook（`.kiro/hooks/*.json`）
 
 ```bash
@@ -59,9 +90,9 @@ free-kiro hook run spec.complete --file .kiro/specs/foo/requirements.md
 - `shell`：`sh -c <action>`，环境变量 `FREE_KIRO_EVENT` / `FREE_KIRO_FILE` / `FREE_KIRO_CWD` 已注入
 - `agent`（占位）：未来版本支持，agent_fn 暂未实现
 
-### Event 名约定
+### 自由命名约定
 
-- IDE 标准事件：`PreToolUse` / `PostToolUse` / `SessionStart` / `Stop` / `UserPromptSubmit`
+- IDE 标准事件：见上方"Kiro 官方 v1 信封"段（7 个）
 - free-kiro 内部事件：`spec.complete` / `spec.approved` / `lint.error`（命名空间 `spec.` 与 `lint.`）
 
 ## 写多 hook / 改 hook

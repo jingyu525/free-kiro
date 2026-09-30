@@ -1,0 +1,17 @@
+{
+  "name": "update-contrib-skill-bundle",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "把 contrib/skills/free-kiro/ SKILL.md bundle 与当前 free-kiro binary 重新对齐：补齐新命令（upgrade / demo / spec quick/sync/show/list/analyze/status/--json 等）、新 flag（spec new --workflow/--type、watch --command、serve --bind/--open 等）、扩展 troubleshooting、把 skill.json 的 sha256 重新生成。",
+  "created_at": "2026-09-30T13:38:52Z",
+  "updated_at": "2026-09-30T13:45:30Z",
+  "baseline": {
+    "ac_count": 12,
+    "design_sections": 6,
+    "task_count": 13
+  }
+}

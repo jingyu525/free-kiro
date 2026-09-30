@@ -1,11 +1,19 @@
-# free-kiro Go 编码规范
+# Go 编码规范（通用）
 
-> 适用对象：free-kiro 项目（`github.com/jingyu525/free-kiro`）及其衍生 Go 代码。
+> 适用对象：任何遵循 Go 社区通用风格基线的 Go 项目；本仓库
+> （`github.com/jingyu525/free-kiro`）作为首选落地参照。
 > 规范与 `golangci-lint` 配置（`.golangci.yml`）一一对应：可机器检查的规则由
 > linter 强制，其余规则由人工 review 保证。
 >
+> **范围声明**：本文档**仅承载 Go 社区通用编码规范**（命名、错误处理、并发、
+> 接口、测试通用部分、注释与文档通用部分、依赖管理通用部分），共 7 章。
+> 本仓库的**项目特定策略**（覆盖率硬阈值、TODO owner、协议合规、内部依赖路径、
+> commit message 中文、代码规模上限、PR 范围约束）见
+> [`POLICY.md`](./POLICY.md)；**AI agent 协作硬性要求**见
+> [`AGENT_RULES.md`](./AGENT_RULES.md)。
+>
 > **配套文档**：CI 门禁见 `.github/workflows/ci.yml` 的 `lint-go` job；
-> 入口索引见 `CONTRIBUTING.md`；AI agent 协作约定见本文第 8 章。
+> 入口索引见 `CONTRIBUTING.md`。
 
 ## 目录
 
@@ -16,7 +24,6 @@
 5. [测试](#5-测试)
 6. [注释与文档](#6-注释与文档)
 7. [依赖管理](#7-依赖管理)
-8. [AI agent 协作](#8-ai-agent-协作)
 
 每个章节的体例：
 
@@ -482,15 +489,12 @@ type ILintEngine interface { ... }   // Go 不推荐匈牙利命名
 
 ### 5.1 原则
 
-- **测试是代码的第一公民**。与产品代码同包、同 review 标准、同覆盖率门槛。
+- **测试是代码的第一公民**。与产品代码同包、同 review 标准。
 - **表驱动测试**（table-driven）是默认形态。同一逻辑多场景 → 1 个
   `TestXxx(t *testing.T)` + 多 `cases := []struct{...}{}` 子用例。
 - **`testify/assert` 与 `testify/require`**：默认断言用 `assert`（失败
   继续），初始化/前置条件用 `require`（失败立即停止）。
-- **不写无断言测试**。每条 case 必须至少有 1 个 `assert/require`，否则
-  CI 必报"测试无断言"。
-- **覆盖率门槛**：`go test -cover` 全包 ≥ 70%，新增/修改行 ≥ 80%。
-  PR 必须 `coverage.out` 上传并在 review 中说明未覆盖路径。
+- **不写无断言测试**。每条 case 必须至少有 1 个 `assert/require`。
 - **`-race` 必跑**。任何启用 goroutine 的代码都必须 `go test -race` 验证。
 
 ### 5.2 ✅ 推荐 / ❌ 反例
@@ -594,8 +598,7 @@ func TestCounter_ConcurrentInc(t *testing.T) {
 ### 5.4 何时可以例外
 
 - E2E 测试（如启动 CLI 子进程跑 smoke）允许用 `exec.Command` + `os.Stderr.Pipe`，
-  不需要 `-race`。
-- Benchmark 与 fuzz 测试独立 `*.bench_test.go` / `*.fuzz_test.go`，不计入覆盖率。
+  不强制 `-race`。
 
 ---
 
@@ -609,7 +612,6 @@ func TestCounter_ConcurrentInc(t *testing.T) {
   都要有完整句子注释，以符号名开头（`// Foo does ...`）。
 - **包必须有 package doc**。在 `doc.go` 或包内任一文件顶部写
   `// Package foo ...`。
-- **TODO 注释带 owner**：`// TODO(jingyu): ...` 而不是裸 `// TODO`。
 - **不写废话注释**。`i++ // i 自增` ❌；保留有信息量的注释。
 
 ### 6.2 ✅ 推荐 / ❌ 反例
@@ -637,17 +639,6 @@ var ErrSpecNotFound = errors.New("spec not found")
 var ErrSpecNotFound = errors.New("spec not found") // 定义一个错误变量
 ```
 
-```go
-// ✅ 推荐：TODO 带 owner + 上下文
-// TODO(jingyu): 待 spec 重构后，把这个 fallback 逻辑迁到 internal/spec。
-//  跟踪：JIRA-1234
-func fallbackEngine(...) { ... }
-
-// ❌ 反例：裸 TODO
-// TODO: refactor this
-func fallbackEngine(...) { ... }
-```
-
 ### 6.3 由 linter 强制
 
 - `revive` 的 `exported`、`package-comments`
@@ -664,10 +655,6 @@ func fallbackEngine(...) { ... }
 - **依赖锁定**：`go.mod` + `go.sum` 必须 100% 提交；CI 跑 `go mod verify`。
 - **升级策略**：第三方依赖按 semver 升；major 版本升级单独 PR，并在
   PR 描述里说明 breaking change。
-- **不许引入 GPL 系传染协议依赖**（AGPL / LGPL 静态链接例外除外）。
-  BSD / MIT / Apache-2.0 / ISC / Unlicense 是默认接受。
-- **内部依赖**：本组织内模块用 `github.com/jingyu525/<repo>` 引用，
-  require 块按字母序。
 
 ### 7.2 ✅ 推荐 / ❌ 反例
 
@@ -697,105 +684,13 @@ go get -u ./...   # 难以 review，可能引入不可控 breaking change
 
 - `go mod verify` 与 `go mod tidy -diff` 在 CI 跑
 - `govet` 的 `modifies` 检查 import 是否被使用
-- 协议合规不在 lint 强制，由人工 review（建议用 `go-licence-checker`）
 
----
+### 7.4 何时可以例外
 
-## 8. AI agent 协作
-
-> **本项目所有 AI 编码 agent（Claude Code / CodeBuddy / OpenCode 等）必须
-> 先读本文档，再写 Go 代码。**
-
-### 8.1 硬性要求（违反任意一条 = PR 拒收）
-
-1. **先 spec 后代码**。任何涉及 > 50 行新增 / 改动的 Go 代码，必须先
-   有 `.kiro/specs/<name>/{requirements,design,tasks}.md` 三件套，且
-   `free-kiro lint <name>` 全绿。参见 `.kiro/AGENTS.md`。
-2. **零 `// TODO`**。AI 生成代码不允许留 `// TODO`、`// FIXME`、`// XXX`、
-   任何形式的占位符。如果某功能未完成，**不要写代码**，先回 spec 阶段补
-   requirements/design。
-3. **零吞错误**。AI 不允许写 `_ = doX()`、`if err != nil { /* ignore */ }`、
-   `log.Print(err)` 后继续。错误必须按第 2 章处理或 wrap。
-4. **零硬编码 magic number**。常量必须有 `const` 或具名变量；端口、超时、
-   阈值都要可配置或位于 `internal/config`。
-5. **必须跑 `go vet ./...` 与 `gofmt -l`** 后再交付。CI 会再跑一遍。
-
-### 8.2 推荐（Soft）
-
-- **每个包文件 ≤ 500 行**。超过说明职责不清，拆包。
-- **每个函数 ≤ 50 行**。超过说明分支过多，拆函数。
-- **每个 PR 只解决 1 个 spec**。多 spec 并行会拖慢 review 与回滚。
-- **commit message 用中文**（项目约定）。格式：
-  `类型(范围): 一句话描述`（如 `feat(spec): 支持 EARS 验证`）。
-
-### 8.3 上下文注入
-
-- SessionStart hook 会自动跑 `free-kiro spec next`，告诉 AI 当前活跃
-  spec 的下一步动作。
-- AI 在动笔前应主动 `Read`：
-  1. `.kiro/specs/<current>/requirements.md`
-  2. `.kiro/specs/<current>/design.md`
-  3. `.kiro/specs/<current>/tasks.md`
-  4. `docs/CODING_STYLE.md`（本文件）
-
-### 8.4 失败处置
-
-如果 lint / test 失败：
-
-1. AI 不应"瞎改到通过"——先读错误，理解根因。
-2. 如果是 spec 不全 → 回 spec 阶段补 requirements/design，不要改代码绕。
-3. 如果是规范冲突 → 在 PR 描述里说"违反第 N 章规则，原因是 X，请评审
-   是否豁免"，**不要静默 `//nolint`**。
-
-### 8.5 由工具强制
-
-- `free-kiro lint`（spec EARS + 结构）
-- `golangci-lint run`（Go 源码规范）
-- `go test -race ./...`（并发正确性）
-- `free-kiro spec complete <name>`（任务未全部完成不允许 complete）
-
-### 8.6 零豁免（zero-exemption policy）
-
-> 由 `enforce-golang-standards-zero-exemptions` spec 落地（2026-Q4）。
-
-**核心条款**：
-
-1. `.golangci.yml` 的 `issues.exclude-rules` 不允许包含任何按
-   `path: 'internal/...'` 的目录级豁免。新代码 + 旧代码一视同仁。
-2. 全仓库 `//nolint:<linter>` 注释总数 **≤ 5**（任何一行都不算豁免）。
-3. 任何新增 `//nolint` 必须紧跟 `//nolint:reason <一句话解释>`，
-   解释为什么这条规则在该处不适用。**不带 reason 的 `//nolint`
-   视为违规，PR reviewer 必须拒收**。
-4. CI lint job（`.github/workflows/ci.yml` 的 `lint-go`）不允许使用
-   `continue-on-error: true` 兜底；任何 lint ERROR 直接阻断 merge。
-
-**新增 `//nolint` 的审批流程**：
-
-1. 在 PR 描述里写明：`//nolint: <linter> at <file:line>; reason: <X>`
-2. reviewer 在 PR 上签字确认（GitHub PR review approval）
-3. 维护者在合并前更新本节 8.6 的统计数字（`//nolint` 总数）
-
-**当前 `//nolint` 总数**：0。
-
-### 8.7 零死代码（zero-dead-code policy）
-
-> 由 `enforce-golang-standards-zero-dead-code` spec 落地（2026-Q4）。
-> 与 8.6 零 `//nolint` 豁免并列适用。
-
-**核心条款**：
-
-1. `staticcheck U1000`（unused）必须被 `.golangci.yml` 的
-   `linters-settings.staticcheck.checks: ["unused"]` 显式开启——CI 命中
-   即视为硬门禁违规，与 errcheck / revive / gofmt 同等待遇。
-2. 任何新增未引用的 package-level 函数、常量、类型、变量，都必须在
-   PR 阶段就清理掉，不允许"先写后删"的过渡状态进入 main 分支。
-3. 删除前必须 `grep -rn '<符号名>' .` 全仓库确认无 caller；删除后
-   再跑一遍 `go test ./...` + `golangci-lint run ./...` 确认无回归。
-4. build tag 隔离的文件（`//go:build !xxx`）默认不视为死代码；但如果
-   该文件最终被实际 build tag 包含进入二进制，则其内部所有符号必须被
-   引用，否则视为死代码清理对象。
-
-**当前死代码（U1000）总数**：0。
+- 紧急 hotfix 可临时用 `replace` 指令指定 fork，但必须提 issue 跟进，
+  在下一个常规 PR 内切回上游。
+- 工具生成的 `*.pb.go` / `*_gen.go` / `mock_*.go` 可豁免 import 分组规则
+  （生成器不保证格式），但需在生成脚本里强制 `goimports` 后置处理。
 
 ---
 

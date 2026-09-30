@@ -1,6 +1,7 @@
 # golangci-lint configuration for free-kiro.
 #
-# 规范配套：docs/CODING_STYLE.md（8 章）+ 本文件的 linter 规则。
+# 规范配套：docs/CODING_STYLE.md（7 章通用 Go 规范）+ docs/AGENT_RULES.md
+# （AI 协作硬性要求）+ docs/POLICY.md（项目策略）+ 本文件的 linter 规则。
 # 本 spec（enforce-golang-standards-zero-exemptions）落地后：
 #   - 零目录级豁免（issues.exclude-rules 不再按 internal/* 放行）
 #   - 软门禁 linter（staticcheck / errcheck / revive）在全仓库与硬门禁同等待遇

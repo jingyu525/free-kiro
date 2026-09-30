@@ -1,15 +1,15 @@
 {
   "name": "free-kiro",
-  "version": "0.7.0-dev",
-  "free_kiro_min_version": "0.7.0",
+  "version": "0.8.0",
+  "free_kiro_min_version": "0.8.0",
   "license": "MIT",
   "repository": "https://github.com/jingyu525/free-kiro",
   "sha256": {
-    "SKILL.md": "f94d18928f9d71db911d77aeed0d7c52745241c89aa7d72c6eff51bbb9bfd778",
-    "references/hooks.md": "2ad182ceff12b1bab96bd4b99da8d2692314568ce1a1ca5ca3032e64cb6231d9",
-    "references/ops.md": "c54015f8a4a1d5adaa590f37e6326ee0189b36c0c506827fc6337456ffd1607f",
+    "SKILL.md": "527ecc0616f964b59bb86748f9e7fbfe7ae39da9a7d46ba7200e3a04a8d69892",
+    "references/hooks.md": "874b0316cc663f14e5d3188c4484a0f5fdfa47f4defbf2b41f12cfa3e7034cb8",
+    "references/ops.md": "152501d3f7b6beb2e9af51ed14ef164793d91ac9ddce403f0f83b939263cfdcb",
     "references/prd-fetch.md": "6fd5b5a854a0836243b4b02fa77669a3b592359782d712923a8ac6246d66b873",
-    "references/spec.md": "0f2896d43da69bcb50f46d257d948356e035d574ed1f42956424a27d09c8e999",
+    "references/spec.md": "70d1853c09ed12b08590b3f6c99fcc117c78f1ff27299ad897f34a2e1edaf1e0",
     "references/troubleshooting.md": "01aec311af85d724595c94960053d019b25140e0340fc425fbfdb75ff0b77b34"
   }
 }
