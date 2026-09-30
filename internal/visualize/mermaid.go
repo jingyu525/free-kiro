@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/jingyu525/free-kiro/internal/models"
-	"github.com/jingyu525/free-kiro/internal/taskgraph"
 )
 
 // RenderMermaidSpec emits a Mermaid `graph LR` block describing one spec's
@@ -114,15 +113,4 @@ func absDelta(d int) int {
 		return -d
 	}
 	return d
-}
-
-// taskWaves is a convenience for callers that already have a Task slice
-// and want the wave grouping without going through Engine. Always
-// returns at least one wave (even an empty placeholder).
-func taskWaves(tasks []models.Task) [][]models.Task {
-	w := taskgraph.ExecutionWaves(tasks)
-	if len(w) == 0 {
-		return [][]models.Task{{}}
-	}
-	return w
 }

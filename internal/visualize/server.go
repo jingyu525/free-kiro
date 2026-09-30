@@ -31,7 +31,6 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -39,10 +38,6 @@ import (
 
 	"github.com/jingyu525/free-kiro/internal/spec"
 )
-
-// osDirEntry aliases os.DirEntry for the package-level osReadDir
-// indirection (so tests can stub if needed).
-type osDirEntry = os.DirEntry
 
 //go:embed static/*
 var staticFS embed.FS
@@ -65,8 +60,8 @@ type Server struct {
 	// locking — concurrent browser clients triggered -race findings
 	// (S1 fix). Moving to per-Server fields keeps multi-tenant
 	// instances independent and serialises access under notifierMu.
-	notifierMu     sync.Mutex
-	subscribers    []chan struct{}
+	notifierMu  sync.Mutex
+	subscribers []chan struct{}
 
 	// watcherOnce ensures watchChanges() is started exactly once per
 	// Server lifetime (S8 fix). watcherRunning is closed by the
@@ -173,12 +168,6 @@ func (s *Server) URL() string {
 		return "http://[" + host + "]:" + port
 	}
 	return "http://" + host + ":" + port
-}
-
-// loadWorkspace re-reads the workspace paths. Used by handlers that
-// might run after the workspace has been re-rooted (rare).
-func (s *Server) loadWorkspace() (WorkspacePaths, error) {
-	return s.ws, nil
 }
 
 // writeJSON encodes v as JSON and writes it to w with a 200 status.

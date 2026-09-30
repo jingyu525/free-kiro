@@ -19,7 +19,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
@@ -28,9 +27,6 @@ const (
 	// GitHubRepo is the source for version checks + downloads. Must match
 	// the repo used by install.sh (and GoReleaser).
 	GitHubRepo = "jingyu525/free-kiro"
-
-	// httpTimeout caps how long any single network call may take.
-	httpTimeout = 30 * time.Second
 )
 
 // Plan describes what an upgrade would do — used by --check to preview

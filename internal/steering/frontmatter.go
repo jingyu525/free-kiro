@@ -108,22 +108,4 @@ func splitComma(s string) []string {
 	return out
 }
 
-// splitLines breaks text on '\n', preserving each line verbatim
-// (including a trailing empty element when text ends with '\n').
-// Retained for steering/store.go's deriveName helper that scans the
-// body for the first H1 title.
-func splitLines(text string) []string {
-	if text == "" {
-		return nil
-	}
-	var out []string
-	start := 0
-	for i := 0; i < len(text); i++ {
-		if text[i] == '\n' {
-			out = append(out, text[start:i])
-			start = i + 1
-		}
-	}
-	out = append(out, text[start:])
-	return out
-}
+// splitLines breaks text on '\n', preserving each line verbatim.

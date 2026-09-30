@@ -34,31 +34,5 @@ func init() {
 	// Defer phase flag registration until after specShowCmd is created.
 }
 
-// attachPhaseFlags attaches the --phase flag (choices: requirements,
-// design, tasks, all) to commands that need it. Called explicitly from
-// each command's constructor after RunE is set.
-func attachPhaseFlags(c *cobra.Command) {
-	c.Flags().String("phase", "all", "phase: requirements | design | tasks | all")
-}
-
 // Note: specShowCmd() already attaches the --phase flag inside its own
 // constructor (see spec_simple.go).
-//
-// Below: stub commands for steering / task / hook — real implementations
-// land in Waves 3 and 4. These keep the root command's --help complete
-// in the meantime. Root.go calls stubCmd constructors directly inside
-// init() to avoid forward-declaration cycles.
-func stubCmd(name, short string) *cobra.Command {
-	return &cobra.Command{
-		Use:   name,
-		Short: short,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			cmd.Printf("(子命令 %q 在 Wave 3/4 实现；当前为占位符)\n", name)
-			return nil
-		},
-	}
-}
-
-// stubFor is the helper used by root.go's init() to wire the not-yet-
-// implemented subcommands (steering / task / hook).
-func stubFor(name, short string) *cobra.Command { return stubCmd(name, short) }

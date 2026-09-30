@@ -169,22 +169,7 @@ func trimTrailingWS(s string) string {
 	return s
 }
 
-// deriveName produces a stable doc name from the body. We look for the
-// first H1 (`# Title`); if missing, fall back to the first non-empty
-// line. Used when the filename is non-meaningful (e.g. AGENTS.md).
-func deriveName(body string) string {
-	for _, line := range splitLines(body) {
-		if line == "" {
-			continue
-		}
-		if len(line) > 2 && line[0] == '#' && line[1] == ' ' {
-			return trim(line[2:])
-		}
-		break
-	}
-	return "untitled"
-}
-
+// deriveName is retained for future H1-based naming.
 func hasMDExt(name string) bool {
 	return filepath.Ext(name) == ".md"
 }
