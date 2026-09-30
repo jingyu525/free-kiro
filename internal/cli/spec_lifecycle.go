@@ -1,18 +1,13 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
-	"github.com/jingyu525/free-kiro/internal/models"
 	"github.com/jingyu525/free-kiro/internal/spec"
-	"github.com/jingyu525/free-kiro/internal/taskgraph"
-	"github.com/jingyu525/free-kiro/internal/visualize"
 )
 
 // specApproveCmd marks a spec approved and captures a drift baseline.
@@ -27,17 +22,15 @@ func specApproveCmd() *cobra.Command {
 lint gate：ERROR（no-ears / placeholder-ac / tasks 环/悬挂/自引用）会拦截审批。
 missing-* 警告不算 ERROR，不拦截。`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			eng, err := engineForSpec()
-			if err != nil {
-				return err
-			}
-			meta, err := eng.Approve(args[0])
-			if err != nil {
-				return exitWithError(err)
-			}
-			fmt.Fprintf(cmd.OutOrStdout(),
-				"approved spec %q; baseline captured for drift detection\n", meta.Name)
-			return nil
+			return RunCmd(cmd, args, func(_ context.Context, eng *spec.Engine, cmd *cobra.Command) error {
+				meta, err := eng.Approve(args[0])
+				if err != nil {
+					return exitWithError(err)
+				}
+				fmt.Fprintf(cmd.OutOrStdout(),
+					"approved spec %q; baseline captured for drift detection\n", meta.Name)
+				return nil
+			})
 		},
 	}
 }
@@ -49,19 +42,16 @@ func specStartCmd() *cobra.Command {
 		Short: "标记开始实现（APPROVED → IMPLEMENTING）",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			eng, err := engineForSpec()
-			if err != nil {
-				return err
-			}
-			meta, err := eng.Start(args[0])
-			if err != nil {
-				return exitWithError(err)
-			}
-			fmt.Fprintf(cmd.OutOrStdout(),
-				"started implementation of spec %q (phase: %s)\n", meta.Name, meta.Phase)
-			fmt.Fprintf(cmd.OutOrStdout(),
-				"next: free-kiro spec complete %s  (once all tasks are done)\n", meta.Name)
-			return nil
+			return RunCmd(cmd, args, func(_ context.Context, eng *spec.Engine, cmd *cobra.Command) error {
+				meta, err := eng.Start(args[0])
+				if err != nil {
+					return exitWithError(err)
+				}
+				fmt.Fprintf(cmd.OutOrStdout(),
+					"started implementation of spec %q (phase: %s)\n", meta.Name, meta.Phase)
+				NextHint(cmd, "free-kiro spec complete %s  (once all tasks are done)", meta.Name)
+				return nil
+			})
 		},
 	}
 }
@@ -73,17 +63,15 @@ func specCompleteCmd() *cobra.Command {
 		Short: "标记 spec 完成（IMPLEMENTING → DONE）",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			eng, err := engineForSpec()
-			if err != nil {
-				return err
-			}
-			meta, err := eng.Complete(args[0])
-			if err != nil {
-				return exitWithError(err)
-			}
-			fmt.Fprintf(cmd.OutOrStdout(),
-				"completed spec %q (phase: %s)\n", meta.Name, meta.Phase)
-			return nil
+			return RunCmd(cmd, args, func(_ context.Context, eng *spec.Engine, cmd *cobra.Command) error {
+				meta, err := eng.Complete(args[0])
+				if err != nil {
+					return exitWithError(err)
+				}
+				fmt.Fprintf(cmd.OutOrStdout(),
+					"completed spec %q (phase: %s)\n", meta.Name, meta.Phase)
+				return nil
+			})
 		},
 	}
 }
@@ -97,16 +85,14 @@ func specSyncCmd() *cobra.Command {
 		Short: "重新基线化（消除漂移）",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			eng, err := engineForSpec()
-			if err != nil {
-				return err
-			}
-			if _, err := eng.Sync(args[0]); err != nil {
-				return exitWithError(err)
-			}
-			fmt.Fprintf(cmd.OutOrStdout(),
-				"re-baselined spec %q (drift comparison reset to current docs)\n", args[0])
-			return nil
+			return RunCmd(cmd, args, func(_ context.Context, eng *spec.Engine, cmd *cobra.Command) error {
+				if _, err := eng.Sync(args[0]); err != nil {
+					return exitWithError(err)
+				}
+				fmt.Fprintf(cmd.OutOrStdout(),
+					"re-baselined spec %q (drift comparison reset to current docs)\n", args[0])
+				return nil
+			})
 		},
 	}
 }
@@ -123,27 +109,25 @@ func specStatusCmd() *cobra.Command {
 		Short: "查看 spec 状态 + 漂移（默认人类可读，--json/--graph 可选）",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			eng, err := engineForSpec()
-			if err != nil {
-				return err
-			}
-			status, err := eng.Status(args[0])
-			if err != nil {
-				return exitWithError(err)
-			}
-			switch {
-			case asJSON:
-				out, err := json.MarshalIndent(status, "", "  ")
+			return RunCmd(cmd, args, func(_ context.Context, eng *spec.Engine, cmd *cobra.Command) error {
+				status, err := eng.Status(args[0])
 				if err != nil {
 					return exitWithError(err)
 				}
-				fmt.Fprintln(cmd.OutOrStdout(), string(out))
-			case asGraph:
-				renderMermaidStatus(cmd.OutOrStdout(), eng, args[0], status)
-			default:
-				renderHumanStatus(cmd.OutOrStdout(), args[0], status)
-			}
-			return nil
+				switch {
+				case asJSON:
+					out, err := json.MarshalIndent(status, "", "  ")
+					if err != nil {
+						return exitWithError(err)
+					}
+					fmt.Fprintln(cmd.OutOrStdout(), string(out))
+				case asGraph:
+					renderMermaidStatus(cmd.OutOrStdout(), eng, args[0], status)
+				default:
+					renderHumanStatus(cmd.OutOrStdout(), args[0], status)
+				}
+				return nil
+			})
 		},
 	}
 	c.Flags().BoolVar(&asJSON, "json", false, "emit nested JSON (for piping into jq / IDE hooks)")
@@ -151,109 +135,7 @@ func specStatusCmd() *cobra.Command {
 	return c
 }
 
-// renderHumanStatus flattens the spec status into a top-level view.
-// Drift signals are surfaced prominently at the top — they're the
-// reason most users run `status`.
-func renderHumanStatus(w io.Writer, name string, s map[string]any) {
-	fmt.Fprintf(w, "%s\n", name)
-	fmt.Fprintf(w, "  phase:      %s\n", s["phase"])
-	fmt.Fprintf(w, "  workflow:   %s\n", s["workflow"])
-	fmt.Fprintf(w, "  spec_type:  %s\n", s["spec_type"])
-	if approved, _ := s["approved"].(bool); approved {
-		fmt.Fprintln(w, "  approved:   yes")
-	} else {
-		fmt.Fprintln(w, "  approved:   no")
-	}
-
-	// Tasks line (handy quick view).
-	if t, ok := s["tasks"].(map[string]any); ok {
-		done, _ := t["done"].(int)
-		total, _ := t["total"].(int)
-		waves, _ := t["waves"].(int)
-		fmt.Fprintf(w, "  tasks:      %d/%d done, %d wave(s)\n", done, total, waves)
-	}
-
-	// Drift — promoted to the top because it's the action item.
-	if drift, ok := s["drift"].([]any); ok && len(drift) > 0 {
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "  DRIFT (baseline → current):")
-		for _, item := range drift {
-			d, ok := item.(map[string]any)
-			if !ok {
-				continue
-			}
-			key, _ := d["key"].(string)
-			base, _ := d["baseline"].(int)
-			cur, _ := d["current"].(int)
-			delta, _ := d["delta"].(int)
-			sign := " "
-			if delta > 0 {
-				sign = "+"
-			} else if delta < 0 {
-				sign = "-"
-			}
-			fmt.Fprintf(w, "    %s: %d → %d  (%s%d)\n",
-				key, base, cur, sign, absDelta(delta))
-		}
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "  fix: either revert the change, or run `free-kiro spec sync <name>` to accept it as the new baseline")
-	} else {
-		fmt.Fprintln(w, "  drift:      none")
-	}
-
-	// Baseline / current snapshot at the bottom (for context).
-	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "  baseline:")
-	if b, ok := s["baseline"].(map[string]int); ok {
-		for k, v := range b {
-			fmt.Fprintf(w, "    %s: %d\n", k, v)
-		}
-	}
-	fmt.Fprintln(w, "  current:")
-	if c, ok := s["current"].(map[string]int); ok {
-		for k, v := range c {
-			fmt.Fprintf(w, "    %s: %d\n", k, v)
-		}
-	}
-}
-
-func absDelta(d int) int {
-	if d < 0 {
-		return -d
-	}
-	return d
-}
-
-// renderMermaidStatus emits a Mermaid graph LR block for one spec.
-// Falls back to a no-op graph (with a comment line) when the spec
-// has no tasks.md yet.
-func renderMermaidStatus(w io.Writer, eng *spec.Engine, name string, status map[string]any) {
-	phase := models.Phase("")
-	if p, ok := status["phase"].(string); ok {
-		phase = models.Phase(p)
-	}
-	tasks, waves := loadTasksForMermaid(eng, name)
-	if len(tasks) == 0 {
-		fmt.Fprintln(w, "graph LR")
-		fmt.Fprintf(w, "  spec_%s[\"%s<br/>phase: %s<br/>no tasks yet\"]\n",
-			name, name, phase)
-		return
-	}
-	visualize.RenderMermaidSpec(w, name, phase, tasks, waves)
-}
-
-// loadTasksForMermaid reads tasks.md and returns the wave grouping.
-func loadTasksForMermaid(eng *spec.Engine, name string) ([]models.Task, [][]models.Task) {
-	data, err := os.ReadFile(filepath.Join(eng.WS().SpecDir(name), "tasks.md"))
-	if err != nil {
-		return nil, nil
-	}
-	tasks := taskgraph.ParseTasks(string(data))
-	if len(tasks) == 0 {
-		return nil, nil
-	}
-	return tasks, taskgraph.ExecutionWaves(tasks)
-}
+// specNextCmd prints the oracle's recommendation for the next action.
 
 // specNextCmd prints the oracle's recommendation for the next action.
 func specNextCmd() *cobra.Command {
@@ -266,17 +148,15 @@ func specNextCmd() *cobra.Command {
   $ free-kiro spec next my-spec | jq -r .command
   free-kiro spec generate my-spec --phase all`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			eng, err := engineForSpec()
-			if err != nil {
-				return err
-			}
-			action, err := eng.NextAction(args[0])
-			if err != nil {
-				return exitWithError(err)
-			}
-			out, _ := json.MarshalIndent(action, "", "  ")
-			fmt.Fprintln(cmd.OutOrStdout(), string(out))
-			return nil
+			return RunCmd(cmd, args, func(_ context.Context, eng *spec.Engine, cmd *cobra.Command) error {
+				action, err := eng.NextAction(args[0])
+				if err != nil {
+					return exitWithError(err)
+				}
+				out, _ := json.MarshalIndent(action, "", "  ")
+				fmt.Fprintln(cmd.OutOrStdout(), string(out))
+				return nil
+			})
 		},
 	}
 }

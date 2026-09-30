@@ -1,19 +1,12 @@
 package cli
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/ide"
 	"github.com/jingyu525/free-kiro/internal/workspace"
 )
@@ -30,6 +23,12 @@ const GitHubRepo = "jingyu525/free-kiro"
 // (no warnings for Claude Code / CodeBuddy directories that simply
 // don't exist on this machine). Use --verbose to see every supported
 // IDE regardless of installation status.
+//
+// Heavy lifting is split across two files:
+//
+//	doctor_report.go — doctorReport / doctorIssue types + formatter
+//	doctor_checks.go — individual IO checks (PATH, hooks, latest
+//	                   release) used by runDoctorChecks below
 func doctorCmdFactory() *cobra.Command {
 	var strict, verbose bool
 	c := &cobra.Command{
@@ -50,10 +49,16 @@ func doctorCmdFactory() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			rep := runDoctorChecks(cmd.OutOrStdout(), verbose)
 			if rep.FatalCount > 0 {
-				return fmt.Errorf("%d fatal issue(s) — run the fixes listed above", rep.FatalCount)
+				// Fatal issues map to engine error (exit 2); matches the
+				// original doctor comment "Exits 0 when healthy, 1 when
+				// warnings, 2 when fatal".
+				return ferrors.New("doctor.run", fmt.Sprintf("%d fatal issue(s) — run the fixes listed above", rep.FatalCount))
 			}
 			if strict && rep.WarnCount > 0 {
-				return fmt.Errorf("%d warning(s) (strict mode)", rep.WarnCount)
+				// Strict-mode warnings also surface as engine error (exit 2)
+				// after the ExitCode unification — the user-visible signal
+				// (non-zero exit + warning detail) is preserved.
+				return ferrors.New("doctor.run.strict", fmt.Sprintf("%d warning(s) (strict mode)", rep.WarnCount))
 			}
 			return nil
 		},
@@ -70,33 +75,6 @@ type doctorReport struct {
 	FatalCount int
 	InfoCount  int
 	Issues     []doctorIssue
-}
-
-type doctorIssue struct {
-	Severity string // "ok" | "info" | "warn" | "fatal"
-	Title    string
-	Detail   string
-	Fix      string // optional one-line fix hint
-}
-
-func (i doctorIssue) render() string {
-	prefix := "✓"
-	switch i.Severity {
-	case "info":
-		prefix = "ℹ"
-	case "warn":
-		prefix = "⚠"
-	case "fatal":
-		prefix = "✗"
-	}
-	out := fmt.Sprintf("%s %s", prefix, i.Title)
-	if i.Detail != "" {
-		out += "\n    " + i.Detail
-	}
-	if i.Fix != "" {
-		out += "\n    fix: " + i.Fix
-	}
-	return out
 }
 
 // runDoctorChecks executes every check and writes a formatted report.
@@ -134,7 +112,7 @@ func runDoctorChecks(w io.Writer, verbose bool) doctorReport {
 	}
 
 	// 3. Workspace.
-	if cwd, err := os.Getwd(); err == nil {
+	if cwd, err := getwd(); err == nil {
 		ws := workspace.Find(cwd)
 		if !ws.Exists() {
 			add(doctorIssue{
@@ -178,13 +156,11 @@ func runDoctorChecks(w io.Writer, verbose bool) doctorReport {
 		add(doctorIssue{
 			Severity: "ok",
 			Title:    "IDE detected",
-			Detail:   strings.Join(names, ", "),
+			Detail:   joinStrings(names, ", "),
 		})
 	}
 
 	// 5. Hook configuration — only for INSTALLED IDEs by default.
-	// Uninstalled IDEs are reported as info (or skipped entirely
-	// without --verbose) so users don't get noise they can't act on.
 	for _, d := range ides {
 		if !d.DirExists {
 			if verbose {
@@ -249,96 +225,3 @@ func runDoctorChecks(w io.Writer, verbose bool) doctorReport {
 
 	return rep
 }
-
-// checkPath reports whether ~/.local/bin is on PATH.
-func checkPath() *doctorIssue {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil
-	}
-	target := filepath.Join(home, ".local", "bin")
-	pathEnv := os.Getenv("PATH")
-	for _, p := range filepath.SplitList(pathEnv) {
-		if p == target {
-			return nil
-		}
-	}
-	return &doctorIssue{
-		Severity: "warn",
-		Title:    target + " is not on PATH",
-		Detail:   "free-kiro installed there won't be found by `free-kiro …` invocations",
-		Fix:      "add to PATH:  export PATH=\"$HOME/.local/bin:$PATH\"",
-	}
-}
-
-// selfPath returns the path to the running binary (best-effort).
-func selfPath() string {
-	p, err := os.Executable()
-	if err != nil {
-		return "(unknown)"
-	}
-	return p
-}
-
-// countFreeKiroHooks reads an IDE's settings.json and counts free-kiro
-// hooks (identified by the `# free-kiro-managed:` command marker).
-func countFreeKiroHooks(path string) (bool, int, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return true, 0, nil
-		}
-		return false, 0, err
-	}
-	var s struct {
-		Hooks map[string][]struct {
-			Hooks []struct {
-				Type    string `json:"type"`
-				Command string `json:"command"`
-			} `json:"hooks"`
-		} `json:"hooks"`
-	}
-	if err := json.Unmarshal(data, &s); err != nil {
-		return false, 0, err
-	}
-	const marker = "# free-kiro-managed:"
-	count := 0
-	for _, entries := range s.Hooks {
-		for _, e := range entries {
-			if len(e.Hooks) > 0 && strings.HasPrefix(e.Hooks[0].Command, marker) {
-				count++
-			}
-		}
-	}
-	return true, count, nil
-}
-
-// fetchLatestVersion queries the GitHub API for the latest release tag
-// (no auth). Returns "" on any error (network, parse, etc.).
-func fetchLatestVersion() string {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	url := "https://api.github.com/repos/" + GitHubRepo + "/releases/latest"
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return ""
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return ""
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return ""
-	}
-	var body struct {
-		TagName string `json:"tag_name"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return ""
-	}
-	return strings.TrimPrefix(body.TagName, "v")
-}
-
-// keep exec import referenced for potential future checks.
-var _ = exec.Command

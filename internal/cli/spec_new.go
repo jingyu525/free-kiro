@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
 
 func newSpecCmd() *cobra.Command {
@@ -120,7 +122,7 @@ func resolvePromptAndNameEx(ctx context.Context, promptFlag, fromIssue, fromPRD,
 		n++
 	}
 	if n > 1 {
-		return "", "", "", fmt.Errorf("--from-issue, --from-prd, and --from-browser are mutually exclusive")
+		return "", "", "", ferrors.NewUsage("spec.new", "--from-issue, --from-prd, and --from-browser are mutually exclusive")
 	}
 	if fromIssue != "" {
 		ref, err := ParseGitHubIssueURL(fromIssue)
@@ -160,7 +162,7 @@ func resolvePromptAndNameEx(ctx context.Context, promptFlag, fromIssue, fromPRD,
 		return "", "", "", err
 	}
 	if len(args) < 1 {
-		return "", "", "", fmt.Errorf("spec name is required when --from-* is not used")
+		return "", "", "", ferrors.NewUsage("spec.new", "spec name is required when --from-* is not used")
 	}
 	return p, args[0], "", nil
 }
@@ -193,11 +195,11 @@ func readPrompt(prompt string) (string, error) {
 	}
 	fi, err := os.Stdin.Stat()
 	if err != nil {
-		return "", fmt.Errorf("stdin: %w", err)
+		return "", ferrors.Wrap("spec.new.readPrompt", err, "stdin stat")
 	}
 	if fi.Mode()&os.ModeCharDevice != 0 {
 		// Stdin is a TTY, not a pipe — no prompt available.
-		return "", fmt.Errorf("a prompt is required (use --prompt, --from-issue, or pipe via stdin)")
+		return "", ferrors.NewUsage("spec.new", "a prompt is required (use --prompt, --from-issue, or pipe via stdin)")
 	}
 	rdr := bufio.NewReader(os.Stdin)
 	var sb strings.Builder
@@ -210,12 +212,12 @@ func readPrompt(prompt string) (string, error) {
 			break
 		}
 		if err != nil {
-			return "", err
+			return "", ferrors.Wrap("spec.new.readPrompt", err, "read stdin")
 		}
 	}
 	out := strings.TrimSpace(sb.String())
 	if out == "" {
-		return "", fmt.Errorf("a prompt is required (use --prompt, --from-issue, or pipe via stdin)")
+		return "", ferrors.NewUsage("spec.new", "a prompt is required (use --prompt, --from-issue, or pipe via stdin)")
 	}
 	return out, nil
 }

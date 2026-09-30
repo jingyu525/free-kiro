@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/ide"
 	"github.com/jingyu525/free-kiro/internal/workspace"
 )
@@ -90,7 +91,7 @@ func runIdeInit(cmd *cobra.Command, target, workspaceRoot, lang string, overwrit
 	// of which IDE is in use.
 	agentsPath, err := ide.WriteAgentsMD(workspaceRoot, lang, overwrite)
 	if err != nil {
-		return fmt.Errorf("write AGENTS.md: %w", err)
+		return ferrors.Wrap("init.writeAgents", err, "write AGENTS.md")
 	}
 	fmt.Fprintf(cmd.OutOrStdout(), "已写入 %s\n", agentsPath)
 
@@ -106,14 +107,14 @@ func runIdeInit(cmd *cobra.Command, target, workspaceRoot, lang string, overwrit
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("resolve HOME: %w", err)
+		return ferrors.Wrap("init.resolveHome", err, "resolve HOME")
 	}
 
 	// Then hooks for each resolved IDE.
 	for _, target := range resolved {
 		path, note, err := ide.InstallHooks(target, home)
 		if err != nil {
-			return fmt.Errorf("install hooks for %s: %w", target, err)
+			return ferrors.Wrap("init.installHooks", err, fmt.Sprintf("install hooks for %s", target))
 		}
 		fmt.Fprintf(cmd.OutOrStdout(), "✓ %s\n", note)
 		_ = path

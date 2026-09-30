@@ -10,16 +10,17 @@
 // Workspace docs override global docs by name. Each doc carries a mode
 // (always / auto / manual / filematch) that controls when it loads.
 //
-// This package deliberately has no external deps: the frontmatter parser
-// is a tiny recursive-descent over `key: value` lines, the glob matcher is
-// a hand-rolled scanner. Same shape as the kiro engine, in idiomatic Go.
+// This package reuses the shared frontmatter parser in
+// internal/frontmatter (Wave 3 of the refactor spec). ParseFrontmatter
+// is kept as a thin wrapper for backward compatibility with the existing
+// steering tests and store.go call-site.
 package steering
 
 import (
-	"regexp"
+	"fmt"
 	"strings"
 
-	ferrors "github.com/jingyu525/free-kiro/internal/errors"
+	"github.com/jingyu525/free-kiro/internal/frontmatter"
 )
 
 // ValidModes are the four inclusion modes a steering doc can declare.
@@ -30,42 +31,23 @@ var ValidModes = map[string]bool{
 	"filematch": true,
 }
 
-// fmOpen is the first line of a YAML-ish frontmatter block.
-var fmOpen = regexp.MustCompile(`^---\s*$`)
-
-// fmKey is one `key: value` line inside the frontmatter.
-var fmKey = regexp.MustCompile(`^([A-Za-z_][\w-]*)\s*:\s*(.*)$`)
-
-// ParseFrontmatter splits a doc into (meta, body). Accepts a leading
-// `---\n key: value\n---\n` block. Values may be single- or double-
-// quoted. Missing or malformed frontmatter returns ({}, text) — the
-// caller decides what to do (e.g. fall back to default mode).
+// ParseFrontmatter splits a doc into (meta, body). Thin wrapper over
+// frontmatter.Parse that returns the legacy (map[string]string, string)
+// shape. Missing or malformed frontmatter returns ({}, text) so the
+// caller can decide policy (e.g. fall back to default mode) — matching
+// the pre-refactor lenient behaviour.
 func ParseFrontmatter(text string) (map[string]string, string) {
-	lines := splitLinesForSteering(text)
-	if len(lines) == 0 || !fmOpen.MatchString(lines[0]) {
+	fm, body, err := frontmatter.Parse(strings.NewReader(text))
+	if err != nil {
+		// Lenient fallback: missing fence or unclosed fence → treat the
+		// whole input as body (caller may default the mode elsewhere).
 		return map[string]string{}, text
 	}
-	meta := map[string]string{}
-	i := 1
-	for i < len(lines) {
-		if fmOpen.MatchString(lines[i]) {
-			body := strings.Join(lines[i+1:], "\n")
-			return meta, body
-		}
-		m := fmKey.FindStringSubmatch(lines[i])
-		if m == nil {
-			i++
-			continue
-		}
-		val := m[2]
-		if len(val) >= 2 && val[0] == val[len(val)-1] && (val[0] == '\'' || val[0] == '"') {
-			val = val[1 : len(val)-1]
-		}
-		meta[m[1]] = val
-		i++
+	out := make(map[string]string, len(fm))
+	for k, v := range fm {
+		out[k] = fmt.Sprint(v)
 	}
-	// No closing fence — treat the whole thing as body.
-	return map[string]string{}, text
+	return out, string(body)
 }
 
 // ParseFilePatterns parses a `fileMatchPattern` frontmatter value into a
@@ -99,25 +81,6 @@ func ParseFilePatterns(raw string) []string {
 	return []string{v}
 }
 
-// splitLinesForSteering returns lines without trailing newlines.
-func splitLinesForSteering(text string) []string {
-	if text == "" {
-		return nil
-	}
-	var out []string
-	start := 0
-	for i := 0; i < len(text); i++ {
-		if text[i] == '\n' {
-			out = append(out, text[start:i])
-			start = i + 1
-		}
-	}
-	if start < len(text) {
-		out = append(out, text[start:])
-	}
-	return out
-}
-
 func trim(s string) string {
 	for len(s) > 0 && isSpace(s[0]) {
 		s = s[1:]
@@ -145,5 +108,22 @@ func splitComma(s string) []string {
 	return out
 }
 
-// ensure imports referenced.
-var _ = ferrors.New
+// splitLines breaks text on '\n', preserving each line verbatim
+// (including a trailing empty element when text ends with '\n').
+// Retained for steering/store.go's deriveName helper that scans the
+// body for the first H1 title.
+func splitLines(text string) []string {
+	if text == "" {
+		return nil
+	}
+	var out []string
+	start := 0
+	for i := 0; i < len(text); i++ {
+		if text[i] == '\n' {
+			out = append(out, text[start:i])
+			start = i + 1
+		}
+	}
+	out = append(out, text[start:])
+	return out
+}

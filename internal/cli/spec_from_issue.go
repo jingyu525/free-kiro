@@ -101,20 +101,21 @@ func FetchIssueTitleAndBody(ref GitHubIssueURL) (string, error) {
 	return body, nil
 }
 
-// atoiSafe parses a non-negative integer. Returns -1 + error on failure.
+// atoiSafe parses a non-negative integer. Returns -1 + UsageError on
+// failure so `free-kiro spec new --from-issue <bad>` exits with code 3.
 func atoiSafe(s string) (int, error) {
 	n := 0
 	if s == "" {
-		return -1, fmt.Errorf("empty number")
+		return -1, ferrors.NewUsage("spec.from-issue.atoi", "empty number")
 	}
 	for _, r := range s {
 		if r < '0' || r > '9' {
-			return -1, fmt.Errorf("not a number: %q", s)
+			return -1, ferrors.NewUsage("spec.from-issue.atoi", fmt.Sprintf("not a number: %q", s))
 		}
 		n = n*10 + int(r-'0')
 	}
 	if n <= 0 {
-		return -1, fmt.Errorf("issue number must be positive")
+		return -1, ferrors.NewUsage("spec.from-issue.atoi", "issue number must be positive")
 	}
 	return n, nil
 }

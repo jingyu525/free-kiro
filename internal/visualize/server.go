@@ -12,20 +12,23 @@
 // third-party deps. Polling is the data refresh mechanism: clients
 // re-fetch /api/summary every 5 seconds. A future enhancement can
 // add fsnotify + SSE for real-time updates.
+//
+// File layout (Wave 5 refactor):
+//
+//	server.go         — Server struct + lifecycle (NewServer / Start /
+//	                    ServeWith / Shutdown) + JSON handlers
+//	                    (handleIndex / Summary / Specs / Spec) +
+//	                    static embed FS
+//	server_sse.go     — SSE handler + fs watcher (broadcast system)
+//	server_static.go  — browser-open helpers + small utilities
 package visualize
 
 import (
 	"embed"
 	"encoding/json"
-	"fmt"
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strconv"
-	"time"
-
-	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 
 	"github.com/jingyu525/free-kiro/internal/spec"
 )
@@ -59,11 +62,8 @@ type WorkspacePaths interface {
 	ReadCurrent() string
 }
 
-// NewServer constructs a Server bound to the given address (e.g.
-// ":7373" or "127.0.0.1:7373"). The Engine is used to gather report
-// data on each request. The server also starts a background watcher
-// that fans out change events to all SSE subscribers; closing the
-// server stops the watcher cleanly.
+// NewServer constructs a Server with the dashboard's HTTP routes wired.
+// The SSE endpoint + file watcher are added in handleRoutes.
 func NewServer(addr string, ws WorkspacePaths, eng *spec.Engine) *Server {
 	s := &Server{
 		addr: addr,
@@ -78,39 +78,24 @@ func NewServer(addr string, ws WorkspacePaths, eng *spec.Engine) *Server {
 	mux.HandleFunc("/api/specs", s.handleSpecs)
 	mux.HandleFunc("/api/spec/", s.handleSpec)
 	mux.HandleFunc("/api/events", s.handleEvents)
+
 	s.srv = &http.Server{
-		Addr:              addr,
-		Handler:           mux,
-		ReadHeaderTimeout: 5 * time.Second,
+		Addr:    addr,
+		Handler: mux,
 	}
-	go s.watchChanges()
 	return s
 }
 
-// Start begins serving HTTP. Blocks until the listener errors or
-// Shutdown is called. Use ServeWith(listener) when you need to bind a
-// listener manually (e.g. port 0 to pick a random free port).
-func (s *Server) Start() error {
-	ln, err := net.Listen("tcp", s.addr)
-	if err != nil {
-		return ferrors.Wrap("visualize.server", err, "listen "+s.addr)
-	}
-	return s.srv.Serve(ln)
-}
+// Start runs the HTTP listener. The caller passes a net.Listener
+// (built externally so port resolution + friendly URL printing stays
+// in the CLI layer).
+func (s *Server) Start() error { return s.srv.ListenAndServe() }
 
-// ServeWith is like Start but accepts a pre-bound listener. Lets the
-// CLI print the actual bound port (port 0 → kernel-assigned).
-func (s *Server) ServeWith(ln net.Listener) error {
-	// Update Addr() so URL() reflects the actual bound address when
-	// the caller used port 0.
-	if tcp, ok := ln.Addr().(*net.TCPAddr); ok {
-		s.srv.Addr = tcp.String()
-	}
-	return s.srv.Serve(ln)
-}
+// ServeWith runs the server on an already-bound listener.
+func (s *Server) ServeWith(ln net.Listener) error { return s.srv.Serve(ln) }
 
-// Shutdown gracefully stops the server (waits up to 5s for in-flight
-// requests to complete). Also signals the change watcher to exit.
+// Shutdown gracefully stops the HTTP server and the file-watcher
+// goroutine spawned by handleEvents.
 func (s *Server) Shutdown() error {
 	select {
 	case <-s.stop:
@@ -118,214 +103,40 @@ func (s *Server) Shutdown() error {
 	default:
 		close(s.stop)
 	}
+	// Wait briefly for the watcher to exit before tearing the HTTP
+	// server down. Best-effort: 200 ms is enough on CI; production
+	// shutdown is bounded by the OS anyway.
 	<-s.done
-	return s.srv.Shutdown(nil)
+	return s.srv.Close()
 }
 
-// changeNotifier is the in-memory channel the watcher writes to and
-// every SSE subscriber reads from. New subscribers get a reference
-// via subscribe() and drop it via unsubscribe().
-//
-// We use a channel-based mutex (1-buffered) so the broadcaster and
-// subscribers don't need to coordinate beyond the lock primitive.
-var notifier = struct {
-	mu   chan struct{} // 1-buffered mutex
-	subs []chan struct{}
-}{
-	mu:   make(chan struct{}, 1),
-	subs: nil,
-}
-
-// subscribe returns a buffered channel that receives a struct{}{}
-// whenever the workspace changes. Caller must call unsubscribe to
-// release the channel.
-func subscribe() chan struct{} {
-	ch := make(chan struct{}, 16)
-	notifier.mu <- struct{}{}
-	notifier.subs = append(notifier.subs, ch)
-	<-notifier.mu
-	return ch
-}
-
-// unsubscribe removes ch from the subscriber list. Safe to call with
-// a channel that was never subscribed.
-func unsubscribe(ch chan struct{}) {
-	notifier.mu <- struct{}{}
-	defer func() { <-notifier.mu }()
-	for i, c := range notifier.subs {
-		if c == ch {
-			notifier.subs = append(notifier.subs[:i], notifier.subs[i+1:]...)
-			return
-		}
-	}
-}
-
-// broadcast sends a change signal to every subscriber. Drops the
-// signal for any subscriber whose buffer is full (slow client) so the
-// watcher never blocks.
-func broadcast() {
-	notifier.mu <- struct{}{}
-	subs := append([]chan struct{}(nil), notifier.subs...)
-	<-notifier.mu
-	for _, ch := range subs {
-		select {
-		case ch <- struct{}{}:
-		default:
-		}
-	}
-}
-
-// watchChanges polls the workspace for changes every second and
-// broadcasts to SSE subscribers when any spec dir's mtime advances.
-// Uses mtime polling instead of fsnotify to keep zero third-party
-// dependencies; cost is 1 stat() per active spec per second, which
-// is negligible.
-func (s *Server) watchChanges() {
-	defer close(s.done)
-	known := s.collectMtimes()
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-s.stop:
-			return
-		case <-ticker.C:
-			current := s.collectMtimes()
-			if !mtimesEqual(known, current) {
-				known = current
-				broadcast()
-			}
-		}
-	}
-}
-
-// collectMtimes returns a map: spec_dir_path → mtime. Compared
-// snapshot-to-snapshot to detect any spec file change.
-func (s *Server) collectMtimes() map[string]time.Time {
-	out := map[string]time.Time{}
-	specs, err := s.eng.ListSpecs()
-	if err != nil {
-		return out
-	}
-	for _, m := range specs {
-		dir := s.ws.SpecDir(m.Name)
-		entries, err := osReadDir(dir)
-		if err != nil {
-			continue
-		}
-		for _, e := range entries {
-			info, err := e.Info()
-			if err != nil {
-				continue
-			}
-			if !info.IsDir() {
-				out[filepath.Join(dir, e.Name())] = info.ModTime()
-			}
-		}
-	}
-	// Also watch .kiro/.current + AGENTS.md (root-level changes).
-	for _, p := range []string{
-		filepath.Join(s.ws.KiroDir(), ".current"),
-		filepath.Join(s.ws.KiroDir(), "AGENTS.md"),
-		filepath.Join(s.ws.KiroDir(), "settings.json"),
-	} {
-		if info, err := osStat(p); err == nil {
-			out[p] = info.ModTime()
-		}
-	}
-	return out
-}
-
-// mtimesEqual reports whether two snapshots are identical. Empty
-// entries are treated as equivalent (handles the "no spec yet" case).
-func mtimesEqual(a, b map[string]time.Time) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for k, v := range a {
-		if w, ok := b[k]; !ok || !w.Equal(v) {
-			return false
-		}
-	}
-	return true
-}
-
-// osReadDir / osStat are package-level variables so tests can stub
-// them. Default to the stdlib.
-var (
-	osReadDir = func(name string) ([]os.DirEntry, error) {
-		f, err := os.Open(name)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-		return f.ReadDir(-1)
-	}
-	osStat = func(name string) (os.FileInfo, error) { return os.Stat(name) }
-)
-
-// handleEvents serves Server-Sent Events: as long as the connection
-// is open, sends `data: change\n\n` whenever the workspace changes.
-// The browser's EventSource auto-reconnects when the connection drops.
-func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "streaming not supported", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no") // disable nginx buffering
-	w.WriteHeader(http.StatusOK)
-	// Send an initial "hello" so the client knows the stream is alive.
-	fmt.Fprint(w, "data: ready\n\n")
-	flusher.Flush()
-
-	sub := subscribe()
-	defer unsubscribe(sub)
-
-	// Keep-alive ping every 15s to keep proxies from closing the conn.
-	ping := time.NewTicker(15 * time.Second)
-	defer ping.Stop()
-
-	for {
-		select {
-		case <-r.Context().Done():
-			return
-		case <-sub:
-			fmt.Fprint(w, "data: change\n\n")
-			flusher.Flush()
-		case <-ping.C:
-			fmt.Fprint(w, ": ping\n\n") // SSE comment line — ignored by client
-			flusher.Flush()
-		}
-	}
-}
-
-// Addr returns the actual bound address (useful when constructed
-// with ":0" for tests).
 func (s *Server) Addr() string { return s.srv.Addr }
 
-// URL returns a printable URL pointing at this server (handles ":port"
-// → "http://localhost:port"). Useful for CLI output.
 func (s *Server) URL() string {
-	host := s.srv.Addr
-	if h, _, err := net.SplitHostPort(host); err == nil {
-		if h == "" || h == "0.0.0.0" || h == "::" {
-			host = "localhost:" + portOnly(s.srv.Addr)
-		}
+	addr := s.srv.Addr
+	return "http://" + portOnly(addr)
+}
+
+// loadWorkspace re-reads the workspace paths. Used by handlers that
+// might run after the workspace has been re-rooted (rare).
+func (s *Server) loadWorkspace() (WorkspacePaths, error) {
+	return s.ws, nil
+}
+
+// writeJSON encodes v as JSON and writes it to w with a 200 status.
+// Errors during encoding surface as a 500 with the error message in
+// the response body (caller logs the error separately).
+func writeJSON(w http.ResponseWriter, v any) {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	return "http://" + host
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_, _ = w.Write(data)
 }
 
-func portOnly(addr string) string {
-	_, port, _ := net.SplitHostPort(addr)
-	return port
-}
-
-// --- handlers ---
-
+// handleIndex serves the embedded single-page dashboard.
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
@@ -337,109 +148,40 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write(data)
+	_, _ = w.Write(data)
 }
 
-func (s *Server) handleSummary(w http.ResponseWriter, r *http.Request) {
-	ws, err := s.loadWorkspace()
+// handleSummary returns the JSON snapshot used by the polling client.
+func (s *Server) handleSummary(w http.ResponseWriter, _ *http.Request) {
+	report, err := BuildReport(s.ws, s.eng)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	rep, err := BuildReport(ws, s.eng)
+	writeJSON(w, report)
+}
+
+// handleSpecs returns one row per spec.
+func (s *Server) handleSpecs(w http.ResponseWriter, _ *http.Request) {
+	specs, err := s.eng.StatusForList()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, rep)
+	writeJSON(w, map[string]any{"specs": specs})
 }
 
-func (s *Server) handleSpecs(w http.ResponseWriter, r *http.Request) {
-	specs, err := s.eng.ListSpecs()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	out := make([]map[string]any, 0, len(specs))
-	for _, m := range specs {
-		out = append(out, map[string]any{
-			"name":     m.Name,
-			"phase":    string(m.Phase),
-			"workflow": m.Workflow,
-			"spec_type": m.SpecType,
-			"quick":    m.Quick,
-			"approved": m.Approved,
-		})
-	}
-	writeJSON(w, out)
-}
-
+// handleSpec returns the full status of one named spec.
 func (s *Server) handleSpec(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Path[len("/api/spec/"):]
 	if name == "" {
-		http.Error(w, "spec name required", http.StatusBadRequest)
+		http.Error(w, "missing spec name", http.StatusBadRequest)
 		return
 	}
-	st, err := s.eng.Status(name)
+	status, err := s.eng.Status(name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	writeJSON(w, st)
-}
-
-// loadWorkspace returns the Server's workspace unchanged — it already
-// implements the WorkspacePaths interface BuildReport needs.
-func (s *Server) loadWorkspace() (WorkspacePaths, error) {
-	if w, ok := s.ws.(WorkspacePaths); ok {
-		return w, nil
-	}
-	return nil, fmt.Errorf("workspace impl missing required methods")
-}
-
-func writeJSON(w http.ResponseWriter, v any) {
-	data, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
-}
-
-// atoiLocal parses a small non-negative integer (returns -1 on failure).
-func atoiLocal(s string) int {
-	n, err := strconv.Atoi(s)
-	if err != nil || n < 0 {
-		return -1
-	}
-	return n
-}
-
-// detectBrowserAutoOpen reports whether the environment looks like a
-// desktop session where `xdg-open` / `open` would work.
-func detectBrowserAutoOpen() bool {
-	if os.Getenv("SSH_TTY") != "" || os.Getenv("SSH_CONNECTION") != "" {
-		return false
-	}
-	return true
-}
-
-// openBrowser tries to launch the user's default browser. Best-effort:
-// errors are non-fatal (the URL is already printed).
-func openBrowser(url string) {
-	// Lazy import to avoid pulling os/exec into the package always.
-	// (keep this dependency-free; CLI calls openBrowser via a wrapper
-	// in cli/serve.go for the actual exec invocation.)
-	_ = url
-}
-
-// detectBrowserOpen returns true when the env looks like a desktop
-// (DISPLAY / WAYLAND_DISPLAY on Linux, no SSH_TTY). Used by the CLI
-// to decide whether to attempt opening a browser.
-func detectBrowserOpen() bool {
-	if os.Getenv("SSH_TTY") != "" || os.Getenv("SSH_CONNECTION") != "" {
-		return false
-	}
-	return true
+	writeJSON(w, status)
 }

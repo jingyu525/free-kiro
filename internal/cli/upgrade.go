@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/upgrade"
 )
 
@@ -61,7 +62,7 @@ func upgradeCmdFactory() *cobra.Command {
 			printPlan(cmd, plan)
 			if checkOnly {
 				if !plan.Same {
-					return exitWithError(fmt.Errorf("a newer version is available — re-run without --check to upgrade"))
+					return exitWithError(ferrors.NewUsage("upgrade.check", "a newer version is available — re-run without --check to upgrade"))
 				}
 				return nil
 			}

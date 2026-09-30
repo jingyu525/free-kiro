@@ -12,7 +12,6 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -70,9 +69,19 @@ func exitWithError(err error) error {
 	if err == nil {
 		return nil
 	}
-	// Wrap as KiroError if it isn't already typed.
-	var k *ferrors.KiroError
-	if errors.As(err, &k) {
+	// errors.As does NOT promote embedded fields — typed errors like
+	// *UsageError embed *KiroError but don't satisfy errors.As(*KiroError).
+	// A type switch on the concrete types is the only correct check.
+	// (See errors_test.go / TestExitCode — the same caveat applies.)
+	switch err.(type) {
+	case *ferrors.KiroError,
+		*ferrors.UsageError,
+		*ferrors.WorkspaceError,
+		*ferrors.TransitionError,
+		*ferrors.LintGateError,
+		*ferrors.TaskGraphError,
+		*ferrors.SteeringError,
+		*ferrors.HookError:
 		return err
 	}
 	return ferrors.Wrap("cli", err, err.Error())

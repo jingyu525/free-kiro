@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/hooks"
 	"github.com/jingyu525/free-kiro/internal/models"
 )
@@ -109,7 +110,7 @@ func hookAddCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			idFlag, _ := cmd.Flags().GetString("id")
 			if idFlag == "" {
-				return exitWithError(fmt.Errorf("--id is required"))
+				return exitWithError(ferrors.NewUsage("hook.add", "--id is required"))
 			}
 			to := timeout
 			h := &models.Hook{
@@ -185,7 +186,7 @@ event context JSON；agent 动作若无 agent_fn 则返回占位符。
 				}
 			}
 			if failed > 0 {
-				return exitWithError(fmt.Errorf("%d hook(s) failed", failed))
+				return exitWithError(ferrors.New("hook.run", fmt.Sprintf("%d hook(s) failed", failed)))
 			}
 			return nil
 		},

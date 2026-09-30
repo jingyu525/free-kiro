@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/visualize"
 	"github.com/jingyu525/free-kiro/internal/workspace"
 )
@@ -53,7 +54,7 @@ Dashboard 每 5 秒自动 refresh（轮询 /api/summary）。`,
 			srv := visualize.NewServer(addr, ws, holder.engine())
 			ln, err := net.Listen("tcp", addr)
 			if err != nil {
-				return exitWithError(fmt.Errorf("listen %s: %w", addr, err))
+				return exitWithError(ferrors.Wrap("serve.listen", err, fmt.Sprintf("listen %s", addr)))
 			}
 
 			fmt.Fprintf(cmd.OutOrStdout(), "free-kiro dashboard listening on %s\n", srv.URL())

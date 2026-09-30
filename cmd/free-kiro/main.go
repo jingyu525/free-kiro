@@ -7,16 +7,17 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/jingyu525/free-kiro/internal/cli"
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
 
 func main() {
 	if err := cli.Execute(); err != nil {
-		// cli.Execute already prints the error and returns the exit code.
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		// cli.Execute already printed the error to stderr; map to the
+		// typed exit code so UsageError → 3 (caller misuse), KiroError
+		// → 2 (engine), TaskGraphError → 1 (lint/cycle), nil → 0.
+		os.Exit(ferrors.ExitCode(err))
 	}
 }

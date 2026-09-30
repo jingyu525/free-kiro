@@ -47,6 +47,28 @@ func Wrap(op string, err error, msg string) *KiroError {
 	return &KiroError{Op: op, Err: err, Msg: msg}
 }
 
+// NewUsage constructs a UsageError (caller-misuse; exit code 3) without
+// a wrapped cause. Sugar for `&UsageError{KiroError: New(op, msg)}` so
+// call sites in cli/ don't have to type the wrapper every time.
+func NewUsage(op, msg string) *UsageError {
+	return &UsageError{KiroError: New(op, msg)}
+}
+
+// WrapUsage constructs a UsageError (exit code 3) that wraps an
+// underlying IO / parse error. Use when a caller misuses the CLI in a
+// way that surfaces a low-level error (e.g. stdin read failure with no
+// prompt supplied).
+func WrapUsage(op string, err error, msg string) *UsageError {
+	return &UsageError{KiroError: Wrap(op, err, msg)}
+}
+
+// NewTaskGraphError constructs a TaskGraphError (exit code 1) for
+// unparseable / cyclic tasks.md. Sugar mirroring NewUsage so cli/task.go
+// can return it directly.
+func NewTaskGraphError(op, msg string) *TaskGraphError {
+	return &TaskGraphError{KiroError: New(op, msg)}
+}
+
 // Typed KiroError subclasses — each represents a distinct failure mode that
 // the CLI layer may want to react to specifically. Use these instead of bare
 // New() when the failure mode is recognisable.
