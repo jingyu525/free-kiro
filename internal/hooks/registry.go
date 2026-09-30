@@ -126,7 +126,7 @@ func (r *Registry) Match(event string, file string) ([]*models.Hook, error) {
 	}
 	var matched []*models.Hook
 	for _, h := range all {
-		if !h.Enabled {
+		if !h.Enabled || h.Disabled {
 			continue
 		}
 		if h.Event != event {
@@ -156,13 +156,14 @@ func (r *Registry) Match(event string, file string) ([]*models.Hook, error) {
 // window; otherwise it refreshes and replaces the cache. The fast path
 // holds a read lock; the slow path holds the write lock and runs the
 // disk read.
+//
+// Returned hooks are deep-copied via cloneHooks so callers may mutate
+// them freely (debug logging, per-call bookkeeping) without corrupting
+// the TTL cache.
 func (r *Registry) cachedAll() ([]*models.Hook, error) {
 	r.cacheMu.RLock()
 	if r.cache != nil && time.Since(r.cacheTime) < hookCacheTTL {
-		// Copy the slice so callers can't mutate our cache under a
-		// stale read lock.
-		out := make([]*models.Hook, len(r.cache))
-		copy(out, r.cache)
+		out := cloneHooks(r.cache)
 		r.cacheMu.RUnlock()
 		return out, nil
 	}
@@ -173,9 +174,7 @@ func (r *Registry) cachedAll() ([]*models.Hook, error) {
 	// Re-check inside the write lock — another goroutine may have
 	// refreshed while we were upgrading.
 	if r.cache != nil && time.Since(r.cacheTime) < hookCacheTTL {
-		out := make([]*models.Hook, len(r.cache))
-		copy(out, r.cache)
-		return out, nil
+		return cloneHooks(r.cache), nil
 	}
 	all, err := r.LoadAll()
 	if err != nil {
@@ -183,7 +182,25 @@ func (r *Registry) cachedAll() ([]*models.Hook, error) {
 	}
 	r.cache = all
 	r.cacheTime = time.Now()
-	return all, nil
+	return cloneHooks(all), nil
+}
+
+// cloneHooks returns a new slice with fresh Hook struct values, so
+// callers may mutate returned hooks without corrupting the source
+// cache. Timeout is a *int; the pointer is shared (callers do not
+// mutate the pointed-to int today), so we only deep-copy the struct
+// layer. If a future caller needs to mutate the pointed-to int,
+// revisit; today an extra int allocation would be overcautious.
+func cloneHooks(in []*models.Hook) []*models.Hook {
+	out := make([]*models.Hook, len(in))
+	for i, h := range in {
+		if h == nil {
+			continue
+		}
+		cp := *h
+		out[i] = &cp
+	}
+	return out
 }
 
 // invalidateCache clears the cached hook list so the next Match() will

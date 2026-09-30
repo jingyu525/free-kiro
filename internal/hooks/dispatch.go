@@ -90,6 +90,14 @@ func runShellAction(ctx context.Context, h *models.Hook, stdin, cwd string) Resu
 
 func runAgentAction(fn AgentFn, h *models.Hook) Result {
 	res := Result{ID: h.ID, Event: h.Event}
+	if h.Disabled {
+		// Explicit opt-out (was overloaded on Timeout=0 before
+		// housekeeping-cleanup). Distinct from a Timeout that simply
+		// wasn't set, so authors get one knob per intent.
+		res.OK = false
+		res.Error = "hook disabled"
+		return res
+	}
 	if fn == nil {
 		res.OK = true
 		res.Output = fmt.Sprintf(

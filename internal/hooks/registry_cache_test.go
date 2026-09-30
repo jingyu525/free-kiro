@@ -153,3 +153,41 @@ func TestRegistry_MatchLatencyUnderBudget(t *testing.T) {
 		t.Errorf("100 Match() calls took %v; budget is 100ms (200ms CI ceiling)", elapsed)
 	}
 }
+
+// TestRegistry_CachedAllReturnsIndependentCopies covers AC-3: mutating
+// any field on a hook returned by Match() must not affect the next
+// Match() call within the TTL window. This guards against regressions
+// where cachedAll regresses to shallow-copy semantics.
+func TestRegistry_CachedAllReturnsIndependentCopies(t *testing.T) {
+	r, _ := setup(t)
+	if err := os.WriteFile(filepath.Join(r.ws.HooksDir(), "demo.json"),
+		[]byte(hookJSONBody), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// First Match populates the cache.
+	first, err := r.Match("PreToolUse", "")
+	if err != nil {
+		t.Fatalf("first Match: %v", err)
+	}
+	if len(first) != 1 {
+		t.Fatalf("expected 1 hook; got %d", len(first))
+	}
+
+	// Caller mutates a returned hook (simulating future debug logging
+	// or per-call bookkeeping). With deep-copy semantics this must
+	// not affect the cached entry.
+	first[0].Enabled = false
+
+	// Subsequent Match within TTL must still see the hook.
+	second, err := r.Match("PreToolUse", "")
+	if err != nil {
+		t.Fatalf("second Match: %v", err)
+	}
+	if len(second) != 1 {
+		t.Errorf("mutation leaked into cache: expected 1 hook; got %d", len(second))
+	}
+	if second[0].ID != "demo" || !second[0].Enabled {
+		t.Errorf("mutation leaked into cache: second=%+v", second[0])
+	}
+}

@@ -3,7 +3,6 @@ package hooks
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -325,30 +324,26 @@ func TestGlobMatch(t *testing.T) {
 	}
 }
 
-// TestDispatch_DisabledShortcut covers AC-4: a hook with Disabled=true
-// must produce an OK=false Result without invoking any shell command.
+// TestRunShellAction_DisabledGuard covers the defence-in-depth path:
+// even if a hook with Disabled=true reaches runShellAction (e.g. a
+// future caller bypasses Match()), the shell must not be invoked.
+// Match() is the hot-path gate (see TestMatch_DisabledFieldSkipped);
+// this test pins the runShellAction guard so a regression that
+// removes either layer is caught.
+//
 // The pre-fix interpretation overloaded Timeout=0 with the same
 // meaning; the new Hook.Disabled field decouples them.
-func TestDispatch_DisabledShortcut(t *testing.T) {
-	reg, root := setup(t)
-	// Sentinel: if the shell runs, it creates the marker file. We
-	// assert the marker does NOT exist after Dispatch.
+func TestRunShellAction_DisabledGuard(t *testing.T) {
+	root := t.TempDir()
 	marker := filepath.Join(root, "should-not-exist.txt")
-	writeHook(t, filepath.Join(root, ".kiro/hooks/disabled.json"),
-		fmt.Sprintf(`{"id":"disabled","event":"manual","action_type":"shell","action":"touch %s","disabled":true}`, marker))
-
-	results, err := reg.Dispatch(context.Background(), "manual", "", nil)
-	if err != nil {
-		t.Fatalf("Dispatch: %v", err)
+	res := runShellAction(context.Background(),
+		&models.Hook{ID: "disabled", Action: "touch " + marker, Disabled: true},
+		"", root)
+	if res.OK {
+		t.Errorf("disabled hook should be OK=false; got %+v", res)
 	}
-	if len(results) != 1 {
-		t.Fatalf("expected 1 result; got %d", len(results))
-	}
-	if results[0].OK {
-		t.Errorf("disabled hook should be OK=false; got %+v", results[0])
-	}
-	if !strings.Contains(results[0].Error, "disabled") {
-		t.Errorf("expected 'disabled' in Error; got %q", results[0].Error)
+	if !strings.Contains(res.Error, "disabled") {
+		t.Errorf("expected 'disabled' in Error; got %q", res.Error)
 	}
 	if _, statErr := os.Stat(marker); statErr == nil {
 		t.Errorf("disabled hook should not have invoked its shell action; marker file exists")
@@ -370,5 +365,54 @@ func TestNormaliseHook_DisabledField(t *testing.T) {
 	}
 	if !h.Disabled {
 		t.Error("expected Hook.Disabled == true")
+	}
+}
+
+// TestMatch_DisabledFieldSkipped covers AC-1 (root cause): a hook
+// with {enabled: true, disabled: true} must NOT be returned by Match.
+// This guards against regressions where the filter loop regresses to
+// checking only `Enabled`.
+func TestMatch_DisabledFieldSkipped(t *testing.T) {
+	reg, root := setup(t)
+	writeHook(t, filepath.Join(root, ".kiro/hooks/d.json"),
+		`{"id":"x","event":"manual","action_type":"shell","action":"true","enabled":true,"disabled":true}`)
+	matched, err := reg.Match("manual", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matched) != 0 {
+		t.Errorf("disabled=true hook must be skipped; got %v", matched)
+	}
+}
+
+// TestRunAgentAction_DisabledGuard covers the defence-in-depth layer
+// for the agent path: even if a hook with Disabled=true reaches
+// runAgentAction directly, the AgentFn must not be invoked and the
+// placeholder branch must not print. The Result shape mirrors
+// runShellAction's guard so downstream consumers (CLI, hooks report)
+// keep working.
+//
+// Match() is the hot-path gate (see TestMatch_DisabledFieldSkipped);
+// this test pins the runAgentAction guard so a regression that
+// removes either layer is caught.
+func TestRunAgentAction_DisabledGuard(t *testing.T) {
+	var calls int
+	fn := func(p string) (string, error) {
+		calls++
+		return "should not happen", nil
+	}
+	res := runAgentAction(fn,
+		&models.Hook{ID: "a", ActionType: "agent", Action: "review this", Disabled: true})
+	if res.OK {
+		t.Errorf("disabled agent hook should be OK=false; got %+v", res)
+	}
+	if !strings.Contains(res.Error, "disabled") {
+		t.Errorf("expected 'disabled' in Error; got %q", res.Error)
+	}
+	if strings.Contains(res.Output, "[agent hook] would execute prompt") {
+		t.Errorf("disabled agent hook must not print placeholder; got %q", res.Output)
+	}
+	if calls != 0 {
+		t.Errorf("agentFn should not be called for disabled hook; got %d calls", calls)
 	}
 }
