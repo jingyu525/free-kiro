@@ -1,8 +1,6 @@
 package spec
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -80,7 +78,7 @@ func (e *Engine) NewSpec(name, prompt, workflow, specType string, quick bool) (*
 	// right `next` action. Best-effort: failure here doesn't block
 	// spec creation (the user can pick the spec manually).
 	if err := e.ws.WriteCurrent(name); err != nil {
-		fmt.Fprintf(os.Stderr, "warning: could not mark %q as active: %v\n", name, err)
+		warnf("could not mark %q as active: %v", name, err)
 	}
 	return meta, nil
 }
@@ -205,7 +203,13 @@ func (e *Engine) Complete(specName string) (*models.SpecMeta, error) {
 		return nil, err
 	}
 	if e.ws.ReadCurrent() == specName {
-		_ = e.ws.ClearCurrent()
+		if err := e.ws.ClearCurrent(); err != nil {
+			// Surface but don't fail the completion — the spec is
+			// done either way; stale .current just means the next
+			// SessionStart hook will recommend this finished spec
+			// until the user manually picks another.
+			warnf("could not clear .current after completing %q: %v", specName, err)
+		}
 	}
 	return meta, nil
 }
@@ -224,6 +228,3 @@ func (e *Engine) Sync(specName string) (*models.SpecMeta, error) {
 	}
 	return meta, nil
 }
-
-// Ensure json import stays referenced after splitting files.
-var _ = json.Marshal
