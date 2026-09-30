@@ -27,15 +27,24 @@ import (
 	"strings"
 
 	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/text"
 )
 
 // Issue is a single finding from the lint gate.
+//
+// Baseline is set by Spec() when the issue's Code is in the spec's
+// `.baseline.json` IgnoredCodes list. Gate() filters on this field
+// directly rather than inspecting Message prefixes, so user-authored
+// Messages that happen to start with "[baseline] " cannot accidentally
+// bypass the gate. The legacy `[baseline] ` prefix is still prepended to
+// Message for backwards-compatible CLI output.
 type Issue struct {
 	Severity string // "error" | "warning"
 	Code     string // short machine-readable id (e.g. "no-ears")
 	Message  string // human-readable explanation (English, for tooling)
 	Location string // optional filename:section hint
 	Hint     string // optional fix hint (URL or guidance)
+	Baseline bool   // true ⇔ whitelisted by the spec's .baseline.json (L3)
 }
 
 // String renders the issue for CLI output (severity-prefixed, location-suffixed,
@@ -130,11 +139,11 @@ var sectionRe = regexp.MustCompile(`^##\s+(.*)$`)
 // Body is the text between this heading and the next `## …` (or EOF),
 // trimmed of surrounding whitespace. The leading `#` / `# Title` H1 is
 // ignored; only H2 (`##`) boundaries participate.
-func splitSections(text string) map[string]string {
+func splitSections(s string) map[string]string {
 	sections := map[string]string{}
 	var current string
 	var buf []string
-	for _, line := range rangeLines(text) {
+	for _, line := range text.RangeLines(s) {
 		if m := sectionRe.FindStringSubmatch(line); m != nil {
 			if current != "" {
 				sections[current] = joinAndTrim(buf)
@@ -151,27 +160,6 @@ func splitSections(text string) map[string]string {
 		sections[current] = joinAndTrim(buf)
 	}
 	return sections
-}
-
-// rangeLines is a tiny iterator that returns each line of text with the
-// trailing newline stripped. We avoid strings.Split + range to keep the
-// hot path allocation-free for large docs.
-func rangeLines(text string) []string {
-	if text == "" {
-		return nil
-	}
-	var out []string
-	start := 0
-	for i := 0; i < len(text); i++ {
-		if text[i] == '\n' {
-			out = append(out, text[start:i])
-			start = i + 1
-		}
-	}
-	if start < len(text) {
-		out = append(out, text[start:])
-	}
-	return out
 }
 
 // joinAndTrim joins lines with newlines and trims surrounding blank lines.

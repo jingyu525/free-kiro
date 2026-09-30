@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/jingyu525/free-kiro/internal/text"
 )
 
 // Quality rules — add semantic checks on top of the shape gate
@@ -57,10 +59,10 @@ type ACLine struct {
 // Implementation note: we also skip template-keyword lines that appear
 // immediately after an `[AC-N]` line — those are continuations of the
 // just-started multi-line AC, not standalone ACs.
-func extractEARSLines(text string) []ACLine {
+func extractEARSLines(doc string) []ACLine {
 	var out []ACLine
 	prevWasACID := false
-	for i, line := range rangeLines(text) {
+	for i, line := range text.RangeLines(doc) {
 		if acIDPrefixRe.MatchString(line) {
 			out = append(out, ACLine{LineNum: i + 1, Text: line})
 			prevWasACID = true
@@ -127,9 +129,9 @@ var etcListRe = regexp.MustCompile(`(?i)\b(etc|and/or)\b`)
 // CheckEtcList — AC-1 (ERROR): an EARS acceptance criterion containing
 // `etc` or `and/or` is a sign the author punted on enumerating concrete
 // cases. Force them to write them out.
-func CheckEtcList(text string) []Issue {
+func CheckEtcList(doc string) []Issue {
 	var out []Issue
-	for _, ac := range extractEARSLines(text) {
+	for _, ac := range extractEARSLines(doc) {
 		if etcListRe.MatchString(ac.Text) {
 			out = append(out, Issue{
 				Severity: SeverityError,
@@ -146,9 +148,9 @@ func CheckEtcList(text string) []Issue {
 // CheckSingleSHALLLine — AC-2 (WARNING): a single line containing two or
 // more `THE SYSTEM SHALL` clauses is hard to trace back to tasks and
 // tends to hide conditionals. Force authors to split into separate ACs.
-func CheckSingleSHALLLine(text string) []Issue {
+func CheckSingleSHALLLine(doc string) []Issue {
 	var out []Issue
-	for _, ac := range extractEARSLines(text) {
+	for _, ac := range extractEARSLines(doc) {
 		n := len(SHALLRe.FindAllString(ac.Text, -1))
 		if n >= 2 {
 			out = append(out, Issue{
@@ -166,8 +168,8 @@ func CheckSingleSHALLLine(text string) []Issue {
 // models.MinAcceptanceCriteria EARS ACs leaves the spec under-specified.
 // WARNING rather than ERROR so tiny docs (one AC for a small bugfix-style
 // feature) can still ship.
-func CheckFewAC(text string, min int) []Issue {
-	count := len(extractEARSLines(text))
+func CheckFewAC(doc string, min int) []Issue {
+	count := len(extractEARSLines(doc))
 	if count >= min {
 		return nil
 	}
@@ -189,24 +191,24 @@ func CheckFewAC(text string, min int) []Issue {
 // trigger keyword) only when such a line actually exists, so that two
 // WHEN lines don't artificially count as 2 templates just because each
 // contains "THE SYSTEM SHALL".
-func CheckTemplateDiversity(text string) []Issue {
+func CheckTemplateDiversity(doc string) []Issue {
 	used := 0
-	if WHENRe.MatchString(text) {
+	if WHENRe.MatchString(doc) {
 		used++
 	}
-	if WHILERe.MatchString(text) {
+	if WHILERe.MatchString(doc) {
 		used++
 	}
-	if WHERERe.MatchString(text) {
+	if WHERERe.MatchString(doc) {
 		used++
 	}
-	if UNLESSRe.MatchString(text) {
+	if UNLESSRe.MatchString(doc) {
 		used++
 	}
-	if UsesIFTHEN(text) {
+	if UsesIFTHEN(doc) {
 		used++
 	}
-	for _, ac := range extractEARSLines(text) {
+	for _, ac := range extractEARSLines(doc) {
 		if !WHENRe.MatchString(ac.Text) &&
 			!WHILERe.MatchString(ac.Text) &&
 			!WHERERe.MatchString(ac.Text) &&
@@ -238,9 +240,9 @@ var acIDRe = regexp.MustCompile(`(?i)^\s*(?:-\s+)?\[AC-\d+\]\s+`)
 // CheckACMissingID — AC-5 (WARNING): every EARS AC must carry an `[AC-N]`
 // prefix so the bidirectional trace to tasks.md is mechanical instead of
 // heuristic. WARNING because the feature is opt-in during rollout.
-func CheckACMissingID(text string) []Issue {
+func CheckACMissingID(doc string) []Issue {
 	var out []Issue
-	for _, ac := range extractEARSLines(text) {
+	for _, ac := range extractEARSLines(doc) {
 		if !acIDRe.MatchString(ac.Text) {
 			out = append(out, Issue{
 				Severity: SeverityWarning,
@@ -278,9 +280,9 @@ var measurableRe = regexp.MustCompile(`(?i)` +
 // concrete measurable commitment ("respond fast", "be robust") cannot be
 // objectively verified. Force authors to commit to a number, time unit,
 // status code, or limit.
-func CheckMeasurableResponse(text string) []Issue {
+func CheckMeasurableResponse(doc string) []Issue {
 	var out []Issue
-	for _, ac := range extractEARSLines(text) {
+	for _, ac := range extractEARSLines(doc) {
 		resp := extractResponse(ac.Text)
 		if resp == "" {
 			continue
@@ -307,9 +309,9 @@ var triggerVagueWords = regexp.MustCompile(`(?i)\b(busy|slow|normal|large|small|
 // built on subjective language ("when system is busy", "while recently
 // logged in") cannot gate automated tests. Force authors to commit to a
 // concrete signal (rate, count, status, threshold).
-func CheckTriggerObservable(text string) []Issue {
+func CheckTriggerObservable(doc string) []Issue {
 	var out []Issue
-	for _, ac := range extractEARSLines(text) {
+	for _, ac := range extractEARSLines(doc) {
 		trigger := extractTrigger(ac.Text)
 		if trigger == "" {
 			continue
@@ -337,9 +339,9 @@ var pastTenseVerbs = regexp.MustCompile(`(?i)\b(logged|submitted|clicked|execute
 // ends in a past-tense verb is mis-classifying an event as a state.
 // Suggest switching to WHEN. Conservative: we only flag the strong
 // pattern (state ends exactly in one of the listed verbs) to avoid noise.
-func CheckKeywordMisuse(text string) []Issue {
+func CheckKeywordMisuse(doc string) []Issue {
 	var out []Issue
-	for _, ac := range extractEARSLines(text) {
+	for _, ac := range extractEARSLines(doc) {
 		if !WHILERe.MatchString(ac.Text) {
 			continue
 		}
@@ -369,9 +371,9 @@ var passiveResponseRe = regexp.MustCompile(`(?i)^\s*(be|is|are|been)\b`)
 // CheckPassiveResponse — AC-9 (WARNING): "SHALL be X" / "SHALL be
 // considered done" are passive promises without a concrete subject
 // action. Encourage authors to commit to a measurable response.
-func CheckPassiveResponse(text string) []Issue {
+func CheckPassiveResponse(doc string) []Issue {
 	var out []Issue
-	for _, ac := range extractEARSLines(text) {
+	for _, ac := range extractEARSLines(doc) {
 		resp := extractResponse(ac.Text)
 		if resp == "" {
 			continue

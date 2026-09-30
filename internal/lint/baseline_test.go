@@ -63,9 +63,6 @@ func TestLoadBaseline_Valid(t *testing.T) {
 	if b.ShouldIgnore("no-ears") {
 		t.Error("ShouldIgnore(no-ears) should be false (not in baseline)")
 	}
-	if b.Empty() {
-		t.Error("Empty() should be false when IgnoredCodes is non-empty")
-	}
 }
 
 // Case 4: schema_version mismatch → error
@@ -131,9 +128,6 @@ func TestBaseline_ZeroValueShouldIgnore(t *testing.T) {
 	var b Baseline
 	if b.ShouldIgnore("anything") {
 		t.Error("zero-value Baseline should ignore nothing")
-	}
-	if !b.Empty() {
-		t.Error("zero-value Baseline should report Empty() = true")
 	}
 }
 

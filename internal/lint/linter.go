@@ -1,6 +1,9 @@
 package lint
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,47 +67,82 @@ func specInternal(specDir string, applyBaseline bool) []Issue {
 	firstDoc := models.FirstPlanningDoc(specType)
 
 	firstPath := filepath.Join(specDir, firstDoc)
-	if data, err := os.ReadFile(firstPath); err == nil {
+	data, err := os.ReadFile(firstPath)
+	switch {
+	case err == nil:
 		text := string(data)
 		if specType == models.SpecTypeBugfix {
 			out = append(out, Bugfix(text)...)
 		} else {
 			out = append(out, Requirements(text)...)
 		}
-	} else {
+	case errors.Is(err, fs.ErrNotExist):
 		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "missing-" + stem(firstDoc),
 			Message:  firstDoc + " not found",
 			Location: firstDoc,
 		})
+	default:
+		// Non-NotExist IO error (EACCES, EISDIR, …). Surface the
+		// underlying message instead of misleadingly reporting
+		// "missing" (F1: lint IO error must wrap, not swallow).
+		out = append(out, Issue{
+			Severity: SeverityError,
+			Code:     "lint-" + stem(firstDoc) + "-read-error",
+			Message:  fmt.Errorf("read %s: %w", firstPath, err).Error(),
+			Location: firstDoc,
+		})
 	}
 
 	tasksPath := filepath.Join(specDir, "tasks.md")
-	if data, err := os.ReadFile(tasksPath); err == nil {
-		out = append(out, Tasks(string(data))...)
-	} else {
+	tasksData, tasksErr := os.ReadFile(tasksPath)
+	switch {
+	case tasksErr == nil:
+		out = append(out, Tasks(string(tasksData))...)
+	case errors.Is(tasksErr, fs.ErrNotExist):
 		out = append(out, Issue{
 			Severity: SeverityWarning,
 			Code:     "missing-tasks",
 			Message:  "tasks.md not found",
 			Location: "tasks.md",
 		})
+	default:
+		out = append(out, Issue{
+			Severity: SeverityWarning,
+			Code:     "lint-tasks-read-error",
+			Message:  fmt.Errorf("read %s: %w", tasksPath, tasksErr).Error(),
+			Location: "tasks.md",
+		})
 	}
 
 	designPath := filepath.Join(specDir, "design.md")
-	if _, err := os.Stat(designPath); os.IsNotExist(err) {
-		out = append(out, Issue{
-			Severity: SeverityWarning,
-			Code:     "missing-design",
-			Message:  "design.md not found (spec may be incomplete)",
-			Location: "design.md",
-		})
+	if _, statErr := os.Stat(designPath); statErr != nil {
+		switch {
+		case errors.Is(statErr, fs.ErrNotExist):
+			out = append(out, Issue{
+				Severity: SeverityWarning,
+				Code:     "missing-design",
+				Message:  "design.md not found (spec may be incomplete)",
+				Location: "design.md",
+			})
+		default:
+			out = append(out, Issue{
+				Severity: SeverityWarning,
+				Code:     "lint-design-stat-error",
+				Message:  fmt.Errorf("stat %s: %w", designPath, statErr).Error(),
+				Location: "design.md",
+			})
+		}
 	}
 
 	if applyBaseline {
 		for i := range out {
 			if base.ShouldIgnore(out[i].Code) {
+				out[i].Baseline = true
+				// Prepend the legacy "[baseline] " prefix to Message so
+				// `free-kiro lint` output stays human-readable; Gate()
+				// does NOT rely on this prefix (it reads Issue.Baseline).
 				out[i].Message = baselinePrefix + out[i].Message
 			}
 		}
@@ -114,9 +152,15 @@ func specInternal(specDir string, applyBaseline bool) []Issue {
 
 // Gate returns the ERROR findings that should block advance/approve.
 // "missing-*" findings (a phase the author has not written yet) and
-// `[baseline]`-prefixed issues (whitelisted by `.baseline.json`) are
-// excluded from the gate — neither should block a spec the author is
-// still drafting or has knowingly accepted.
+// issues flagged with Issue.Baseline (whitelisted by `.baseline.json`)
+// are excluded from the gate — neither should block a spec the author
+// is still drafting or has knowingly accepted.
+//
+// Implementation note: we filter on Issue.Baseline (an explicit field)
+// rather than inspecting the Message prefix. The Message is still
+// prefixed with `[baseline] ` for human-readable CLI output, but a
+// user-authored Message that happens to start with that string cannot
+// accidentally bypass the gate (the L3 fix).
 func Gate(specDir string) []Issue {
 	var gate []Issue
 	for _, i := range Spec(specDir) {
@@ -126,7 +170,7 @@ func Gate(specDir string) []Issue {
 		if isMissingCode(i.Code) {
 			continue
 		}
-		if strings.HasPrefix(i.Message, baselinePrefix) {
+		if i.Baseline {
 			continue
 		}
 		gate = append(gate, i)
@@ -143,8 +187,8 @@ func isMissingCode(code string) bool {
 
 func stem(p string) string {
 	base := filepath.Base(p)
-	if dot := strings.IndexByte(base, '.'); dot >= 0 {
-		return base[:dot]
+	if before, _, ok := strings.Cut(base, "."); ok {
+		return before
 	}
 	return base
 }

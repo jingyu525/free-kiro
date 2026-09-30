@@ -82,11 +82,3 @@ func LoadBaseline(specDir string) (Baseline, error) {
 func (b Baseline) ShouldIgnore(code string) bool {
 	return slices.Contains(b.IgnoredCodes, code)
 }
-
-// Empty reports whether the baseline has no ignorable codes. Used by
-// callers that want to skip the `[baseline]` prefix rewrite when the
-// baseline is a no-op (a common case for historical specs whose only
-// reason to have the file is to opt into the mechanism).
-func (b Baseline) Empty() bool {
-	return len(b.IgnoredCodes) == 0
-}
