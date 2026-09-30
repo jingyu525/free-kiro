@@ -29,10 +29,10 @@ const BaselineSchemaVersion = 1
 // Fields:
 //   - SchemaVersion: integer; mismatch → error (no silent fallthrough).
 //   - SpecName:      string; must match the directory basename when set.
-//                     Mismatch → error (catches copy-paste mistakes).
+//     Mismatch → error (catches copy-paste mistakes).
 //   - IgnoredCodes:  list of Issue.Code strings to skip in Gate() while
-//                     still emitting them in `free-kiro lint` output
-//                     (prefixed with `[baseline]`).
+//     still emitting them in `free-kiro lint` output
+//     (prefixed with `[baseline]`).
 //
 // Empty IgnoredCodes is a valid baseline — it lets the file exist so
 // historical specs don't have to invent ignore entries just to opt into

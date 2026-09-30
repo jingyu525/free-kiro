@@ -168,16 +168,16 @@ func CheckSingleSHALLLine(doc string) []Issue {
 // models.MinAcceptanceCriteria EARS ACs leaves the spec under-specified.
 // WARNING rather than ERROR so tiny docs (one AC for a small bugfix-style
 // feature) can still ship.
-func CheckFewAC(doc string, min int) []Issue {
+func CheckFewAC(doc string, minAC int) []Issue {
 	count := len(extractEARSLines(doc))
-	if count >= min {
+	if count >= minAC {
 		return nil
 	}
 	return []Issue{{
 		Severity: SeverityWarning,
 		Code:     "ears-few-ac",
 		Message: "only " + strconv.Itoa(count) + " EARS AC(s) found — write at least " +
-			strconv.Itoa(min) + " (configurable via models.MinAcceptanceCriteria)",
+			strconv.Itoa(minAC) + " (configurable via models.MinAcceptanceCriteria)",
 		Location: "requirements.md",
 		Hint:     "see docs/EARS.md#semantic-quality-gates",
 	}}

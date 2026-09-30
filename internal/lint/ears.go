@@ -111,10 +111,10 @@ var UserStoryRe = regexp.MustCompile(`(?i)user\s+stor`)
 // alternation falling through to the ubiquitous `THE SYSTEM SHALL`
 // branch.)
 var (
-	WHENRe    = regexp.MustCompile(`(?i)WHEN\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
-	WHILERe   = regexp.MustCompile(`(?i)WHILE\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
-	WHERERe   = regexp.MustCompile(`(?i)WHERE\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
-	UNLESSRe  = regexp.MustCompile(`(?i)UNLESS\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
+	WHENRe   = regexp.MustCompile(`(?i)WHEN\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
+	WHILERe  = regexp.MustCompile(`(?i)WHILE\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
+	WHERERe  = regexp.MustCompile(`(?i)WHERE\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
+	UNLESSRe = regexp.MustCompile(`(?i)UNLESS\s+.+?\s+THE\s+SYSTEM\s+SHALL`)
 
 	ifThenPrefixRe = regexp.MustCompile(`(?i)\bIF\s+.+?\s+THEN\b`)
 	ifThenSuffixRe = regexp.MustCompile(`(?i)\bTHEN\s+(?:.+?\s+)?THE\s+SYSTEM\s+SHALL`)

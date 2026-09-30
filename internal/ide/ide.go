@@ -423,7 +423,12 @@ func IsFreeKiroInstruction(path string) (bool, error) {
 		}
 		return false, ferrors.Wrap("ide.isInstruction", err, "open "+path)
 	}
-	defer f.Close()
+	// Close() error is intentionally dropped: this is a read-only probe
+	// whose only failure mode is the scanner.Err() path below; the file
+	// handle will be released by the runtime when `f` goes out of scope.
+	// We still defer the close (rather than calling it eagerly) so the
+	// scanner below gets to read the file end-to-end.
+	defer func() { _ = f.Close() }()
 	scanner := bufio.NewScanner(f)
 	if !scanner.Scan() {
 		if scanErr := scanner.Err(); scanErr != nil {

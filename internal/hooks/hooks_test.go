@@ -397,7 +397,7 @@ func TestMatch_DisabledFieldSkipped(t *testing.T) {
 // removes either layer is caught.
 func TestRunAgentAction_DisabledGuard(t *testing.T) {
 	var calls int
-	fn := func(p string) (string, error) {
+	fn := func(_ string) (string, error) {
 		calls++
 		return "should not happen", nil
 	}
