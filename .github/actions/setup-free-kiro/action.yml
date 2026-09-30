@@ -64,7 +64,12 @@ runs:
             exit 1
           fi
         fi
-        echo "version=v$ver" >> "$GITHUB_OUTPUT"
+        # Normalize: `ver` must not carry a leading `v` (the curl branch
+        # strips it via sed, but the user-input branch keeps `v0.7.0`).
+        # Without this, `echo "version=v$ver"` becomes `vv0.7.0` and
+        # downstream URL assembly breaks.
+        ver="${ver#v}"
+        echo "version=$ver" >> "$GITHUB_OUTPUT"
         echo "resolved: v$ver"
 
     - name: Download + verify + install
