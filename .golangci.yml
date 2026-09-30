@@ -1,0 +1,88 @@
+# golangci-lint configuration for free-kiro.
+#
+# 规范配套：
+#   - 硬门禁 linter（govet / gofmt / goimports）: CI 阻断合并
+#   - 软门禁 linter（staticcheck / errcheck / revive）: CI WARNING，
+#     由 .github/workflows/ci.yml 的 lint-go job 通过
+#     `continue-on-error: true` 收集，但不阻断
+#   - 历史代码豁免：见 issues.exclude-rules
+#   - 详细规则：见 docs/CODING_STYLE.md
+#
+# 本地使用：
+#   make lint-go           # 走 free-kiro 链路（推荐）
+#   golangci-lint run ./... # 直接调
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+  # CI 与本地 golangci-lint 工具链版本可能落后于 go.mod 的 `go 1.27.0`，
+  # 这里把目标语言版本锁到 1.23 避免 "language version X < Y" 类加载错误。
+  # 实际编译仍由 `actions/setup-go` / 本地 `go` 完成。
+  go: "1.23"
+
+linters:
+  disable-all: true
+  enable:
+    # 硬门禁：编译期正确性 + 格式（CI 阻断）
+    - govet
+    - gofmt
+    - goimports
+    # 软门禁：风格与潜在 bug（CI 仅 WARN）
+    - staticcheck
+    - errcheck
+    - revive
+
+issues:
+  # 硬门禁 linter 0 容忍
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-dirs:
+    - vendor
+    - third_party
+    - testdata
+    - .git
+  exclude-rules:
+    # 测试文件允许 `defer xxx.Close()` 的 errcheck 豁免
+    - path: '_test\.go$'
+      linters: [errcheck]
+      text: 'Error return value of `.*\.Close` is not checked'
+    # 历史代码静态分析：旧代码可能存在大量欠账，先豁免让新代码 0 容忍。
+    # 后续任务（#10 dogfooding 之后）逐包收紧。
+    - path: 'internal/(spec|lint|steering|hooks|skill|upgrade|workspace|ide)/.*\.go$'
+      linters: [staticcheck, errcheck, revive]
+
+linters-settings:
+  goimports:
+    local-prefixes: github.com/jingyu525/free-kiro
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment  # 与本规范"不过度优化结构体对齐"原则冲突
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+      - name: package-comments
+        severity: warning
+      - name: receiver-naming
+        severity: warning
+      - name: error-strings
+        severity: warning
+      - name: error-naming
+        severity: warning
+      - name: var-naming
+        severity: warning
+      - name: indent-error-flow
+        severity: warning
+      - name: range
+        severity: warning
+      - name: superfluous-else
+        severity: warning
+
+output:
+  formats:
+    - format: colored-line-number
+      path: stdout
+  print-issued-lines: true
+  print-linter-name: true
