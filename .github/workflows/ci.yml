@@ -40,6 +40,33 @@ jobs:
         run: |
           go tool cover -func=coverage.out | tail -1
 
+  # Go 源码静态分析门禁（docs/CODING_STYLE.md + .golangci.yml）
+  # 失败阻断 merge；新代码必须 0 违规，历史欠账已在 .golangci.yml 中按目录豁免
+  lint-go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Cache modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-1.23-${{ hashFiles('**/go.sum') }}
+
+      # golangci-lint-action 自动装匹配 Go 版本 + go.mod 的最新 linter；
+      # 与本地 `make lint-go` 同一配置入口（.golangci.yml）。
+      # version 不锁 v1.x，让 action 自动选，避免 Go 1.27 module 与旧 linter 不兼容。
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout 5m
+
   build:
     runs-on: ubuntu-latest
     needs: test
