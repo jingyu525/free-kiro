@@ -47,10 +47,18 @@ const (
 	ClaudeCode ID = "claude-code"
 	// CodeBuddy is the Tencent CodeBuddy IDE.
 	CodeBuddy ID = "codebuddy"
+	// Cursor is the Cursor AI editor.
+	Cursor ID = "cursor"
+	// Continue is the Continue.dev VS Code / JetBrains extension.
+	Continue ID = "continue"
+	// OpenCode is the OpenCode CLI / IDE.
+	OpenCode ID = "opencode"
 )
 
 // All returns the list of IDEs free-kiro knows how to configure.
-func All() []ID { return []ID{ClaudeCode, CodeBuddy} }
+func All() []ID {
+	return []ID{ClaudeCode, CodeBuddy, Cursor, Continue, OpenCode}
+}
 
 // String pretty-prints the ID.
 func (i ID) String() string { return string(i) }
@@ -65,9 +73,15 @@ func Parse(s string) (ID, error) {
 		return ClaudeCode, nil
 	case "codebuddy":
 		return CodeBuddy, nil
+	case "cursor":
+		return Cursor, nil
+	case "continue":
+		return Continue, nil
+	case "opencode":
+		return OpenCode, nil
 	}
-	return "", ferrors.New("ide.parse", "unknown IDE: "+s+
-		" (supported: claude-code, codebuddy, none)")
+	return "", ferrors.NewUsage("ide.parse",
+		"unknown IDE: "+s+" (supported: claude-code, codebuddy, cursor, continue, opencode, none)")
 }
 
 // Info describes one supported IDE and where its settings live.
@@ -102,6 +116,12 @@ func configPathFor(id ID, home string) string {
 		return filepath.Join(home, ".claude", "settings.json")
 	case CodeBuddy:
 		return filepath.Join(home, ".codebuddy", "settings.json")
+	case Cursor:
+		return filepath.Join(home, ".cursor", "settings.json")
+	case Continue:
+		return filepath.Join(home, ".continue", "config.json")
+	case OpenCode:
+		return filepath.Join(home, ".opencode", "settings.json")
 	}
 	return ""
 }

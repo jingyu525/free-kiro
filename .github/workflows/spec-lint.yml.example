@@ -1,0 +1,66 @@
+# Spec-lint workflow template for free-kiro consumers.
+#
+# Usage:
+#   1. Copy this file to `.github/workflows/spec-lint.yml` (drop the
+#      `.example` suffix) and commit it.
+#   2. Adjust `paths:` if your specs live outside `.kiro/specs/**` (the
+#      default covers requirements.md / design.md / tasks.md).
+#   3. (Optional) Add the badge to your README:
+#      ![spec lint](https://github.com/<owner>/<repo>/actions/workflows/spec-lint.yml/badge.svg)
+#
+# This workflow runs on every pull_request to main and fails the build
+# if any spec contains EARS violations or placeholder markers. The
+# free-kiro binary is the lint gate; `setup-free-kiro@v0` is the
+# companion GitHub Action maintained at jingyu525/free-kiro.
+
+name: spec-lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".kiro/specs/**"
+      - ".kiro/steering/**"
+      - ".kiro/.current"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up free-kiro
+        uses: jingyu525/free-kiro/.github/actions/setup-free-kiro@v0
+        with:
+          # Pin to a known-good version; bump explicitly when you're ready
+          # to track a new release.
+          version: v0.7.0
+
+      - name: Run spec lint
+        # `free-kiro lint` exits 1 on EARS / structure errors; that
+        # propagates as a failed job step and blocks the PR. See
+        # docs/EARS.md for the accepted 5 EARS templates + 1 unconditional
+        # baseline.
+        run: free-kiro lint
+
+      - name: Run doctor
+        # Best-effort diagnostics — exit codes 1-3 here are treated as
+        # warnings, not failures (use `continue-on-error: false` to
+        # promote them to blockers).
+        run: free-kiro doctor
+        continue-on-error: true
+
+      - name: Upload spec report
+        # Attach the human-readable report as a workflow artifact so
+        # reviewers can inspect it without re-running the CLI locally.
+        run: free-kiro report
+        continue-on-error: true
+
+      - name: Save report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spec-report
+          path: .kiro/REPORT.md
+          retention-days: 14

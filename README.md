@@ -21,6 +21,44 @@ Claude Code / CodeBuddy / Cursor / Continue 这些主流 AI coding 工具
 单二进制 CLI**，通过 hook 系统接入任何支持 hook 的 AI coding 工具，
 让"先写 spec → 过 lint → 再写代码"成为强制流程。
 
+👉 想 5 分钟内看到完整闭环?跳到 [5 分钟端到端 demo](#5-分钟端到端-demo) 直接跑样例。
+
+## 5 分钟端到端 demo
+
+不读文档、不写自己的 spec、零项目 setup。clone 仓库后跑两个命令就能看
+到 free-kiro 完整闭环(spec → lint → status → dashboard → drift)。
+
+```bash
+git clone https://github.com/jingyu525/free-kiro
+cd free-kiro
+go run ./cmd/free-kiro demo                # 打印 5 步 onboarding 摘要
+```
+
+`demo` 子命令做了什么:
+
+- 校验当前目录是仓库根(找不到 `examples/todo-app/` 时 exit 3 引导 `cd`)
+- 写一个 RFC3339 时间戳到 `.kiro/.demostart`(30 秒内重复执行会跳过)
+- 打印 5 步 onboarding 摘要 + 当前 cwd
+- 可选 `--ide <claude-code|codebuddy|cursor|continue|opencode>` 打印
+  对应 IDE 的 hook 配置片段,粘贴即可用
+- 可选 `--no-color` 抑制 ANSI,适合 CI / `tee`
+
+然后按打印出的步骤跑:
+
+```bash
+cd examples/todo-app
+../../dist/free-kiro_darwin_arm64/free-kiro serve    # 或 go run ../../cmd/free-kiro
+xdg-open http://127.0.0.1:7373                       # macOS 用 open,Windows 用 start
+```
+
+样例 spec(`add-task-priority`)展示:
+
+- `free-kiro task list` 输出 4 个并行 wave 拓扑
+- `free-kiro spec status add-task-priority --human` 看 drift
+- 故意改一行后 status 报 `drift: drift` — 这是 free-kiro 的核心约束演示
+
+完整验证记录见 [`docs/DEMO_VERIFICATION.md`](docs/DEMO_VERIFICATION.md)。
+
 ## 核心特性
 
 | 特性 | 说明 |
@@ -114,6 +152,10 @@ npx @jingyu525/free-kiro-skill
 AI 助手就会主动调 `free-kiro`，不用你手敲命令。
 
 ## 30 秒上手
+
+> ⚠️ 推荐新用户从上面的 [5 分钟端到端 demo](#5-分钟端到端-demo) 开始。本节保留给
+> 已有项目想接入 free-kiro 的老用户;完整迁移审计见
+> [`docs/DEMO_VERIFICATION.md` §2](docs/DEMO_VERIFICATION.md)。
 
 ```bash
 cd your-project
@@ -236,7 +278,10 @@ not found`，可以传绝对路径或用 `which free-kiro` 取得。
 
 ```
 # 工作流
-free-kiro init [--ide auto|claude-code|codebuddy|none]    初始化 + IDE hook
+free-kiro init [--ide auto|claude-code|codebuddy|        初始化 + IDE hook（支持
+                cursor|continue|opencode|none]            Claude Code / CodeBuddy
+                                                          / Cursor / Continue / OpenCode）
+free-kiro demo [--no-color] [--ide <name>]                5 分钟端到端 demo 入口
 free-kiro doctor [--strict]                              一键诊断
 free-kiro upgrade [--check|--force]                      自升级
 

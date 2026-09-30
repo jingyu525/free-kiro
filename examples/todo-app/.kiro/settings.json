@@ -1,0 +1,9 @@
+{
+  "generator": "template",
+  "model": {
+    "api_key_env": "",
+    "base_url": "",
+    "model": "",
+    "provider": "template"
+  }
+}

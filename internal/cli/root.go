@@ -115,4 +115,5 @@ func init() {
 	rootCmd.AddCommand(watchCmdFactory())
 	rootCmd.AddCommand(skillCmdFactory())
 	rootCmd.AddCommand(statusCmdFactory())
+	rootCmd.AddCommand(demoCmd)
 }

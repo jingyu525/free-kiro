@@ -35,9 +35,12 @@ var initCmd = &cobra.Command{
   └── AGENTS.md        写入给 agent 的总体指令（v0.2.0+）
 
 --ide <target>  配置 AI coding 工具的 hook（默认: auto）：
-  auto            检测本机已装的 IDE（Claude Code / CodeBuddy）
+  auto            检测本机已装的 IDE（Claude Code / CodeBuddy / Cursor / Continue / OpenCode）
   claude-code     写入 ~/.claude/settings.json
   codebuddy       写入 ~/.codebuddy/settings.json
+  cursor          写入 ~/.cursor/settings.json
+  continue        写入 ~/.continue/config.json
+  opencode        写入 ~/.opencode/settings.json
   none            跳过 IDE 配置
 
 若目录已存在 .kiro，重复运行是幂等的（不会覆盖已有 steering / settings）。
@@ -78,7 +81,7 @@ var initCmd = &cobra.Command{
 
 func init() {
 	initCmd.Flags().String("path", ".", "目标项目根目录（默认：当前目录）")
-	initCmd.Flags().String("ide", "auto", "IDE 集成目标: auto | claude-code | codebuddy | none")
+	initCmd.Flags().String("ide", "auto", "IDE 集成目标: auto | claude-code | codebuddy | cursor | continue | opencode | none")
 	initCmd.Flags().String("lang", "zh", "AGENTS.md 语言: zh | en（默认探测 LANG）")
 	initCmd.Flags().Bool("overwrite-agents", false, "覆盖已存在的 .kiro/AGENTS.md")
 }
@@ -147,7 +150,7 @@ func resolveIdeTarget(target string) ([]ide.ID, error) {
 	}
 	if len(present) == 0 {
 		writeOut(os.Stderr,
-			"⚠️  未检测到 Claude Code 或 CodeBuddy 目录；跳过 IDE 配置\n"+
+			"⚠️  未检测到 Claude Code / CodeBuddy / Cursor / Continue / OpenCode 目录；跳过 IDE 配置\n"+
 				"   安装其中一个并重跑 `free-kiro init --ide auto`，或显式指定 --ide <name>\n")
 		return nil, nil
 	}

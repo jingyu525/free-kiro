@@ -2,10 +2,13 @@ package ide
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 )
 
 func TestParse(t *testing.T) {
@@ -20,6 +23,10 @@ func TestParse(t *testing.T) {
 		{"Claude-Code", ClaudeCode, false}, // case-insensitive
 		{"claude", ClaudeCode, false},      // alias
 		{"codebuddy", CodeBuddy, false},
+		{"cursor", Cursor, false},
+		{"Cursor", Cursor, false}, // case-insensitive
+		{"continue", Continue, false},
+		{"opencode", OpenCode, false},
 		{"none", "", false}, // treated as auto-detect signal (caller resolves)
 		{"unknown", "", true},
 	}
@@ -34,27 +41,81 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestParse_UnknownReturnsUsageError(t *testing.T) {
+	// Per docs/CODING_STYLE.md 8.6 (zero-exemption), unknown IDE values
+	// must surface a UsageError so callers can map to exit code 3.
+	_, err := Parse("vscode")
+	if err == nil {
+		t.Fatal("expected error for unknown IDE")
+	}
+	var target *ferrors.UsageError
+	if !errors.As(err, &target) {
+		t.Fatalf("expected *UsageError; got %T (%v)", err, err)
+	}
+	// Message should list every supported IDE so users can self-correct.
+	msg := err.Error()
+	for _, name := range []string{"claude-code", "codebuddy", "cursor", "continue", "opencode"} {
+		if !strings.Contains(msg, name) {
+			t.Errorf("UsageError message should mention %q; got %q", name, msg)
+		}
+	}
+}
+
+func TestAll_ReturnsFive(t *testing.T) {
+	got := All()
+	if len(got) != 5 {
+		t.Fatalf("All() should return 5 IDEs; got %d (%v)", len(got), got)
+	}
+	want := map[ID]bool{ClaudeCode: false, CodeBuddy: false, Cursor: false, Continue: false, OpenCode: false}
+	for _, id := range got {
+		want[id] = true
+	}
+	for id, seen := range want {
+		if !seen {
+			t.Errorf("All() missing %q", id)
+		}
+	}
+}
+
+func TestConfigPathFor_AllFive(t *testing.T) {
+	home := "/tmp/home"
+	cases := map[ID]string{
+		ClaudeCode: filepath.Join(home, ".claude", "settings.json"),
+		CodeBuddy:  filepath.Join(home, ".codebuddy", "settings.json"),
+		Cursor:     filepath.Join(home, ".cursor", "settings.json"),
+		Continue:   filepath.Join(home, ".continue", "config.json"),
+		OpenCode:   filepath.Join(home, ".opencode", "settings.json"),
+	}
+	for id, want := range cases {
+		got := configPathFor(id, home)
+		if got != want {
+			t.Errorf("configPathFor(%q) = %q, want %q", id, got, want)
+		}
+	}
+}
+
 func TestDetectAll_MarksExistingDirs(t *testing.T) {
 	home := t.TempDir()
-	// Create ~/.claude/ but not ~/.codebuddy/
+	// Create ~/.claude/ and ~/.cursor/ but not the other three.
 	if err := os.MkdirAll(filepath.Join(home, ".claude"), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.MkdirAll(filepath.Join(home, ".cursor"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	got := DetectAll(home)
-	var claude, codebuddy bool
+	want := map[ID]bool{
+		ClaudeCode: true, CodeBuddy: false, Cursor: true,
+		Continue: false, OpenCode: false,
+	}
+	got2 := map[ID]bool{}
 	for _, d := range got {
-		if d.ID == ClaudeCode {
-			claude = d.DirExists
-		}
-		if d.ID == CodeBuddy {
-			codebuddy = d.DirExists
-		}
+		got2[d.ID] = d.DirExists
 	}
-	if !claude {
-		t.Error("claude-code should be detected")
-	}
-	if codebuddy {
-		t.Error("codebuddy should NOT be detected")
+	for id, w := range want {
+		if got2[id] != w {
+			t.Errorf("DetectAll(%s) = %v, want %v", id, got2[id], w)
+		}
 	}
 }
 
@@ -132,7 +193,7 @@ func TestInstallHooks_PreservesExistingUserHooks(t *testing.T) {
 
 func TestInstallHooks_Idempotent(t *testing.T) {
 	home := t.TempDir()
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		if _, _, err := InstallHooks(ClaudeCode, home); err != nil {
 			t.Fatal(err)
 		}
@@ -237,6 +298,72 @@ func TestWriteAgentsMD_Idempotent(t *testing.T) {
 	second, _ := WriteAgentsMD(dir, "zh", false)
 	if first != second {
 		t.Errorf("expected same path on repeat")
+	}
+}
+
+func TestInstallHooks_CursorCreatesFile(t *testing.T) {
+	// Per docs/HOOKS.md, Cursor settings live at ~/.cursor/settings.json.
+	// Verify free-kiro hook installer creates the directory + file with
+	// the canonical event-keyed envelope (same as Claude Code / CodeBuddy).
+	home := t.TempDir()
+	path, note, err := InstallHooks(Cursor, home)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(home, ".cursor", "settings.json")
+	if path != want {
+		t.Errorf("path = %q, want %q", path, want)
+	}
+	if !strings.Contains(note, want) {
+		t.Errorf("note should reference %q; got %q", want, note)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("settings.json should exist: %v", err)
+	}
+	var sh settingsShape
+	if err := json.Unmarshal(data, &sh); err != nil {
+		t.Fatalf("settings.json not valid JSON: %v\nraw: %s", err, data)
+	}
+	// free-kiro-managed marker present on PreToolUse lint-gate.
+	var lintGate bool
+	for _, e := range sh.Hooks["PreToolUse"] {
+		if isFreeKiroEntry(e) {
+			lintGate = true
+		}
+	}
+	if !lintGate {
+		t.Error("free-kiro lint-gate should be installed for Cursor")
+	}
+}
+
+func TestInstallHooks_FiveIDEsRoundTrip(t *testing.T) {
+	// Smoke-test that InstallHooks succeeds for all 5 IDs, each writing
+	// to a distinct config path. This guards against future edits that
+	// accidentally only handle a subset of All().
+	home := t.TempDir()
+	ids := All()
+	if len(ids) < 5 {
+		t.Fatalf("sanity: All() returned %d IDs (< 5); test premise broken", len(ids))
+	}
+	paths := map[ID]string{}
+	for _, id := range ids {
+		path, _, err := InstallHooks(id, home)
+		if err != nil {
+			t.Fatalf("InstallHooks(%s): %v", id, err)
+		}
+		paths[id] = path
+		if _, err := os.Stat(path); err != nil {
+			t.Errorf("settings file for %s not written: %v", id, err)
+		}
+	}
+	// All 5 paths must be distinct (sanity: configPathFor is exhaustive).
+	seen := map[string]ID{}
+	for id, p := range paths {
+		if other, dup := seen[p]; dup {
+			t.Errorf("path collision between %s and %s at %s", id, other, p)
+		}
+		seen[p] = id
 	}
 }
 
