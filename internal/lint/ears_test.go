@@ -30,7 +30,7 @@ func TestEARSRe_AllTemplates(t *testing.T) {
 }
 
 func TestLintRequirements_Empty(t *testing.T) {
-	issues := LintRequirements("")
+	issues := Requirements("")
 	if len(issues) != 1 || issues[0].Code != "empty-requirements" {
 		t.Fatalf("expected empty-requirements ERROR; got %v", issues)
 	}
@@ -40,7 +40,7 @@ func TestLintRequirements_Empty(t *testing.T) {
 }
 
 func TestLintRequirements_NoEars(t *testing.T) {
-	issues := LintRequirements("# Feature\n\nSome prose without acceptance criteria.\n")
+	issues := Requirements("# Feature\n\nSome prose without acceptance criteria.\n")
 	if len(issues) == 0 {
 		t.Fatal("expected at least one issue")
 	}
@@ -74,7 +74,7 @@ As a user I want to log in so that I can access my dashboard.
 WHEN the user submits valid credentials THE SYSTEM SHALL redirect to /dashboard.
 WHILE the user is authenticated THE SYSTEM SHALL keep the session active.
 `
-	issues := LintRequirements(doc)
+	issues := Requirements(doc)
 	for _, i := range issues {
 		if i.Severity == SeverityError {
 			t.Errorf("golden path should have no ERRORs; got %s", i)
@@ -83,7 +83,7 @@ WHILE the user is authenticated THE SYSTEM SHALL keep the session active.
 }
 
 func TestLintBugfix_Empty(t *testing.T) {
-	issues := LintBugfix("")
+	issues := Bugfix("")
 	if len(issues) != 1 || issues[0].Code != "empty-bugfix" {
 		t.Fatalf("expected empty-bugfix; got %v", issues)
 	}
@@ -101,7 +101,7 @@ WHEN the user submits valid credentials THE SYSTEM SHALL redirect to /dashboard.
 ## Unchanged Behavior
 WHEN the user submits invalid credentials THE SYSTEM SHALL CONTINUE TO show the error page.
 `
-	issues := LintBugfix(doc)
+	issues := Bugfix(doc)
 	for _, i := range issues {
 		if i.Severity == SeverityError {
 			t.Errorf("golden path should have no ERRORs; got %s", i)
@@ -119,7 +119,7 @@ WHEN the user logs in THE SYSTEM SHALL redirect to /dashboard.
 ## Unchanged Behavior
 WHEN the session expires THE SYSTEM SHALL CONTINUE TO log the user out.
 `
-	issues := LintBugfix(doc)
+	issues := Bugfix(doc)
 	var found bool
 	for _, i := range issues {
 		if i.Code == "defect-uses-shall" {
@@ -141,7 +141,7 @@ wrong thing happens.
 ## Unchanged Behavior
 WHEN foo THE SYSTEM SHALL CONTINUE TO bar.
 `
-	issues := LintBugfix(doc)
+	issues := Bugfix(doc)
 	var found bool
 	for _, i := range issues {
 		if i.Code == "missing-expected" {
@@ -160,7 +160,7 @@ broken.
 ## Expected Behavior
 WHEN fixed THE SYSTEM SHALL work.
 `
-	issues := LintBugfix(doc)
+	issues := Bugfix(doc)
 	var found bool
 	for _, i := range issues {
 		if i.Code == "missing-unchanged" {
@@ -178,7 +178,7 @@ This should fix the redirect. (no SHALL here)
 ## Unchanged Behavior
 WHEN foo THE SYSTEM SHALL CONTINUE TO bar.
 `
-	issues := LintBugfix(doc)
+	issues := Bugfix(doc)
 	var found bool
 	for _, i := range issues {
 		if i.Code == "no-ears-expected" {
@@ -196,7 +196,7 @@ WHEN fixed THE SYSTEM SHALL work.
 ## Unchanged Behavior
 everything else stays the same.
 `
-	issues := LintBugfix(doc)
+	issues := Bugfix(doc)
 	var found bool
 	for _, i := range issues {
 		if i.Code == "no-shall-continue" {

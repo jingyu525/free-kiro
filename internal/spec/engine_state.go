@@ -52,7 +52,7 @@ func (e *Engine) NextAction(specName string) (map[string]any, error) {
 		return nil, err
 	}
 	dir := e.ws.SpecDir(specName)
-	gate := lint.LintGate(dir)
+	gate := lint.Gate(dir)
 
 	action := map[string]any{
 		"spec":      meta.Name,
@@ -185,7 +185,7 @@ func nextPhase(p models.Phase) string {
 
 // formatGate renders a one-line summary of lint-gate failures for the
 // "approval blocked" message. Pure string-builder, no JSON.
-func formatGate(issues []lint.LintIssue) string {
+func formatGate(issues []lint.Issue) string {
 	if len(issues) == 0 {
 		return "no errors"
 	}

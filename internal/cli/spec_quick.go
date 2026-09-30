@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -34,9 +32,9 @@ lint 门禁仍生效（文档错了照样拦），只是跳过人工签字那一
 			if _, err := eng.GenerateAll(args[0], false); err != nil {
 				return exitWithError(err)
 			}
-			fmt.Fprintf(cmd.OutOrStdout(),
+			writeOut(cmd.OutOrStdout(),
 				"quick spec %q generated (requirements/design/tasks); approval waived\n", meta.Name)
-			fmt.Fprintf(cmd.OutOrStdout(),
+			writeOut(cmd.OutOrStdout(),
 				"next: free-kiro spec start %s   (or review, then free-kiro spec approve %s)\n",
 				meta.Name, meta.Name)
 			return nil

@@ -3,7 +3,6 @@ package cli
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -78,10 +77,10 @@ func newSpecCmd() *cobra.Command {
 			}
 			printSpecMeta(cmd, meta, tag)
 			if !quick {
-				fmt.Fprintf(cmd.OutOrStdout(),
+				writeOut(cmd.OutOrStdout(),
 					"next: free-kiro spec generate %s --phase all\n", meta.Name)
 			} else {
-				fmt.Fprintf(cmd.OutOrStdout(),
+				writeOut(cmd.OutOrStdout(),
 					"next: free-kiro spec start %s\n", meta.Name)
 			}
 			return nil
@@ -105,9 +104,9 @@ func newSpecCmd() *cobra.Command {
 //
 //  1. --from-issue    fetch GitHub issue title + body via `gh`
 //  2. --from-prd      fetch any web page (HTML/Markdown), extract title
-//                     + visible text
+//     + visible text
 //  3. --from-browser  fetch JS-rendered page via browser-skill's `bsk`,
-//                     extract title + visible text from rendered HTML
+//     extract title + visible text from rendered HTML
 //  4. --prompt / stdin with positional name
 func resolvePromptAndNameEx(ctx context.Context, promptFlag, fromIssue, fromPRD, fromBrowser string, args []string) (string, string, string, error) {
 	// Mutually exclusive check across all three --from-* flags.

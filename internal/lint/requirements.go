@@ -8,7 +8,7 @@ import "regexp"
 // unfilled and reported as `placeholder-ac`.
 var placeholderRe = regexp.MustCompile(`<TODO[:\s]`)
 
-// LintRequirements checks requirements.md for the structural contract of a
+// Requirements checks requirements.md for the structural contract of a
 // feature spec:
 //
 //   - The document must not be empty.
@@ -20,10 +20,10 @@ var placeholderRe = regexp.MustCompile(`<TODO[:\s]`)
 //     `no-user-stories` (advisory — does not block).
 //
 // Pure function over the document text.
-func LintRequirements(text string) []LintIssue {
-	var out []LintIssue
+func Requirements(text string) []Issue {
+	var out []Issue
 	if isEmpty(text) {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "empty-requirements",
 			Message:  "requirements.md is empty — fill in user stories + acceptance criteria",
@@ -32,7 +32,7 @@ func LintRequirements(text string) []LintIssue {
 		return out
 	}
 	if !EARSRe.MatchString(text) {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "no-ears",
 			Message: "no EARS acceptance criteria found — write at least one AC using " +
@@ -44,7 +44,7 @@ func LintRequirements(text string) []LintIssue {
 		// EARS regex matched only because of `<TODO:…>` placeholders inside
 		// template-generated AC lines. Flag the placeholder as the real
 		// problem so the author replaces it with real content.
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "placeholder-ac",
 			Message:  "acceptance criteria still contain <TODO…> placeholders — replace each <TODO:…> with real, measurable content",
@@ -53,7 +53,7 @@ func LintRequirements(text string) []LintIssue {
 		})
 	}
 	if !UserStoryRe.MatchString(text) {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityWarning,
 			Code:     "no-user-stories",
 			Message:  "no User Stories section found",

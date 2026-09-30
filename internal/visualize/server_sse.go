@@ -117,7 +117,7 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 	defer unsubscribe(ch)
 
 	// Initial ping so EventSource knows the stream is live.
-	fmt.Fprint(w, "event: ping\ndata: ok\n\n")
+	_, _ = fmt.Fprint(w, "event: ping\ndata: ok\n\n")
 	flusher.Flush()
 
 	// Start the watcher if not already running.

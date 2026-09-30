@@ -11,18 +11,18 @@ import (
 // initSpecSubcommands registers every spec lifecycle subcommand onto
 // the specCmd parent. Called from spec.go's init().
 func initSpecSubcommands(specCmd *cobra.Command) {
-	specCmd.AddCommand(specNewCmdFactory())     // new
-	specCmd.AddCommand(specGenerateCmd())       // generate
-	specCmd.AddCommand(specQuickCmd())          // quick
-	specCmd.AddCommand(specShowCmd())           // show
-	specCmd.AddCommand(specListCmd())           // list
-	specCmd.AddCommand(specApproveCmd())        // approve
-	specCmd.AddCommand(specStartCmd())          // start
-	specCmd.AddCommand(specCompleteCmd())       // complete
-	specCmd.AddCommand(specSyncCmd())           // sync
-	specCmd.AddCommand(specStatusCmd())         // status
-	specCmd.AddCommand(specNextCmd())           // next
-	specCmd.AddCommand(specAnalyzeCmd())        // analyze
+	specCmd.AddCommand(specNewCmdFactory()) // new
+	specCmd.AddCommand(specGenerateCmd())   // generate
+	specCmd.AddCommand(specQuickCmd())      // quick
+	specCmd.AddCommand(specShowCmd())       // show
+	specCmd.AddCommand(specListCmd())       // list
+	specCmd.AddCommand(specApproveCmd())    // approve
+	specCmd.AddCommand(specStartCmd())      // start
+	specCmd.AddCommand(specCompleteCmd())   // complete
+	specCmd.AddCommand(specSyncCmd())       // sync
+	specCmd.AddCommand(specStatusCmd())     // status
+	specCmd.AddCommand(specNextCmd())       // next
+	specCmd.AddCommand(specAnalyzeCmd())    // analyze
 }
 
 // specNewCmdFactory wraps newSpecCmd so the registration above is
@@ -52,7 +52,7 @@ func stubCmd(name, short string) *cobra.Command {
 	return &cobra.Command{
 		Use:   name,
 		Short: short,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.Printf("(子命令 %q 在 Wave 3/4 实现；当前为占位符)\n", name)
 			return nil
 		},

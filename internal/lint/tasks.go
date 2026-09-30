@@ -8,7 +8,7 @@ import (
 	"github.com/jingyu525/free-kiro/internal/taskgraph"
 )
 
-// LintTasks checks tasks.md for parseability, dangling/self deps, and
+// Tasks checks tasks.md for parseability, dangling/self deps, and
 // dependency cycles. The format itself is fixed by taskgraph.ParseTasks;
 // here we apply the quality rules on top of the parsed structure.
 //
@@ -19,11 +19,11 @@ import (
 //   - Task depending on itself → ERROR `self-dep` (blocks advance/approve).
 //   - Task depending on a non-existent id → ERROR `dangling-dep`.
 //   - Dependency cycle → ERROR `cycle` (blocks advance/approve).
-func LintTasks(text string) []LintIssue {
-	var out []LintIssue
+func Tasks(text string) []Issue {
+	var out []Issue
 	tasks := taskgraph.ParseTasks(text)
 	if len(tasks) == 0 {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityWarning,
 			Code:     "empty-tasks",
 			Message:  "tasks.md has no parseable tasks",
@@ -38,7 +38,7 @@ func LintTasks(text string) []LintIssue {
 	}
 	for _, t := range tasks {
 		if slices.Contains(t.Deps, t.ID) {
-			out = append(out, LintIssue{
+			out = append(out, Issue{
 				Severity: SeverityError,
 				Code:     "self-dep",
 				Message:  fmt.Sprintf("task #%d depends on itself", t.ID),
@@ -48,7 +48,7 @@ func LintTasks(text string) []LintIssue {
 		}
 		for _, d := range t.Deps {
 			if !ids[d] {
-				out = append(out, LintIssue{
+				out = append(out, Issue{
 					Severity: SeverityError,
 					Code:     "dangling-dep",
 					Message:  fmt.Sprintf("task #%d depends on missing #%d", t.ID, d),
@@ -60,7 +60,7 @@ func LintTasks(text string) []LintIssue {
 	}
 
 	if cycle := taskgraph.DetectCycle(tasks); cycle != nil {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "cycle",
 			Message:  "dependency cycle detected: " + formatCycle(cycle),

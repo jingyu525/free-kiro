@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -56,7 +55,7 @@ func skillPathCmd() *cobra.Command {
 		Long: `解析 ~/.{app}/skills/free-kiro/ 的绝对路径。
 
   $ free-kiro skill path --app claude-code`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			app, err := skill.ParseApp(appFlag)
 			if err != nil {
 				return exitWithError(err)
@@ -68,7 +67,7 @@ func skillPathCmd() *cobra.Command {
 			if err != nil {
 				return exitWithError(err)
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), skill.SkillsDir(app, home, "free-kiro"))
+			writeOutln(cmd.OutOrStdout(), skill.SkillsDir(app, home, "free-kiro"))
 			return nil
 		},
 	}
@@ -83,20 +82,20 @@ func skillVersionCmd() *cobra.Command {
 		Long: `对比已装 bundle 版本（从任意已装 app 读 skill.json）与 binary buildVersion。
 
   $ free-kiro skill version`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "binary:   %s\n", buildVersion)
+			writeOut(out, "binary:   %s\n", buildVersion)
 			home, err := skill.HomeDir()
 			if err != nil {
-				fmt.Fprintf(out, "(home: %s)\n", err)
+				writeOut(out, "(home: %s)\n", err)
 				return nil
 			}
 			states := skill.ShowInstalled(home, "free-kiro")
 			for _, s := range states {
 				if s.Installed {
-					fmt.Fprintf(out, "bundle:   %s (%s)\n", s.Version, s.App.Label())
+					writeOut(out, "bundle:   %s (%s)\n", s.Version, s.App.Label())
 					if s.FreeKiroMin != "" && s.FreeKiroMin != buildVersion && buildVersion != "dev" {
-						fmt.Fprintf(out, "  warn:   bundle requires free-kiro >= %s\n", s.FreeKiroMin)
+						writeOut(out, "  warn:   bundle requires free-kiro >= %s\n", s.FreeKiroMin)
 					}
 				}
 			}

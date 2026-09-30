@@ -20,6 +20,7 @@ import (
 //	free-kiro watch --command "free-kiro lint && echo ✓"
 //	free-kiro watch --debounce 1s             # longer quiet period
 //	free-kiro watch --root ./docs --command "make"
+//
 // presetCommands maps the --preset flag to a list of shell snippets.
 // Presets are convenience groupings; --command (repeatable) overrides.
 var presetCommands = map[string][]string{
@@ -68,7 +69,7 @@ func watchCmdFactory() *cobra.Command {
   --root ./docs      自定义路径
 
 退出 / 信号：SIGINT/SIGTERM 干净退出（Ctrl+C 不留 leak）。`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := signal.NotifyContext(cmd.Context(),
 				syscall.SIGINT, syscall.SIGTERM)
 			defer cancel()
@@ -95,10 +96,10 @@ func watchCmdFactory() *cobra.Command {
 			if err != nil {
 				return exitWithError(err)
 			}
-			fmt.Fprintf(cmd.OutOrStdout(),
+			writeOut(cmd.OutOrStdout(),
 				"free-kiro watch: running %d command(s) on .kiro/ changes.\n", len(cmds))
 			for _, c := range cmds {
-				fmt.Fprintf(cmd.OutOrStdout(), "  → %s\n", c)
+				writeOut(cmd.OutOrStdout(), "  → %s\n", c)
 			}
 			if err := w.Run(ctx); err != nil && ctx.Err() == nil {
 				return exitWithError(err)

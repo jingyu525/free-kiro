@@ -14,8 +14,8 @@ func TestParse(t *testing.T) {
 		want ID
 		err  bool
 	}{
-		{"", "", false},           // empty → auto-detect
-		{"auto", "", false},       // explicit auto
+		{"", "", false},     // empty → auto-detect
+		{"auto", "", false}, // explicit auto
 		{"claude-code", ClaudeCode, false},
 		{"Claude-Code", ClaudeCode, false}, // case-insensitive
 		{"claude", ClaudeCode, false},      // alias
@@ -140,7 +140,7 @@ func TestInstallHooks_Idempotent(t *testing.T) {
 	cfg := filepath.Join(home, ".claude", "settings.json")
 	data, _ := os.ReadFile(cfg)
 	var s settingsShape
-	json.Unmarshal(data, &s)
+	_ = json.Unmarshal(data, &s)
 	count := 0
 	for _, entries := range s.Hooks {
 		for _, e := range entries {
@@ -232,7 +232,7 @@ func TestWriteAgentsMD_EnglishVariant(t *testing.T) {
 
 func TestWriteAgentsMD_Idempotent(t *testing.T) {
 	dir := t.TempDir()
-	os.MkdirAll(filepath.Join(dir, ".kiro"), 0o755)
+	_ = os.MkdirAll(filepath.Join(dir, ".kiro"), 0o755)
 	first, _ := WriteAgentsMD(dir, "zh", false)
 	second, _ := WriteAgentsMD(dir, "zh", false)
 	if first != second {
@@ -243,7 +243,7 @@ func TestWriteAgentsMD_Idempotent(t *testing.T) {
 func TestUpsertHookEntry_StripsOldOnes(t *testing.T) {
 	marker := freeKiroMarker + " old"
 	existing := []HookSpec{
-		{Hooks: []HookIn{{Type: "command", Command: marker}}}, // free-kiro old
+		{Hooks: []HookIn{{Type: "command", Command: marker}}},      // free-kiro old
 		{Hooks: []HookIn{{Type: "command", Command: "user hook"}}}, // user-managed
 	}
 	fk := FreeKiroHookSpec{Event: "PreToolUse", Matcher: "Edit|Write", Command: "new"}

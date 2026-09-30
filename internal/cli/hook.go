@@ -40,7 +40,7 @@ func hookListCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "列出全部 hook",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			reg, err := newHookRegistry()
 			if err != nil {
 				return err
@@ -50,10 +50,10 @@ func hookListCmd() *cobra.Command {
 				return exitWithError(err)
 			}
 			if len(hs) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "(no hooks)")
+				writeOutln(cmd.OutOrStdout(), "(no hooks)")
 				return nil
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "%-20s %-16s %-10s %-7s %-5s ENABLED\n",
+			writeOut(cmd.OutOrStdout(), "%-20s %-16s %-10s %-7s %-5s ENABLED\n",
 				"ID", "EVENT", "FILTER", "TYPE", "TO")
 			for _, h := range hs {
 				filt := h.Glob
@@ -71,7 +71,7 @@ func hookListCmd() *cobra.Command {
 						to = fmt.Sprintf("%ds", *h.Timeout)
 					}
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "%-20s %-16s %-10s %-7s %-5s %v\n",
+				writeOut(cmd.OutOrStdout(), "%-20s %-16s %-10s %-7s %-5s %v\n",
 					h.ID, h.Event, filt, h.ActionType, to, h.Enabled)
 			}
 			return nil
@@ -107,7 +107,7 @@ func hookAddCmd() *cobra.Command {
   --description <text>       描述
   --timeout <seconds>        shell 命令超时（0 = 禁用超时）
   --disabled                 写入但默认 enabled=false`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			idFlag, _ := cmd.Flags().GetString("id")
 			if idFlag == "" {
 				return exitWithError(ferrors.NewUsage("hook.add", "--id is required"))
@@ -133,7 +133,7 @@ func hookAddCmd() *cobra.Command {
 			if err != nil {
 				return exitWithError(err)
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "added hook %q -> %s\n", h.ID, path)
+			writeOut(cmd.OutOrStdout(), "added hook %q -> %s\n", h.ID, path)
 			return nil
 		},
 	}
@@ -168,7 +168,7 @@ event context JSON；agent 动作若无 agent_fn 则返回占位符。
 				return exitWithError(err)
 			}
 			if len(results) == 0 {
-				fmt.Fprintf(cmd.OutOrStdout(),
+				writeOut(cmd.OutOrStdout(),
 					"(no hooks matched event=%q file=%q)\n", args[0], file)
 				return nil
 			}
@@ -179,10 +179,10 @@ event context JSON；agent 动作若无 agent_fn 则返回占位符。
 					status = "FAIL"
 					failed++
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "[%s] %s: %s\n",
+				writeOut(cmd.OutOrStdout(), "[%s] %s: %s\n",
 					status, r.ID, trimTrailing(r.Output))
 				if r.Error != "" {
-					fmt.Fprintf(cmd.OutOrStdout(), "    error: %s\n", r.Error)
+					writeOut(cmd.OutOrStdout(), "    error: %s\n", r.Error)
 				}
 			}
 			if failed > 0 {

@@ -46,7 +46,7 @@ func RunCmd(cmd *cobra.Command, _ []string, fn CmdFunc) error {
 				// diagnose without re-running with --debug. Full debug
 				// stack goes to stderr for `free-kiro doctor` / `report`
 				// to pick up.
-				fmt.Fprintf(cmd.ErrOrStderr(), "panic recovered: %v\n%s\n", r, debug.Stack())
+				writeOut(cmd.ErrOrStderr(), "panic recovered: %v\n%s\n", r, debug.Stack())
 				runErr = ferrors.New("cli.runCmd.panic",
 					fmt.Sprintf("panic in %s: %v", cmd.Name(), r))
 			}
@@ -60,5 +60,5 @@ func RunCmd(cmd *cobra.Command, _ []string, fn CmdFunc) error {
 // to the command's stdout. Centralised so the message format stays
 // consistent (used by spec new / spec_lifecycle / spec_quick).
 func NextHint(cmd *cobra.Command, format string, args ...any) {
-	fmt.Fprintf(cmd.OutOrStdout(), "next: "+format+"\n", args...)
+	writeOut(cmd.OutOrStdout(), "next: "+format+"\n", args...)
 }

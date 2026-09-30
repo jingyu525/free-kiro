@@ -49,8 +49,8 @@ func FetchBrowserHTML(ctx context.Context, rawURL string) (title, body string, e
 		return "", "", ferrors.Wrap("spec.from-browser", err, "create temp html")
 	}
 	tmpPath := tmp.Name()
-	tmp.Close()
-	defer os.Remove(tmpPath) // best-effort cleanup
+	_ = tmp.Close()
+	defer func() { _ = os.Remove(tmpPath) }() // best-effort cleanup
 
 	dump := exec.CommandContext(ctx, path, "get-html", "--out", tmpPath)
 	if out, err := dump.CombinedOutput(); err != nil {

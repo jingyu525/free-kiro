@@ -41,7 +41,8 @@ jobs:
           go tool cover -func=coverage.out | tail -1
 
   # Go 源码静态分析门禁（docs/CODING_STYLE.md + .golangci.yml）
-  # 失败阻断 merge；新代码必须 0 违规，历史欠账已在 .golangci.yml 中按目录豁免
+  # 失败阻断 merge；新代码必须 0 违规；
+  # enforce-golang-standards-zero-exemptions spec 落地后，全代码库零豁免。
   lint-go:
     runs-on: ubuntu-latest
     steps:

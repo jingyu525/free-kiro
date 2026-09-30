@@ -82,33 +82,40 @@ func NewLintFailureError(op, msg string) *LintFailureError {
 // the CLI layer may want to react to specifically. Use these instead of bare
 // New() when the failure mode is recognisable.
 
-// WorkspaceError: .kiro directory missing or unreadable. Exit 2.
+// WorkspaceError indicates the .kiro directory is missing or unreadable.
+// Maps to exit code 2.
 type WorkspaceError struct{ *KiroError }
 
-// TransitionError: illegal phase transition in the spec state machine. Exit 2.
+// TransitionError indicates an illegal phase transition in the spec
+// state machine. Maps to exit code 2.
 type TransitionError struct{ *KiroError }
 
-// LintGateError: lint gate blocked an advance/approve. Exit 2.
+// LintGateError indicates a lint gate blocked an advance/approve.
+// Maps to exit code 2.
 type LintGateError struct{ *KiroError }
 
-// LintFailureError: the `free-kiro lint [name]` subcommand found at
-// least one ERROR-severity issue. Exit 1 — matches the contract in
-// docs/CLI.md / errors.go header ("1 = lint gate failure"). Distinct
-// from LintGateError (exit 2) which is used when an upstream caller
-// like `spec approve` is blocked by lint and the operation itself
-// failed.
+// LintFailureError indicates the `free-kiro lint [name]` subcommand
+// found at least one ERROR-severity issue. Maps to exit code 1 —
+// matches the contract in docs/CLI.md / errors.go header
+// ("1 = lint gate failure"). Distinct from LintGateError (exit 2)
+// which is used when an upstream caller like `spec approve` is blocked
+// by lint and the operation itself failed.
 type LintFailureError struct{ *KiroError }
 
-// TaskGraphError: tasks.md has a cycle or other unparseable structure. Exit 1.
+// TaskGraphError indicates tasks.md has a cycle or other unparseable
+// structure. Maps to exit code 1.
 type TaskGraphError struct{ *KiroError }
 
-// SteeringError: steering doc malformed (bad frontmatter, invalid mode). Exit 2.
+// SteeringError indicates a steering doc is malformed (bad frontmatter,
+// invalid mode). Maps to exit code 2.
 type SteeringError struct{ *KiroError }
 
-// HookError: hook definition malformed or action failed. Exit 2.
+// HookError indicates a hook definition is malformed or its action
+// failed. Maps to exit code 2.
 type HookError struct{ *KiroError }
 
-// UsageError: caller misused the CLI (missing arg, bad name, etc.). Exit 3.
+// UsageError indicates the caller misused the CLI (missing arg, bad
+// name, etc.). Maps to exit code 3.
 type UsageError struct{ *KiroError }
 
 // ExitCode maps an error to the CLI exit code per the contract above.

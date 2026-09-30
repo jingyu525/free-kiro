@@ -110,8 +110,12 @@ func (s *Server) Shutdown() error {
 	return s.srv.Close()
 }
 
+// Addr returns the bound TCP address (host:port) of the dashboard
+// server. Useful for `openBrowser` and status output.
 func (s *Server) Addr() string { return s.srv.Addr }
 
+// URL returns the dashboard's full HTTP URL, suitable for opening in a
+// browser (e.g. `open http://127.0.0.1:PORT`).
 func (s *Server) URL() string {
 	addr := s.srv.Addr
 	return "http://" + portOnly(addr)

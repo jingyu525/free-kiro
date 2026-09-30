@@ -41,9 +41,12 @@ var templatesFS embed.FS
 // ID is the canonical name of a supported IDE.
 type ID string
 
+// Known IDE identifiers free-kiro can configure.
 const (
+	// ClaudeCode is the Anthropic Claude Code CLI.
 	ClaudeCode ID = "claude-code"
-	CodeBuddy  ID = "codebuddy"
+	// CodeBuddy is the Tencent CodeBuddy IDE.
+	CodeBuddy ID = "codebuddy"
 )
 
 // All returns the list of IDEs free-kiro knows how to configure.
@@ -67,15 +70,15 @@ func Parse(s string) (ID, error) {
 		" (supported: claude-code, codebuddy, none)")
 }
 
-// IDEInfo describes one supported IDE and where its settings live.
-type IDEInfo struct {
+// Info describes one supported IDE and where its settings live.
+type Info struct {
 	ID         ID
 	ConfigPath string // absolute path to settings.json
 	DirExists  bool
 }
 
 // DetectAll enumerates the supported IDEs.
-func DetectAll(home string) []IDEInfo {
+func DetectAll(home string) []Info {
 	if home == "" {
 		var err error
 		home, err = os.UserHomeDir()
@@ -83,12 +86,12 @@ func DetectAll(home string) []IDEInfo {
 			home = "."
 		}
 	}
-	out := make([]IDEInfo, 0, len(All()))
+	out := make([]Info, 0, len(All()))
 	for _, id := range All() {
 		cfg := configPathFor(id, home)
 		dir := filepath.Dir(cfg)
 		_, statErr := os.Stat(dir)
-		out = append(out, IDEInfo{ID: id, ConfigPath: cfg, DirExists: statErr == nil})
+		out = append(out, Info{ID: id, ConfigPath: cfg, DirExists: statErr == nil})
 	}
 	return out
 }

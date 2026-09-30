@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -32,7 +31,7 @@ func reportCmdFactory() *cobra.Command {
   - 每个 spec 的 phase / workflow / wave Mermaid 图
 
 适合贴到 GitHub PR description、Notion、Confluence。`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			holder, err := loadEngine()
 			if err != nil {
 				return err
@@ -53,7 +52,7 @@ func reportCmdFactory() *cobra.Command {
 				// file already went to stdout; don't double-print.
 				return nil
 			}
-			fmt.Fprintf(cmd.OutOrStdout(),
+			writeOut(cmd.OutOrStdout(),
 				"wrote report (%d specs, %d drift) to %s\n",
 				len(r.Specs), driftCount(r.Specs), path)
 			return nil

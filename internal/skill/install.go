@@ -81,7 +81,7 @@ func InstallOne(ctx context.Context, opts InstallOptions) InstallResult {
 		// Only remove dirs we created (temp extraction dirs). When
 		// Source is a local path, resolveBundle returns it as-is — it
 		// belongs to the user and must not be deleted.
-		defer os.RemoveAll(bundleDir)
+		defer func() { _ = os.RemoveAll(bundleDir) }()
 	}
 
 	// Verify sha256 if manifest has them populated.
@@ -160,7 +160,7 @@ func resolveBundle(ctx context.Context, opts InstallOptions) (string, bool, erro
 			return "", false, err
 		}
 		if err := DownloadAndExtract(ctx, version, dest); err != nil {
-			os.RemoveAll(dest)
+			_ = os.RemoveAll(dest)
 			return "", false, err
 		}
 		return dest, true, nil
@@ -173,11 +173,11 @@ func resolveBundle(ctx context.Context, opts InstallOptions) (string, bool, erro
 		}
 		body, err := upgrade.Download(ctx, opts.Source)
 		if err != nil {
-			os.RemoveAll(dest)
+			_ = os.RemoveAll(dest)
 			return "", false, err
 		}
 		if err := unzip(body, dest); err != nil {
-			os.RemoveAll(dest)
+			_ = os.RemoveAll(dest)
 			return "", false, ferrors.Wrap("skill.install", err, "extract "+opts.Source)
 		}
 		return dest, true, nil
@@ -230,12 +230,12 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer in.Close()
+	defer func() { _ = in.Close() }()
 	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 	_, err = io.Copy(out, in)
 	return err
 }

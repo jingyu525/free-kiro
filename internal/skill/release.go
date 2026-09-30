@@ -158,16 +158,16 @@ func unzip(data []byte, dest string) error {
 		}
 		dst, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 		if err != nil {
-			src.Close()
+			_ = src.Close()
 			return err
 		}
 		if _, err := io.Copy(dst, src); err != nil {
-			src.Close()
-			dst.Close()
+			_ = src.Close()
+			_ = dst.Close()
 			return err
 		}
-		src.Close()
-		dst.Close()
+		_ = src.Close()
+		_ = dst.Close()
 	}
 	return nil
 }

@@ -23,11 +23,16 @@ import (
 // Each app has its own `~/.{app}/skills/<name>/` directory layout.
 type App string
 
+// Skill-app identifiers that the skill bundle can target.
 const (
+	// AppClaudeCode is the Anthropic Claude Code CLI.
 	AppClaudeCode App = "claude-code"
-	AppOpenCode   App = "opencode"
-	AppCodex      App = "codex"
-	AppCodeBuddy  App = "codebuddy"
+	// AppOpenCode is the opencode CLI.
+	AppOpenCode App = "opencode"
+	// AppCodex is the OpenAI Codex CLI.
+	AppCodex App = "codex"
+	// AppCodeBuddy is the Tencent CodeBuddy IDE.
+	AppCodeBuddy App = "codebuddy"
 )
 
 // AllApps returns every supported App. Used for `--app all` and for

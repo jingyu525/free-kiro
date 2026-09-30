@@ -17,8 +17,8 @@ func TestParseGitHubIssueURL_FullURL(t *testing.T) {
 		{"https://github.com/jingyu525/free-kiro/issues/42#issuecomment-1", "jingyu525", "free-kiro", 42, false},
 		{"https://www.github.com/jingyu525/free-kiro/issues/7", "jingyu525", "free-kiro", 7, false},
 		{"https://github.com/jingyu525/free-kiro/issues/1/anything", "jingyu525", "free-kiro", 1, false},
-		{"https://github.com/jingyu525/free-kiro/pull/1", "", "", 0, true},      // PR is not an issue
-		{"https://gitlab.com/foo/bar/issues/1", "", "", 0, true},              // non-github host
+		{"https://github.com/jingyu525/free-kiro/pull/1", "", "", 0, true}, // PR is not an issue
+		{"https://gitlab.com/foo/bar/issues/1", "", "", 0, true},           // non-github host
 		{"not a url at all", "", "", 0, true},
 		{"https://github.com/jingyu525/free-kiro/issues/abc", "", "", 0, true}, // non-numeric
 	}
@@ -69,7 +69,10 @@ func TestSlugFromText(t *testing.T) {
 			t.Errorf("slugFromText(%q) = %q (len=%d, > 40)", c.in, got, len(got))
 		}
 		for _, r := range got {
-			if !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-') {
+			isAlpha := r >= 'a' && r <= 'z'
+			isDigit := r >= '0' && r <= '9'
+			isDash := r == '-'
+			if !isAlpha && !isDigit && !isDash {
 				t.Errorf("slugFromText(%q) = %q contains %q (not kebab)", c.in, got, r)
 			}
 		}

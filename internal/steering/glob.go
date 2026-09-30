@@ -6,10 +6,10 @@ import "regexp"
 //
 // Supported syntax (linear scan → single anchored regex, no recursion):
 //
-//	*    matches any sequence of non-`/` characters
-//	?    matches a single non-`/` character
-//	**   matches any sequence of characters including `/`
-//	      (used to mean "across path segments")
+//   - matches any sequence of non-`/` characters
+//     ?    matches a single non-`/` character
+//     **   matches any sequence of characters including `/`
+//     (used to mean "across path segments")
 //
 // Everything else is literal.
 func GlobMatch(pattern, path string) bool {

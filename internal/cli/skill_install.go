@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -42,7 +41,7 @@ func skillInstallCmd() *cobra.Command {
   0   全部成功（含 already-current）
   1   部分 / 全部 app 失败
   2   engine error`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(cmd.Context(), 2*time.Minute)
 			defer cancel()
 			return runSkillInstall(ctx, cmd, appFlag, from, version, dryRun, force)
@@ -62,19 +61,19 @@ func runSkillInstall(ctx context.Context, cmd *cobra.Command, appFlag, from, ver
 		return exitWithError(err)
 	}
 	out := cmd.OutOrStdout()
-	fmt.Fprintln(out, "Installing free-kiro SKILL.md bundle...")
-	fmt.Fprintf(out, "  source:  %s\n", sourceLabel(from, version))
+	writeOutln(out, "Installing free-kiro SKILL.md bundle...")
+	writeOut(out, "  source:  %s\n", sourceLabel(from, version))
 	labels := make([]string, len(targets))
 	for i, a := range targets {
 		labels[i] = a.Label()
 	}
-	fmt.Fprintf(out, "  target:  %s\n", strings.Join(labels, ", "))
+	writeOut(out, "  target:  %s\n", strings.Join(labels, ", "))
 	if dryRun {
-		fmt.Fprintln(out, "  mode:    dry-run (no writes)")
+		writeOutln(out, "  mode:    dry-run (no writes)")
 	} else {
-		fmt.Fprintln(out, "  mode:    write")
+		writeOutln(out, "  mode:    write")
 	}
-	fmt.Fprintln(out)
+	writeOutln(out)
 
 	anyErr := false
 	for _, app := range targets {
@@ -88,21 +87,21 @@ func runSkillInstall(ctx context.Context, cmd *cobra.Command, appFlag, from, ver
 			Force:   force,
 		})
 		if res.Err != nil {
-			fmt.Fprintf(out, "  ✗ %-12s %s\n", app.Label(), res.Err)
+			writeOut(out, "  ✗ %-12s %s\n", app.Label(), res.Err)
 			anyErr = true
 			continue
 		}
-		fmt.Fprintf(out, "  ✓ %-12s %-15s %s\n", app.Label(), res.Status, res.SkillsDir)
+		writeOut(out, "  ✓ %-12s %-15s %s\n", app.Label(), res.Status, res.SkillsDir)
 		if res.Status != "dry-run" && res.Status != "already-current" {
-			fmt.Fprintf(out, "               version=%s files=%d sha256=%v\n",
+			writeOut(out, "               version=%s files=%d sha256=%v\n",
 				res.Version, res.FilesWritten, res.SHA256OK)
 		}
 	}
-	fmt.Fprintln(out)
+	writeOutln(out)
 	if anyErr {
 		return exitWithError(ferrors.New("skill.install", "one or more apps failed; see above"))
 	}
-	fmt.Fprintln(out, "Done. Verify with: free-kiro skill show")
+	writeOutln(out, "Done. Verify with: free-kiro skill show")
 	return nil
 }
 
@@ -115,7 +114,7 @@ func skillUninstallCmd() *cobra.Command {
 
   $ free-kiro skill uninstall --app claude-code
   $ free-kiro skill uninstall --app all`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			targets, home, err := targetsAndHome(appFlag)
 			if err != nil {
 				return exitWithError(err)
@@ -124,13 +123,13 @@ func skillUninstallCmd() *cobra.Command {
 			for _, app := range targets {
 				removed, err := skill.UninstallOne(app, home, "free-kiro")
 				if err != nil {
-					fmt.Fprintf(out, "  ✗ %-12s %s\n", app.Label(), err)
+					writeOut(out, "  ✗ %-12s %s\n", app.Label(), err)
 					return exitWithError(err)
 				}
 				if len(removed) == 0 {
-					fmt.Fprintf(out, "  · %-12s (not installed)\n", app.Label())
+					writeOut(out, "  · %-12s (not installed)\n", app.Label())
 				} else {
-					fmt.Fprintf(out, "  ✓ %-12s removed %s\n", app.Label(), removed[0])
+					writeOut(out, "  ✓ %-12s removed %s\n", app.Label(), removed[0])
 				}
 			}
 			return nil

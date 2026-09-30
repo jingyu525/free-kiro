@@ -16,14 +16,23 @@ import (
 // changing them is a breaking change.
 type Phase string
 
+// Spec lifecycle phases. See .kiro/specs/<name>/workflow.md for the
+// full state machine and allowed transitions.
 const (
-	PhaseDraft        Phase = "draft"
+	// PhaseDraft is the initial state after `spec new`.
+	PhaseDraft Phase = "draft"
+	// PhaseRequirements is reached after `spec generate requirements`.
 	PhaseRequirements Phase = "requirements"
-	PhaseDesign       Phase = "design"
-	PhaseTasks        Phase = "tasks"
-	PhaseApproved     Phase = "approved"
+	// PhaseDesign is reached after `spec generate design`.
+	PhaseDesign Phase = "design"
+	// PhaseTasks is reached after `spec generate tasks`.
+	PhaseTasks Phase = "tasks"
+	// PhaseApproved is reached after `spec approve`.
+	PhaseApproved Phase = "approved"
+	// PhaseImplementing is reached after `spec start`.
 	PhaseImplementing Phase = "implementing"
-	PhaseDone         Phase = "done"
+	// PhaseDone is reached after `spec complete`.
+	PhaseDone Phase = "done"
 )
 
 // Order returns the linear ordering of phases for display purposes. The

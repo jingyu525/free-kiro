@@ -13,7 +13,7 @@ import (
 func TestFetchPRD_HTML(t *testing.T) {
 	// Tiny HTML page with the standard noise a real PRD has: scripts,
 	// styles, nav, footer. Verifies our walker drops them.
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write([]byte(`<!DOCTYPE html>
 <html>
@@ -60,7 +60,7 @@ func TestFetchPRD_HTML(t *testing.T) {
 }
 
 func TestFetchPRD_Markdown(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/markdown")
 		_, _ = w.Write([]byte("# Onboarding Flow\n\nWe need a 3-step wizard.\n\n- Step 1\n- Step 2\n- Step 3\n"))
 	}))
@@ -103,7 +103,7 @@ func TestFetchPRD_BadScheme(t *testing.T) {
 
 func TestFetchPRD_TruncatesLargeBodies(t *testing.T) {
 	// Build a huge page; verify truncation kicks in.
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		body := "<html><body><p>" + strings.Repeat("word ", 20000) + "</p></body></html>"
 		_, _ = w.Write([]byte(body))

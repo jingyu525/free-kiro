@@ -57,7 +57,7 @@ IDE hook 配置示例（写到 ~/.claude/settings.json 或项目 settings.json�
 
 func lintOne(ws *workspace.Workspace, name string) error {
 	dir := ws.SpecDir(name)
-	issues := lint.LintSpec(dir)
+	issues := lint.Spec(dir)
 	printIssues(name, issues)
 	return gateExitCode(issues)
 }
@@ -66,7 +66,7 @@ func lintAll(ws *workspace.Workspace, cmd *cobra.Command) error {
 	specsDir := ws.SpecsDir()
 	entries, err := readDir(specsDir)
 	if err != nil {
-		fmt.Fprintln(cmd.OutOrStdout(), "(no specs to lint)")
+		writeOutln(cmd.OutOrStdout(), "(no specs to lint)")
 		return nil
 	}
 	failed := 0
@@ -76,7 +76,7 @@ func lintAll(ws *workspace.Workspace, cmd *cobra.Command) error {
 		}
 		name := ent.Name()
 		dir := filepath.Join(specsDir, name)
-		issues := lint.LintSpec(dir)
+		issues := lint.Spec(dir)
 		printIssues(name, issues)
 		if anyError(issues) {
 			failed++
@@ -92,7 +92,7 @@ func lintAll(ws *workspace.Workspace, cmd *cobra.Command) error {
 	return nil
 }
 
-func printIssues(name string, issues []lint.LintIssue) {
+func printIssues(name string, issues []lint.Issue) {
 	if len(issues) == 0 {
 		fmt.Printf("%s: OK\n", name)
 		return
@@ -111,7 +111,7 @@ func printIssues(name string, issues []lint.LintIssue) {
 	}
 }
 
-func anyError(issues []lint.LintIssue) bool {
+func anyError(issues []lint.Issue) bool {
 	for _, i := range issues {
 		if i.Severity == lint.SeverityError {
 			return true
@@ -124,7 +124,7 @@ func anyError(issues []lint.LintIssue) bool {
 // ERROR-severity issue is present, 0 otherwise. Used by `lint <name>`.
 // Uses LintFailureError so main.go's ExitCode maps it to exit 1
 // (matches the contract in docs/CLI.md + the smoke test).
-func gateExitCode(issues []lint.LintIssue) error {
+func gateExitCode(issues []lint.Issue) error {
 	if anyError(issues) {
 		return ferrors.NewLintFailureError("lint.one", "lint gate failed")
 	}

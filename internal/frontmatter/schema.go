@@ -10,20 +10,28 @@ import (
 // check against. Untyped fields use FieldTypeAny (the zero value).
 type FieldType string
 
+// FieldType values drive how the frontmatter parser coerces raw text
+// into Go values when validating a Schema.
 const (
-	FieldTypeAny      FieldType = ""           // accept any string value
-	FieldTypeString   FieldType = "string"     // default; no coercion
-	FieldTypeInt      FieldType = "int"        // coerces "42" → 42
-	FieldTypeBool     FieldType = "bool"       // coerces "true"/"false"
-	FieldTypeStringer FieldType = "stringer"   // alias of string, future-proof
-	FieldTypeList     FieldType = "list"       // comma-separated → []string
+	// FieldTypeAny accepts any string value; the zero value.
+	FieldTypeAny FieldType = ""
+	// FieldTypeString is the default; no coercion.
+	FieldTypeString FieldType = "string"
+	// FieldTypeInt coerces "42" → 42.
+	FieldTypeInt FieldType = "int"
+	// FieldTypeBool coerces "true"/"false".
+	FieldTypeBool FieldType = "bool"
+	// FieldTypeStringer is an alias of string, future-proof.
+	FieldTypeStringer FieldType = "stringer"
+	// FieldTypeList converts comma-separated → []string.
+	FieldTypeList FieldType = "list"
 )
 
 // FieldRule constrains one key in a Schema.
 type FieldRule struct {
-	Required bool        // key MUST be present in fm
-	Type     FieldType   // expected value type (coerce on Validate)
-	Allowed  []string    // if non-empty, value MUST equal one of these
+	Required bool      // key MUST be present in fm
+	Type     FieldType // expected value type (coerce on Validate)
+	Allowed  []string  // if non-empty, value MUST equal one of these
 }
 
 // Schema maps key → FieldRule. Iterate over a Schema to find unknown keys

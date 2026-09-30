@@ -69,7 +69,7 @@ func TestRunCmd_PanicRecover(t *testing.T) {
 					panic(r) // re-panic so the outer recover catches it
 				}
 			}()
-			fn(context.Background(), eng, cmd)
+			_ = fn(context.Background(), eng, cmd)
 		}
 		wrapped()
 	}()

@@ -3,7 +3,6 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -27,7 +26,7 @@ missing-* 警告不算 ERROR，不拦截。`,
 				if err != nil {
 					return exitWithError(err)
 				}
-				fmt.Fprintf(cmd.OutOrStdout(),
+				writeOut(cmd.OutOrStdout(),
 					"approved spec %q; baseline captured for drift detection\n", meta.Name)
 				return nil
 			})
@@ -47,7 +46,7 @@ func specStartCmd() *cobra.Command {
 				if err != nil {
 					return exitWithError(err)
 				}
-				fmt.Fprintf(cmd.OutOrStdout(),
+				writeOut(cmd.OutOrStdout(),
 					"started implementation of spec %q (phase: %s)\n", meta.Name, meta.Phase)
 				NextHint(cmd, "free-kiro spec complete %s  (once all tasks are done)", meta.Name)
 				return nil
@@ -68,7 +67,7 @@ func specCompleteCmd() *cobra.Command {
 				if err != nil {
 					return exitWithError(err)
 				}
-				fmt.Fprintf(cmd.OutOrStdout(),
+				writeOut(cmd.OutOrStdout(),
 					"completed spec %q (phase: %s)\n", meta.Name, meta.Phase)
 				return nil
 			})
@@ -89,7 +88,7 @@ func specSyncCmd() *cobra.Command {
 				if _, err := eng.Sync(args[0]); err != nil {
 					return exitWithError(err)
 				}
-				fmt.Fprintf(cmd.OutOrStdout(),
+				writeOut(cmd.OutOrStdout(),
 					"re-baselined spec %q (drift comparison reset to current docs)\n", args[0])
 				return nil
 			})
@@ -120,7 +119,7 @@ func specStatusCmd() *cobra.Command {
 					if err != nil {
 						return exitWithError(err)
 					}
-					fmt.Fprintln(cmd.OutOrStdout(), string(out))
+					writeOutln(cmd.OutOrStdout(), string(out))
 				case asGraph:
 					renderMermaidStatus(cmd.OutOrStdout(), eng, args[0], status)
 				default:
@@ -154,7 +153,7 @@ func specNextCmd() *cobra.Command {
 					return exitWithError(err)
 				}
 				out, _ := json.MarshalIndent(action, "", "  ")
-				fmt.Fprintln(cmd.OutOrStdout(), string(out))
+				writeOutln(cmd.OutOrStdout(), string(out))
 				return nil
 			})
 		},
@@ -185,11 +184,11 @@ func specAnalyzeCmd() *cobra.Command {
 			findings := eng.Analyze(args[0])
 			if asJSON {
 				out, _ := json.MarshalIndent(findings, "", "  ")
-				fmt.Fprintln(cmd.OutOrStdout(), string(out))
+				writeOutln(cmd.OutOrStdout(), string(out))
 				return nil
 			}
 			if len(findings) == 0 {
-				fmt.Fprintf(cmd.OutOrStdout(), "%s: no consistency findings\n", args[0])
+				writeOut(cmd.OutOrStdout(), "%s: no consistency findings\n", args[0])
 				return nil
 			}
 			// Severity histogram.
@@ -197,13 +196,13 @@ func specAnalyzeCmd() *cobra.Command {
 			for _, f := range findings {
 				hist[f.Severity]++
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "%s: %d finding(s)\n", args[0], len(findings))
+			writeOut(cmd.OutOrStdout(), "%s: %d finding(s)\n", args[0], len(findings))
 			for _, f := range findings {
 				loc := ""
 				if f.Location != "" {
 					loc = " [" + f.Location + "]"
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "  (%s) %s%s: %s\n",
+				writeOut(cmd.OutOrStdout(), "  (%s) %s%s: %s\n",
 					f.Severity, f.Code, loc, f.Message)
 			}
 			return nil

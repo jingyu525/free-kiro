@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -52,7 +51,7 @@ func upgradeCmdFactory() *cobra.Command {
   0   已是最新（或升级成功）
   1   网络 / SHA256 / IO 失败
   2   当前 binary 路径无法解析`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(cmd.Context(), 2*time.Minute)
 			defer cancel()
 			plan, err := upgrade.Check(ctx, buildVersion)
@@ -71,7 +70,7 @@ func upgradeCmdFactory() *cobra.Command {
 			}
 			// On POSIX, Apply re-execs and we never reach this line.
 			// On Windows, instruct the user to restart.
-			fmt.Fprintln(cmd.OutOrStdout(),
+			writeOutln(cmd.OutOrStdout(),
 				"upgrade installed. Please re-run `free-kiro` to use the new version.")
 			return nil
 		},
@@ -83,16 +82,16 @@ func upgradeCmdFactory() *cobra.Command {
 
 func printPlan(cmd *cobra.Command, p *upgrade.Plan) {
 	out := cmd.OutOrStdout()
-	fmt.Fprintf(out, "current: %s\n", displayVersion(p.Current))
-	fmt.Fprintf(out, "latest:  v%s\n", p.Latest)
+	writeOut(out, "current: %s\n", displayVersion(p.Current))
+	writeOut(out, "latest:  v%s\n", p.Latest)
 	if p.Same {
-		fmt.Fprintln(out, "status:  already on the latest version")
+		writeOutln(out, "status:  already on the latest version")
 	} else {
-		fmt.Fprintln(out, "status:  update available")
+		writeOutln(out, "status:  update available")
 	}
-	fmt.Fprintf(out, "target:  %s\n", p.Target)
+	writeOut(out, "target:  %s\n", p.Target)
 	if !p.Same {
-		fmt.Fprintf(out, "download: %s\n", p.Download)
+		writeOut(out, "download: %s\n", p.Download)
 	}
 }
 

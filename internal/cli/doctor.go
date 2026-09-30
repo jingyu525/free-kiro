@@ -11,6 +11,8 @@ import (
 	"github.com/jingyu525/free-kiro/internal/workspace"
 )
 
+// GitHubRepo is the GitHub owner/repo slug for this project. Used by
+// `upgrade` and `doctor` to look up releases / report issues.
 const GitHubRepo = "jingyu525/free-kiro"
 
 // doctorCmd runs a series of self-checks and prints a human-readable
@@ -46,7 +48,7 @@ func doctorCmdFactory() *cobra.Command {
 --strict 启用更严格检查（如有警告也返回 exit 1）。
 --verbose 报告所有受支持的 IDE（即使本机未安装也显示）。
 `,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			rep := runDoctorChecks(cmd.OutOrStdout(), verbose)
 			if rep.FatalCount > 0 {
 				// Fatal issues map to engine error (exit 2); matches the
@@ -214,13 +216,13 @@ func runDoctorChecks(w io.Writer, verbose bool) doctorReport {
 	}
 
 	// Render.
-	w.Write([]byte("free-kiro doctor\n"))
-	w.Write([]byte("================\n\n"))
+	_, _ = w.Write([]byte("free-kiro doctor\n"))
+	_, _ = w.Write([]byte("================\n\n"))
 	for _, issue := range rep.Issues {
-		w.Write([]byte(issue.render()))
-		w.Write([]byte("\n\n"))
+		_, _ = w.Write([]byte(issue.render()))
+		_, _ = w.Write([]byte("\n\n"))
 	}
-	fmt.Fprintf(w, "summary: %d ok, %d info, %d warn, %d fatal\n",
+	writeOut(w, "summary: %d ok, %d info, %d warn, %d fatal\n",
 		rep.OK, rep.InfoCount, rep.WarnCount, rep.FatalCount)
 
 	return rep

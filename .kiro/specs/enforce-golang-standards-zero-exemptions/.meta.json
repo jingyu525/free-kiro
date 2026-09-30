@@ -1,0 +1,17 @@
+{
+  "name": "enforce-golang-standards-zero-exemptions",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "该项目全面 golang-coding-standards，零豁免：移除 .golangci.yml 中对 internal/(spec|lint|steering|hooks|skill|upgrade|workspace|ide) 的 exclude-rule，让 staticcheck/errcheck/revive 在全代码库生效；逐包清理历史欠账（~327 处 lint 问题：192 errcheck + 86 gofmt + 47 revive + 2 staticcheck）；同步迁移 .golangci.yml 从 v1 到 v2 schema（formatters 拆分 + output.formats 由 slice 改 map）；CI 阻断从软门禁切换为硬门禁（continue-on-error: true 移除）。",
+  "created_at": "2026-09-30T00:51:42Z",
+  "updated_at": "2026-09-30T01:33:16Z",
+  "baseline": {
+    "ac_count": 3,
+    "design_sections": 6,
+    "task_count": 14
+  }
+}

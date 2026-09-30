@@ -8,9 +8,9 @@ import (
 	"github.com/jingyu525/free-kiro/internal/models"
 )
 
-// LintSpec runs every rule over one spec's documents. Missing documents
+// Spec runs every rule over one spec's documents. Missing documents
 // are flagged as ERROR / WARNING depending on whether the spec was
-// expected to have written them yet (see LintGate for the gating subset).
+// expected to have written them yet (see Gate for the gating subset).
 //
 // The branch on spec_type picks the right rule for the analysis doc:
 // feature specs use requirements.md + EARS; bugfix specs use bugfix.md
@@ -18,8 +18,8 @@ import (
 //
 // Returns issues in a deterministic order: type-dependent doc first, then
 // tasks.md, then design.md warnings.
-func LintSpec(specDir string) []LintIssue {
-	var out []LintIssue
+func Spec(specDir string) []Issue {
+	var out []Issue
 	specType := SpecTypeFor(specDir)
 	firstDoc := models.FirstPlanningDoc(specType)
 
@@ -27,14 +27,14 @@ func LintSpec(specDir string) []LintIssue {
 	if data, err := os.ReadFile(firstPath); err == nil {
 		text := string(data)
 		if specType == models.SpecTypeBugfix {
-			out = append(out, LintBugfix(text)...)
+			out = append(out, Bugfix(text)...)
 		} else {
-			out = append(out, LintRequirements(text)...)
+			out = append(out, Requirements(text)...)
 		}
 	} else {
 		// Missing-doc findings use code `missing-<stem>` so the gate can
-		// filter them out (see LintGate).
-		out = append(out, LintIssue{
+		// filter them out (see Gate).
+		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "missing-" + stem(firstDoc),
 			Message:  firstDoc + " not found",
@@ -44,9 +44,9 @@ func LintSpec(specDir string) []LintIssue {
 
 	tasksPath := filepath.Join(specDir, "tasks.md")
 	if data, err := os.ReadFile(tasksPath); err == nil {
-		out = append(out, LintTasks(string(data))...)
+		out = append(out, Tasks(string(data))...)
 	} else {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityWarning,
 			Code:     "missing-tasks",
 			Message:  "tasks.md not found",
@@ -56,7 +56,7 @@ func LintSpec(specDir string) []LintIssue {
 
 	designPath := filepath.Join(specDir, "design.md")
 	if _, err := os.Stat(designPath); os.IsNotExist(err) {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityWarning,
 			Code:     "missing-design",
 			Message:  "design.md not found (spec may be incomplete)",
@@ -67,14 +67,14 @@ func LintSpec(specDir string) []LintIssue {
 	return out
 }
 
-// LintGate returns the ERROR findings that should block advance/approve.
+// Gate returns the ERROR findings that should block advance/approve.
 // "missing-*" findings (a phase the author has not written yet) are
 // excluded from the gate — you cannot be failed for a document that does
 // not exist. This lets the very first `generate` (nothing written yet)
 // through while still blocking an advance off a malformed document.
-func LintGate(specDir string) []LintIssue {
-	var gate []LintIssue
-	for _, i := range LintSpec(specDir) {
+func Gate(specDir string) []Issue {
+	var gate []Issue
+	for _, i := range Spec(specDir) {
 		if i.Severity != SeverityError {
 			continue
 		}
@@ -88,7 +88,7 @@ func LintGate(specDir string) []LintIssue {
 
 // isMissingCode reports whether a lint code marks a missing-doc finding.
 // `missing-` findings are excluded from the advance/approve gate (see
-// LintGate) — you cannot be failed for a document that does not exist.
+// Gate) — you cannot be failed for a document that does not exist.
 func isMissingCode(code string) bool {
 	return strings.HasPrefix(code, "missing-")
 }

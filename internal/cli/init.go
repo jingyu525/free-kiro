@@ -42,7 +42,7 @@ var initCmd = &cobra.Command{
 
 若目录已存在 .kiro，重复运行是幂等的（不会覆盖已有 steering / settings）。
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		path, _ := cmd.Flags().GetString("path")
 		ideTarget, _ := cmd.Flags().GetString("ide")
 		lang, _ := cmd.Flags().GetString("lang")
@@ -62,13 +62,13 @@ var initCmd = &cobra.Command{
 				return exitWithError(err)
 			}
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "已初始化 free-kiro 工作区于 %s\n", ws.KiroDir())
-		fmt.Fprintln(cmd.OutOrStdout(), "已写入示例 steering：product.md、structure.md、tech.md")
+		writeOut(cmd.OutOrStdout(), "已初始化 free-kiro 工作区于 %s\n", ws.KiroDir())
+		writeOutln(cmd.OutOrStdout(), "已写入示例 steering：product.md、structure.md、tech.md")
 
 		// IDE integration (v0.2.0+).
 		if err := runIdeInit(cmd, ideTarget, ws.Root(), lang, overwrite); err != nil {
 			// IDE failure is non-fatal — the workspace is still usable.
-			fmt.Fprintf(cmd.OutOrStdout(),
+			writeOut(cmd.OutOrStdout(),
 				"⚠️  IDE 配置失败：%v\n   workspace 已就绪，可后续运行 `free-kiro doctor` 排查\n",
 				err)
 		}
@@ -93,7 +93,7 @@ func runIdeInit(cmd *cobra.Command, target, workspaceRoot, lang string, overwrit
 	if err != nil {
 		return ferrors.Wrap("init.writeAgents", err, "write AGENTS.md")
 	}
-	fmt.Fprintf(cmd.OutOrStdout(), "已写入 %s\n", agentsPath)
+	writeOut(cmd.OutOrStdout(), "已写入 %s\n", agentsPath)
 
 	// Resolve "auto" / "none" / explicit.
 	resolved, err := resolveIdeTarget(target)
@@ -101,7 +101,7 @@ func runIdeInit(cmd *cobra.Command, target, workspaceRoot, lang string, overwrit
 		return err
 	}
 	if resolved == nil {
-		fmt.Fprintln(cmd.OutOrStdout(), "已跳过 IDE 配置（--ide none）")
+		writeOutln(cmd.OutOrStdout(), "已跳过 IDE 配置（--ide none）")
 		return nil
 	}
 
@@ -116,7 +116,7 @@ func runIdeInit(cmd *cobra.Command, target, workspaceRoot, lang string, overwrit
 		if err != nil {
 			return ferrors.Wrap("init.installHooks", err, fmt.Sprintf("install hooks for %s", target))
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "✓ %s\n", note)
+		writeOut(cmd.OutOrStdout(), "✓ %s\n", note)
 		_ = path
 	}
 	return nil
@@ -146,7 +146,7 @@ func resolveIdeTarget(target string) ([]ide.ID, error) {
 		}
 	}
 	if len(present) == 0 {
-		fmt.Fprintf(os.Stderr,
+		writeOut(os.Stderr,
 			"⚠️  未检测到 Claude Code 或 CodeBuddy 目录；跳过 IDE 配置\n"+
 				"   安装其中一个并重跑 `free-kiro init --ide auto`，或显式指定 --ide <name>\n")
 		return nil, nil
@@ -156,9 +156,9 @@ func resolveIdeTarget(target string) ([]ide.ID, error) {
 
 func sampleSteering() map[string]string {
 	return map[string]string{
-		"product.md": "---\nmode: always\ndescription: 这个产品的目标、核心能力与边界\n---\n# Product\n\n用 1-3 段说明产品的目标和必须提供的核心能力。\n本文档作为 always 上下文注入到每次生成中。\n",
+		"product.md":   "---\nmode: always\ndescription: 这个产品的目标、核心能力与边界\n---\n# Product\n\n用 1-3 段说明产品的目标和必须提供的核心能力。\n本文档作为 always 上下文注入到每次生成中。\n",
 		"structure.md": "---\nmode: always\ndescription: 代码组织与架构约定\n---\n# Structure\n\n- 模块保持小且单一职责。\n- IO 隔离在显式适配器后面。\n- 除非有明确理由，优先使用标准库而非新增依赖。\n",
-		"tech.md": "---\nmode: auto\ndescription: Go 项目技术栈与开发规范\n---\n# Tech\n\n- 语言：Go 1.22+。\n- 不引入非必要第三方依赖。\n- 测试用标准库 testing 包，断言用 testify。\n",
+		"tech.md":      "---\nmode: auto\ndescription: Go 项目技术栈与开发规范\n---\n# Tech\n\n- 语言：Go 1.22+。\n- 不引入非必要第三方依赖。\n- 测试用标准库 testing 包，断言用 testify。\n",
 	}
 }
 

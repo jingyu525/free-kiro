@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -16,14 +15,14 @@ import (
 // Drift signals are surfaced prominently at the top — they're the
 // reason most users run `status`.
 func renderHumanStatus(w io.Writer, name string, s map[string]any) {
-	fmt.Fprintf(w, "%s\n", name)
-	fmt.Fprintf(w, "  phase:      %s\n", s["phase"])
-	fmt.Fprintf(w, "  workflow:   %s\n", s["workflow"])
-	fmt.Fprintf(w, "  spec_type:  %s\n", s["spec_type"])
+	writeOut(w, "%s\n", name)
+	writeOut(w, "  phase:      %s\n", s["phase"])
+	writeOut(w, "  workflow:   %s\n", s["workflow"])
+	writeOut(w, "  spec_type:  %s\n", s["spec_type"])
 	if approved, _ := s["approved"].(bool); approved {
-		fmt.Fprintln(w, "  approved:   yes")
+		writeOutln(w, "  approved:   yes")
 	} else {
-		fmt.Fprintln(w, "  approved:   no")
+		writeOutln(w, "  approved:   no")
 	}
 
 	// Tasks line (handy quick view).
@@ -31,13 +30,13 @@ func renderHumanStatus(w io.Writer, name string, s map[string]any) {
 		done, _ := t["done"].(int)
 		total, _ := t["total"].(int)
 		waves, _ := t["waves"].(int)
-		fmt.Fprintf(w, "  tasks:      %d/%d done, %d wave(s)\n", done, total, waves)
+		writeOut(w, "  tasks:      %d/%d done, %d wave(s)\n", done, total, waves)
 	}
 
 	// Drift — promoted to the top because it's the action item.
 	if drift, ok := s["drift"].([]any); ok && len(drift) > 0 {
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "  DRIFT (baseline → current):")
+		writeOutln(w, "")
+		writeOutln(w, "  DRIFT (baseline → current):")
 		for _, item := range drift {
 			d, ok := item.(map[string]any)
 			if !ok {
@@ -53,27 +52,27 @@ func renderHumanStatus(w io.Writer, name string, s map[string]any) {
 			} else if delta < 0 {
 				sign = "-"
 			}
-			fmt.Fprintf(w, "    %s: %d → %d  (%s%d)\n",
+			writeOut(w, "    %s: %d → %d  (%s%d)\n",
 				key, base, cur, sign, absDelta(delta))
 		}
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "  fix: either revert the change, or run `free-kiro spec sync <name>` to accept it as the new baseline")
+		writeOutln(w, "")
+		writeOutln(w, "  fix: either revert the change, or run `free-kiro spec sync <name>` to accept it as the new baseline")
 	} else {
-		fmt.Fprintln(w, "  drift:      none")
+		writeOutln(w, "  drift:      none")
 	}
 
 	// Baseline / current snapshot at the bottom (for context).
-	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "  baseline:")
+	writeOutln(w, "")
+	writeOutln(w, "  baseline:")
 	if b, ok := s["baseline"].(map[string]int); ok {
 		for k, v := range b {
-			fmt.Fprintf(w, "    %s: %d\n", k, v)
+			writeOut(w, "    %s: %d\n", k, v)
 		}
 	}
-	fmt.Fprintln(w, "  current:")
+	writeOutln(w, "  current:")
 	if c, ok := s["current"].(map[string]int); ok {
 		for k, v := range c {
-			fmt.Fprintf(w, "    %s: %d\n", k, v)
+			writeOut(w, "    %s: %d\n", k, v)
 		}
 	}
 }
@@ -95,8 +94,8 @@ func renderMermaidStatus(w io.Writer, eng *spec.Engine, name string, status map[
 	}
 	tasks, waves := loadTasksForMermaid(eng, name)
 	if len(tasks) == 0 {
-		fmt.Fprintln(w, "graph LR")
-		fmt.Fprintf(w, "  spec_%s[\"%s<br/>phase: %s<br/>no tasks yet\"]\n",
+		writeOutln(w, "graph LR")
+		writeOut(w, "  spec_%s[\"%s<br/>phase: %s<br/>no tasks yet\"]\n",
 			name, name, phase)
 		return
 	}
