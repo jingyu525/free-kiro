@@ -22,10 +22,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install free-kiro
-        uses: jingyu525/free-kiro/.github/actions/setup-free-kiro@v0
+        # Pin to a concrete release tag — `@v0` is not a valid git ref.
+        # `version` below can still drift forward; bump both together.
+        uses: jingyu525/free-kiro/.github/actions/setup-free-kiro@v0.7.0
         with:
-          # Pin a major version in production. Omit `version` for latest.
-          version: v0.5.0
+          version: v0.7.0
 
       - name: Verify installation
         run: |

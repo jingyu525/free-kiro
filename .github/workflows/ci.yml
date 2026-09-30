@@ -81,7 +81,12 @@ jobs:
           /tmp/free-kiro init --path /tmp/smoke
           /tmp/free-kiro spec new demo --prompt "test"
           /tmp/free-kiro spec generate demo --phase all
-          /tmp/free-kiro lint demo  # expect exit 1 (placeholder)
+          # lint demo must fail (placeholder content) — verify non-zero
+          # exit without aborting the script under `set -e`.
+          if /tmp/free-kiro lint demo; then
+            echo "::error::expected free-kiro lint demo to fail (placeholder)"
+            exit 1
+          fi
           echo "--- quick variant ---"
           /tmp/free-kiro spec quick fast --prompt "x"
           /tmp/free-kiro task list fast
