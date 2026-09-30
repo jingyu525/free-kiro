@@ -9,7 +9,7 @@ package models
 // match the path of the file being worked on (for filematch).
 type SteeringDoc struct {
 	Name         string
-	Mode         string   // "always" | "auto" | "manual" | "filematch"
+	Mode         string // "always" | "auto" | "manual" | "filematch"
 	Description  string
 	Content      string
 	FilePatterns []string // fileMatch patterns (populated only when Mode == "filematch")

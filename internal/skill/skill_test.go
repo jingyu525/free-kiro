@@ -40,8 +40,8 @@ func TestParseApp(t *testing.T) {
 func TestSkillsDir(t *testing.T) {
 	home := "/home/test"
 	cases := []struct {
-		app App
-		sub string
+		app  App
+		sub  string
 		want string
 	}{
 		{AppClaudeCode, "free-kiro", "/home/test/.claude/skills/free-kiro"},

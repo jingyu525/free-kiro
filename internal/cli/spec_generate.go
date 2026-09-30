@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/jingyu525/free-kiro/internal/models"
@@ -35,7 +33,7 @@ lint gate：前向进阶会被门禁拦截（draft→requirements→design→tas
 				if err != nil {
 					return exitWithError(err)
 				}
-				fmt.Fprintf(cmd.OutOrStdout(),
+				writeOut(cmd.OutOrStdout(),
 					"generated %d document(s) for %q\n", len(paths), args[0])
 				return nil
 			}
@@ -44,7 +42,7 @@ lint gate：前向进阶会被门禁拦截（draft→requirements→design→tas
 				return exitWithError(err)
 			}
 			doc := models.PhaseDocFor(meta.SpecType, models.Phase(phaseStr))
-			fmt.Fprintf(cmd.OutOrStdout(), "generated %s for %q\n", doc, args[0])
+			writeOut(cmd.OutOrStdout(), "generated %s for %q\n", doc, args[0])
 			return nil
 		},
 	}

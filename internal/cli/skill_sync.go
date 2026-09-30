@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"text/tabwriter"
 	"time"
 
@@ -28,7 +27,7 @@ func skillUpdateCmd() *cobra.Command {
 
   $ free-kiro skill update           # 检查 + 更新
   $ free-kiro skill update --check   # 只检查（exit 0 = 最新, 1 = 有新版）`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithTimeout(cmd.Context(), 2*time.Minute)
 			defer cancel()
 			targets, home, err := targetsAndHome(appFlag)
@@ -57,11 +56,11 @@ func skillUpdateCmd() *cobra.Command {
 					installedVersion = "(none)"
 				}
 				if installedVersion == latest {
-					fmt.Fprintf(out, "  = %-12s up-to-date (%s)\n", app.Label(), latest)
+					writeOut(out, "  = %-12s up-to-date (%s)\n", app.Label(), latest)
 					continue
 				}
 				if check {
-					fmt.Fprintf(out, "  ↑ %-12s %s → %s\n", app.Label(), installedVersion, latest)
+					writeOut(out, "  ↑ %-12s %s → %s\n", app.Label(), installedVersion, latest)
 					anyNewer = true
 					continue
 				}
@@ -69,11 +68,11 @@ func skillUpdateCmd() *cobra.Command {
 					App: app, Home: home, Subdir: "free-kiro", Version: latest, Force: force,
 				})
 				if res.Err != nil {
-					fmt.Fprintf(out, "  ✗ %-12s %s\n", app.Label(), res.Err)
+					writeOut(out, "  ✗ %-12s %s\n", app.Label(), res.Err)
 					anyErr = true
 					continue
 				}
-				fmt.Fprintf(out, "  ✓ %-12s %s (%s → %s)\n",
+				writeOut(out, "  ✓ %-12s %s (%s → %s)\n",
 					app.Label(), res.Status, installedVersion, latest)
 			}
 			if check && anyNewer {
@@ -82,7 +81,7 @@ func skillUpdateCmd() *cobra.Command {
 			if anyErr {
 				return exitWithError(ferrors.New("skill.update", "one or more apps failed"))
 			}
-			fmt.Fprintln(out, "Done.")
+			writeOutln(out, "Done.")
 			return nil
 		},
 	}
@@ -100,17 +99,17 @@ func skillShowCmd() *cobra.Command {
 		Long: `逐 app 列出已装的 bundle：路径 / 版本 / free-kiro 最低版本要求。
 
   $ free-kiro skill show`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			home, err := skill.HomeDir()
 			if err != nil {
 				return exitWithError(err)
 			}
 			states := skill.ShowInstalled(home, "free-kiro")
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "binary:  %s (%s, %s)\n", buildVersion, buildCommit, buildDate)
-			fmt.Fprintln(out)
+			writeOut(out, "binary:  %s (%s, %s)\n", buildVersion, buildCommit, buildDate)
+			writeOutln(out)
 			tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(tw, "APP\tSTATUS\tVERSION\tPATH")
+			writeOutln(tw, "APP\tSTATUS\tVERSION\tPATH")
 			for _, s := range states {
 				status := "not installed"
 				version := "-"
@@ -122,10 +121,10 @@ func skillShowCmd() *cobra.Command {
 				if s.Experimental {
 					exp = " (experimental)"
 				}
-				fmt.Fprintf(tw, "%s\t%s\t%s\t%s%s\n",
+				writeOut(tw, "%s\t%s\t%s\t%s%s\n",
 					s.App.Label(), status, version, s.SkillsDir, exp)
 			}
-			tw.Flush()
+			_ = tw.Flush()
 			return nil
 		},
 	}

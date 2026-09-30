@@ -35,7 +35,7 @@ func statusCmdFactory() *cobra.Command {
   - 每个 spec 的 phase / approved / drift / tasks 进度
   - 标记当前活跃 spec（来自 .kiro/.current）
   - 默认人类可读表格，加 --json 输出与 serve /api/summary 同源结构`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ws, err := workspace.Find("").Require()
 			if err != nil {
 				return exitWithError(err)
@@ -70,7 +70,7 @@ func renderStatusJSON(w io.Writer, r *visualize.ProjectReport) error {
 	if err != nil {
 		return ferrors.Wrap("status", err, "marshal report failed")
 	}
-	fmt.Fprintln(w, string(data))
+	writeOutln(w, string(data))
 	return nil
 }
 
@@ -78,11 +78,11 @@ func renderStatusJSON(w io.Writer, r *visualize.ProjectReport) error {
 // No ANSI escapes — output is greppable / pipe-safe.
 func renderStatusHuman(w io.Writer, r *visualize.ProjectReport) error {
 	if len(r.Specs) == 0 {
-		fmt.Fprintln(w, "No specs found")
+		writeOutln(w, "No specs found")
 		return nil
 	}
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(tw, "*\tNAME\tPHASE\tAPPROVED\tDRIFT\tTASKS")
+	writeOutln(tw, "*\tNAME\tPHASE\tAPPROVED\tDRIFT\tTASKS")
 	for _, s := range r.Specs {
 		marker := ""
 		if s.Active {
@@ -96,7 +96,7 @@ func renderStatusHuman(w io.Writer, r *visualize.ProjectReport) error {
 		if s.Tasks.Total == 0 {
 			tasks = "—"
 		}
-		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\n",
+		writeOut(tw, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			marker, s.Meta.Name, s.Meta.Phase,
 			yesNoHuman(s.Meta.Approved), drift, tasks)
 	}
@@ -106,7 +106,7 @@ func renderStatusHuman(w io.Writer, r *visualize.ProjectReport) error {
 	// If .current names a spec absent from the list, surface it as a
 	// footer so the user knows their active pointer is dangling.
 	if r.Active != "" && !activeExists(r.Specs, r.Active) {
-		fmt.Fprintf(w, "\n(current=%s not found)\n", r.Active)
+		writeOut(w, "\n(current=%s not found)\n", r.Active)
 	}
 	return nil
 }

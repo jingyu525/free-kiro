@@ -16,7 +16,7 @@ import (
 //   - auto      → included iff prompt keywords overlap the doc's description
 //   - manual    → included only when the name is in `manual`
 //   - filematch → included iff `currentFile` matches one of the doc's
-//                 fileMatchPattern globs (or name is in `manual`)
+//     fileMatchPattern globs (or name is in `manual`)
 //
 // Returns a single concatenated string suitable for splicing into a
 // generation prompt. Returns "" when nothing matches.

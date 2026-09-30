@@ -18,8 +18,8 @@ type rawHook map[string]any
 
 // envelopeFile mirrors Kiro's official {version, hooks[]} shape.
 type envelopeFile struct {
-	Version string     `json:"version"`
-	Hooks   []rawHook  `json:"hooks"`
+	Version string    `json:"version"`
+	Hooks   []rawHook `json:"hooks"`
 }
 
 // normaliseHook coerces a single raw entry into a typed Hook. Accepts

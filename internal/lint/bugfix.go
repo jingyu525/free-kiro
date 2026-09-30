@@ -1,6 +1,6 @@
 package lint
 
-// LintBugfix checks bugfix.md for the Current / Expected / Unchanged
+// Bugfix checks bugfix.md for the Current / Expected / Unchanged
 // Behavior contract of a bug-fix spec.
 //
 // The defect (Current Behavior) is *incorrect* behavior and must NOT use
@@ -17,10 +17,10 @@ package lint
 //     present, it must not assert a SHALL (ERROR `defect-uses-shall`).
 //
 // Pure function over the document text.
-func LintBugfix(text string) []LintIssue {
-	var out []LintIssue
+func Bugfix(text string) []Issue {
+	var out []Issue
 	if isEmpty(text) {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "empty-bugfix",
 			Message:  "bugfix.md is empty",
@@ -36,7 +36,7 @@ func LintBugfix(text string) []LintIssue {
 
 	// Expected Behavior is the corrective acceptance criterion.
 	if expected == "" {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "missing-expected",
 			Message:  "no '## Expected Behavior' section — the correct behavior MUST use THE SYSTEM SHALL",
@@ -44,7 +44,7 @@ func LintBugfix(text string) []LintIssue {
 			Hint:     "see docs/EARS.md#bugfix-spec-bugfixmd for the 3-section contract",
 		})
 	} else if !SHALLRe.MatchString(expected) {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "no-ears-expected",
 			Message:  "Expected Behavior section has no 'THE SYSTEM SHALL' acceptance criterion",
@@ -55,7 +55,7 @@ func LintBugfix(text string) []LintIssue {
 
 	// Unchanged Behavior is regression prevention.
 	if unchanged == "" {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "missing-unchanged",
 			Message:  "no '## Unchanged Behavior' section — regression prevention MUST use THE SYSTEM SHALL CONTINUE TO",
@@ -63,7 +63,7 @@ func LintBugfix(text string) []LintIssue {
 			Hint:     "list every behavior that must NOT change; use 'SHALL CONTINUE TO' form",
 		})
 	} else if !SHALLContinueRe.MatchString(unchanged) {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityWarning,
 			Code:     "no-shall-continue",
 			Message:  "Unchanged Behavior section does not use 'THE SYSTEM SHALL CONTINUE TO'",
@@ -75,14 +75,14 @@ func LintBugfix(text string) []LintIssue {
 	// Current Behavior is the defect description — optional but, when
 	// present, MUST NOT assert a SHALL (that would legitimise the bug).
 	if current == "" {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityWarning,
 			Code:     "missing-current",
 			Message:  "no '## Current Behavior' section — describe the observed defect",
 			Location: "bugfix.md",
 		})
 	} else if SHALLRe.MatchString(current) {
-		out = append(out, LintIssue{
+		out = append(out, Issue{
 			Severity: SeverityError,
 			Code:     "defect-uses-shall",
 			Message:  "Current Behavior (Defect) uses 'THE SYSTEM SHALL' — the defect is incorrect behavior and must NOT use SHALL",

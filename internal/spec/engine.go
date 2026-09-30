@@ -13,7 +13,7 @@ import (
 )
 
 // Engine is the spec lifecycle orchestrator. All state-machine transitions
-// route through it; every advance/approve calls lint.LintGate first.
+// route through it; every advance/approve calls lint.Gate first.
 //
 // File layout (Wave 5 refactor):
 //
@@ -151,7 +151,7 @@ func (e *Engine) Approve(specName string) (*models.SpecMeta, error) {
 		return nil, err
 	}
 	// Gate: refuse to approve a spec with structural defects.
-	if gate := lint.LintGate(e.ws.SpecDir(specName)); len(gate) > 0 {
+	if gate := lint.Gate(e.ws.SpecDir(specName)); len(gate) > 0 {
 		return nil, &ferrors.LintGateError{KiroError: ferrors.Wrap(
 			"spec.approve",
 			nil,

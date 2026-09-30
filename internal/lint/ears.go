@@ -29,8 +29,8 @@ import (
 	"github.com/jingyu525/free-kiro/internal/models"
 )
 
-// LintIssue is a single finding from the lint gate.
-type LintIssue struct {
+// Issue is a single finding from the lint gate.
+type Issue struct {
 	Severity string // "error" | "warning"
 	Code     string // short machine-readable id (e.g. "no-ears")
 	Message  string // human-readable explanation (English, for tooling)
@@ -40,7 +40,7 @@ type LintIssue struct {
 
 // String renders the issue for CLI output (severity-prefixed, location-suffixed,
 // hint-appended). Used by both `lint` and `spec analyze`.
-func (i LintIssue) String() string {
+func (i Issue) String() string {
 	out := i.Severity + ":" + i.Code
 	if i.Location != "" {
 		out += " [" + i.Location + "]"
@@ -52,7 +52,7 @@ func (i LintIssue) String() string {
 	return out
 }
 
-// Severity constants — pass through to LintIssue.Severity.
+// Severity constants — pass through to Issue.Severity.
 const (
 	SeverityError   = "error"
 	SeverityWarning = "warning"

@@ -63,8 +63,8 @@ func Check(ctx context.Context, currentVersion string) (*Plan, error) {
 		return nil, ferrors.Wrap("upgrade.check", err, "locate current executable")
 	}
 	// Resolve any symlinks so the plan points at the real file path.
-	if real, err := filepath.EvalSymlinks(exe); err == nil {
-		exe = real
+	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = resolved
 	}
 	return &Plan{
 		Current:  currentVersion,
@@ -126,17 +126,22 @@ func Apply(ctx context.Context, p *Plan, force bool) error {
 	_ = os.Chmod(p.Target, 0o755)
 
 	// Re-exec — replaces the current process with the new binary.
-	return reexec(p.Target)
+	// On POSIX this never returns (reexec calls os.Exit); on Windows
+	// it returns nil and the caller tells the user to restart.
+	_ = reexec(p.Target)
+	return nil
 }
 
 // reexec replaces the current process with the given executable.
-// Returns a non-nil error on platforms where this isn't supported
-// (Windows); the caller falls back to instructing the user to
-// restart manually.
+// On platforms that don't support process re-exec (Windows), reexec
+// returns without re-spawning; the caller is expected to instruct the
+// user to restart manually.
+//
+// On POSIX, reexec never returns — it terminates the current process
+// via os.Exit after the child exits (or on the first exec error).
 func reexec(bin string) error {
 	if runtime.GOOS == "windows" {
-		return ferrors.New("upgrade.reexec",
-			"re-exec not supported on Windows; please restart manually")
+		return nil
 	}
 	cmd := exec.Command(bin, os.Args[1:]...)
 	cmd.Stdin = os.Stdin
@@ -153,6 +158,8 @@ func reexec(bin string) error {
 	}
 	// Child exited 0 — exit the parent cleanly.
 	os.Exit(0)
+	// Unreachable on POSIX; required to satisfy the function signature
+	// for the Windows fallback path.
 	return nil
 }
 
@@ -184,7 +191,7 @@ func FetchLatestRelease(ctx context.Context) (*Release, error) {
 	if err != nil {
 		return nil, ferrors.Wrap("upgrade.check", err, "GET releases/latest")
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != 200 {
 		return nil, ferrors.New("upgrade.check",
 			fmt.Sprintf("GitHub API returned HTTP %d (rate limit?)", resp.StatusCode))
@@ -220,7 +227,7 @@ func Download(ctx context.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, ferrors.Wrap("upgrade.download", err, url)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != 200 {
 		return nil, ferrors.New("upgrade.download",
 			fmt.Sprintf("%s returned HTTP %d", url, resp.StatusCode))
@@ -268,7 +275,7 @@ func extractBinary(tarball []byte, binary, dir string) (string, error) {
 	if err != nil {
 		return "", ferrors.Wrap("upgrade.extract", err, "open gzip")
 	}
-	defer gz.Close()
+	defer func() { _ = gz.Close() }()
 	tr := tarNewReader(gz)
 	for {
 		hdr, err := tr.Next()

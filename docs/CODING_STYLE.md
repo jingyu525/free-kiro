@@ -754,6 +754,29 @@ go get -u ./...   # 难以 review，可能引入不可控 breaking change
 - `go test -race ./...`（并发正确性）
 - `free-kiro spec complete <name>`（任务未全部完成不允许 complete）
 
+### 8.6 零豁免（zero-exemption policy）
+
+> 由 `enforce-golang-standards-zero-exemptions` spec 落地（2026-Q4）。
+
+**核心条款**：
+
+1. `.golangci.yml` 的 `issues.exclude-rules` 不允许包含任何按
+   `path: 'internal/...'` 的目录级豁免。新代码 + 旧代码一视同仁。
+2. 全仓库 `//nolint:<linter>` 注释总数 **≤ 5**（任何一行都不算豁免）。
+3. 任何新增 `//nolint` 必须紧跟 `//nolint:reason <一句话解释>`，
+   解释为什么这条规则在该处不适用。**不带 reason 的 `//nolint`
+   视为违规，PR reviewer 必须拒收**。
+4. CI lint job（`.github/workflows/ci.yml` 的 `lint-go`）不允许使用
+   `continue-on-error: true` 兜底；任何 lint ERROR 直接阻断 merge。
+
+**新增 `//nolint` 的审批流程**：
+
+1. 在 PR 描述里写明：`//nolint: <linter> at <file:line>; reason: <X>`
+2. reviewer 在 PR 上签字确认（GitHub PR review approval）
+3. 维护者在合并前更新本节 8.6 的统计数字（`//nolint` 总数）
+
+**当前 `//nolint` 总数**：0。
+
 ---
 
 > 文档结束。变更请联系 `.kiro/specs/golang-coding-standards/` 的维护者，

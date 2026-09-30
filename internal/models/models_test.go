@@ -39,7 +39,7 @@ func TestCanTransition_Illegal(t *testing.T) {
 		{PhaseDraft, PhaseImplementing}, // no direct jump
 		{PhaseRequirements, PhaseApproved},
 		{PhaseDesign, PhaseApproved},
-		{PhaseApproved, PhaseDone},       // must go via IMPLEMENTING
+		{PhaseApproved, PhaseDone}, // must go via IMPLEMENTING
 		{PhaseImplementing, PhaseApproved},
 		{PhaseImplementing, PhaseRequirements},
 		{PhaseDone, PhaseImplementing}, // DONE is terminal

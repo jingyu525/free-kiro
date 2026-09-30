@@ -35,17 +35,17 @@ const (
 // of the spec at approval time (acceptance-criteria count, task count) so
 // drift detection has a reference.
 type SpecMeta struct {
-	Name       string         `json:"name"`
-	Phase      Phase          `json:"phase"`
-	Workflow   string         `json:"workflow"`
-	SpecType   string         `json:"spec_type"`
-	Quick      bool           `json:"quick"`
-	Approved   bool           `json:"approved"`
-	Generator  string         `json:"generator"`
-	Prompt     string         `json:"prompt"`
-	CreatedAt  string         `json:"created_at"`
-	UpdatedAt  string         `json:"updated_at"`
-	Baseline   map[string]int `json:"baseline"`
+	Name      string         `json:"name"`
+	Phase     Phase          `json:"phase"`
+	Workflow  string         `json:"workflow"`
+	SpecType  string         `json:"spec_type"`
+	Quick     bool           `json:"quick"`
+	Approved  bool           `json:"approved"`
+	Generator string         `json:"generator"`
+	Prompt    string         `json:"prompt"`
+	CreatedAt string         `json:"created_at"`
+	UpdatedAt string         `json:"updated_at"`
+	Baseline  map[string]int `json:"baseline"`
 }
 
 // MetaFileName is the filename inside SpecDir() that stores SpecMeta.

@@ -13,7 +13,7 @@ type Hook struct {
 	ActionType  string // "shell" (alias "command") | "agent"
 	Action      string // shell command or agent prompt
 	Description string
-	IsRegex     bool   // true when the filter came from a Kiro matcher
-	Timeout     *int   // command timeout seconds; nil = engine default (30s), 0 = disabled
-	Enabled     bool   // false skips the hook without deleting it
+	IsRegex     bool // true when the filter came from a Kiro matcher
+	Timeout     *int // command timeout seconds; nil = engine default (30s), 0 = disabled
+	Enabled     bool // false skips the hook without deleting it
 }

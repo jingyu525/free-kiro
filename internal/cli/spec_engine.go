@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/jingyu525/free-kiro/internal/models"
@@ -28,7 +26,7 @@ func engineForSpec() (*spec.Engine, error) {
 // printSpecMeta renders the post-action state of a spec meta to stdout.
 // Used by spec new / approve / start / complete for consistent output.
 func printSpecMeta(cmd *cobra.Command, m *models.SpecMeta, tag string) {
-	fmt.Fprintf(cmd.OutOrStdout(),
+	writeOut(cmd.OutOrStdout(),
 		"%s spec %q (phase: %s, workflow: %s, type: %s)\n",
 		tag, m.Name, m.Phase, m.Workflow, m.SpecType)
 }

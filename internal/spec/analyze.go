@@ -12,7 +12,7 @@ import (
 )
 
 // AnalysisFinding is one advisory consistency issue raised by Analyze.
-// Distinct from lint.LintIssue: this is *consistency* (would a reviewer
+// Distinct from lint.Issue: this is *consistency* (would a reviewer
 // flag it?) not *shape* (does it satisfy the gate?). The CLI renders
 // these via `spec analyze`, never as blocking errors.
 type AnalysisFinding struct {

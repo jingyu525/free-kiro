@@ -307,7 +307,10 @@ func TestDispatch_ShellFailureCaptured(t *testing.T) {
 }
 
 func TestGlobMatch(t *testing.T) {
-	cases := []struct{ pattern, path string; want bool }{
+	cases := []struct {
+		pattern, path string
+		want          bool
+	}{
 		{"**/*.tsx", "components/Button.tsx", true},
 		{"**/*.tsx", "components/Button.ts", false},
 		{"*.go", "main.go", true},

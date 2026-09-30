@@ -43,7 +43,7 @@ Endpoints:
   GET /api/spec/<n>   → JSON：单个 spec 状态
 
 Dashboard 每 5 秒自动 refresh（轮询 /api/summary）。`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			holder, err := loadEngine()
 			if err != nil {
 				return err
@@ -57,7 +57,7 @@ Dashboard 每 5 秒自动 refresh（轮询 /api/summary）。`,
 				return exitWithError(ferrors.Wrap("serve.listen", err, fmt.Sprintf("listen %s", addr)))
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "free-kiro dashboard listening on %s\n", srv.URL())
+			writeOut(cmd.OutOrStdout(), "free-kiro dashboard listening on %s\n", srv.URL())
 			if open {
 				openBrowser(srv.URL())
 			}
@@ -69,7 +69,7 @@ Dashboard 每 5 秒自动 refresh（轮询 /api/summary）。`,
 				<-ctx.Done()
 				shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
-				srv.Shutdown()
+				_ = srv.Shutdown()
 				_ = shutdownCtx
 			}()
 

@@ -3,7 +3,7 @@ package lint
 import "testing"
 
 func TestLintTasks_Empty(t *testing.T) {
-	issues := LintTasks("# Tasks\n\nNo tasks yet.\n")
+	issues := Tasks("# Tasks\n\nNo tasks yet.\n")
 	if len(issues) != 1 || issues[0].Code != "empty-tasks" {
 		t.Fatalf("expected empty-tasks WARNING; got %v", issues)
 	}
@@ -14,7 +14,7 @@ func TestLintTasks_Empty(t *testing.T) {
 
 func TestLintTasks_SelfDep(t *testing.T) {
 	doc := "- [ ] #1 Bad task [deps: #1]\n"
-	issues := LintTasks(doc)
+	issues := Tasks(doc)
 	var found bool
 	for _, i := range issues {
 		if i.Code == "self-dep" {
@@ -31,7 +31,7 @@ func TestLintTasks_SelfDep(t *testing.T) {
 
 func TestLintTasks_DanglingDep(t *testing.T) {
 	doc := "- [ ] #1 Real task\n- [ ] #2 Bad task [deps: #99]\n"
-	issues := LintTasks(doc)
+	issues := Tasks(doc)
 	var found bool
 	for _, i := range issues {
 		if i.Code == "dangling-dep" {
@@ -47,7 +47,7 @@ func TestLintTasks_Cycle(t *testing.T) {
 	doc := `- [ ] #1 a [deps: #2]
 - [ ] #2 b [deps: #1]
 `
-	issues := LintTasks(doc)
+	issues := Tasks(doc)
 	var found bool
 	for _, i := range issues {
 		if i.Code == "cycle" {
@@ -68,7 +68,7 @@ func TestLintTasks_GoldenPath(t *testing.T) {
 - [ ] #3 Implement persistence [deps: #1]
 - [x] #4 Polish [deps: #2,#3]
 `
-	issues := LintTasks(doc)
+	issues := Tasks(doc)
 	for _, i := range issues {
 		if i.Severity == SeverityError {
 			t.Errorf("golden path should have no ERRORs; got %s", i)
@@ -78,7 +78,7 @@ func TestLintTasks_GoldenPath(t *testing.T) {
 
 func TestLintSpec_MissingAll(t *testing.T) {
 	dir := t.TempDir()
-	issues := LintSpec(dir)
+	issues := Spec(dir)
 	var hasReq, hasDesign, hasTasks bool
 	for _, i := range issues {
 		switch i.Code {
@@ -114,7 +114,7 @@ WHEN foo THE SYSTEM SHALL bar.
 	writeFile(t, dir+"/design.md", "# Design\n\nArchitecture notes.\n")
 	writeFile(t, dir+"/tasks.md", "- [ ] #1 First task\n- [ ] #2 Second task [deps: #1]\n")
 	// No .meta.json → defaults to feature.
-	issues := LintSpec(dir)
+	issues := Spec(dir)
 	for _, i := range issues {
 		if i.Severity == SeverityError {
 			t.Errorf("golden spec should have no ERRORs; got %s", i)
@@ -135,7 +135,7 @@ WHEN fixed THE SYSTEM SHALL work.
 WHEN foo THE SYSTEM SHALL CONTINUE TO bar.
 `)
 	writeFile(t, dir+"/design.md", "# Design\n\nRoot cause: line 42.\n")
-	issues := LintSpec(dir)
+	issues := Spec(dir)
 	for _, i := range issues {
 		if i.Severity == SeverityError {
 			t.Errorf("golden bugfix should have no ERRORs; got %s", i)
@@ -145,7 +145,7 @@ WHEN foo THE SYSTEM SHALL CONTINUE TO bar.
 
 func TestLintGate_ExcludesMissing(t *testing.T) {
 	dir := t.TempDir()
-	gate := LintGate(dir)
+	gate := Gate(dir)
 	// Empty spec → missing-* findings are EXCLUDED from the gate.
 	for _, i := range gate {
 		if i.Code == "missing-requirements" || i.Code == "missing-tasks" || i.Code == "missing-design" {
@@ -160,7 +160,7 @@ func TestLintGate_IncludesRealErrors(t *testing.T) {
 
 Some prose, no EARS, no user stories.
 `)
-	gate := LintGate(dir)
+	gate := Gate(dir)
 	var foundNoEars bool
 	for _, i := range gate {
 		if i.Code == "no-ears" {

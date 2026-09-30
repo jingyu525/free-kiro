@@ -361,8 +361,8 @@ func TestShow_NotGenerated(t *testing.T) {
 
 func TestListSpecs(t *testing.T) {
 	eng, _ := newTestEngine(t)
-	eng.NewSpec("a", "a", "", "", false)
-	eng.NewSpec("b", "b", "", "", false)
+	_, _ = eng.NewSpec("a", "a", "", "", false)
+	_, _ = eng.NewSpec("b", "b", "", "", false)
 	metas, err := eng.ListSpecs()
 	if err != nil {
 		t.Fatal(err)

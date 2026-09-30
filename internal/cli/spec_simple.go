@@ -39,7 +39,7 @@ func specShowCmd() *cobra.Command {
 				}
 				for _, doc := range models.PlanningOrder(meta.Workflow, meta.SpecType) {
 					body, _ := eng.Show(args[0], phaseFromDoc(models.Phase(doc)))
-					fmt.Fprintf(cmd.OutOrStdout(), "=== %s ===\n%s\n\n", doc, body)
+					writeOut(cmd.OutOrStdout(), "=== %s ===\n%s\n\n", doc, body)
 				}
 				return nil
 			}
@@ -47,7 +47,7 @@ func specShowCmd() *cobra.Command {
 			if err != nil {
 				return exitWithError(err)
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), body)
+			writeOutln(cmd.OutOrStdout(), body)
 			return nil
 		},
 	}
@@ -61,7 +61,7 @@ func specListCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "列出全部 specs",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			eng, err := engineForSpec()
 			if err != nil {
 				return err
@@ -71,24 +71,24 @@ func specListCmd() *cobra.Command {
 				return exitWithError(err)
 			}
 			if len(rows) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "(no specs)")
+				writeOutln(cmd.OutOrStdout(), "(no specs)")
 				return nil
 			}
 			// Stable sort by name.
 			sort.Slice(rows, func(i, j int) bool {
 				return rows[i]["name"].(string) < rows[j]["name"].(string)
 			})
-			fmt.Fprintf(cmd.OutOrStdout(), "%-24s %-14s %-9s %s\n", "NAME", "PHASE", "APPROVED", "ACTIVE")
+			writeOut(cmd.OutOrStdout(), "%-24s %-14s %-9s %s\n", "NAME", "PHASE", "APPROVED", "ACTIVE")
 			for _, r := range rows {
 				marker := ""
 				if active, _ := r["active"].(bool); active {
 					marker = "*"
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "%-24s %-14s %-9s %s\n",
+				writeOut(cmd.OutOrStdout(), "%-24s %-14s %-9s %s\n",
 					r["name"], r["phase"], yesNo(r["approved"].(bool)), marker)
 			}
 			// Hint about how to switch.
-			fmt.Fprintln(cmd.OutOrStdout(),
+			writeOutln(cmd.OutOrStdout(),
 				"\n(* = active spec, used by IDE SessionStart hook. "+
 					"To switch: edit .kiro/.current.)")
 			return nil
@@ -126,7 +126,7 @@ func renderSpecTree(w io.Writer, eng *spec.Engine, name string) error {
 
 	st, _ := eng.Status(name)
 	root := buildSpecTreeNode(name, st, tasks)
-	fmt.Fprintln(w, visualize.RenderTree(root))
+	writeOutln(w, visualize.RenderTree(root))
 	return nil
 }
 

@@ -55,7 +55,7 @@ func Execute() error {
 	if err := rootCmd.Execute(); err != nil {
 		// Cobra already printed the error to SetErr; surface it for the
 		// caller to convert to a non-zero exit.
-		fmt.Fprintln(os.Stderr, "error:", err)
+		writeOutln(os.Stderr, "error:", err)
 		return err
 	}
 	return nil

@@ -77,7 +77,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 	if err != nil {
 		return ferrors.Wrap("watch.run", err, "create watcher")
 	}
-	defer fs.Close()
+	defer func() { _ = fs.Close() }()
 
 	// Add every root + all its subdirectories (fsnotify doesn't
 	// recurse on its own).
@@ -87,7 +87,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 		}
 	}
 	if w.opts.Verbose {
-		fmt.Fprintf(stderr(), "[watch] watching %s (debounce=%s)\n", strings.Join(w.opts.Roots, ", "), w.opts.Debounce)
+		_, _ = fmt.Fprintf(stderr(), "[watch] watching %s (debounce=%s)\n", strings.Join(w.opts.Roots, ", "), w.opts.Debounce)
 	}
 
 	var (
@@ -112,7 +112,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 			}
 			lastPath = ev.Name
 			if w.opts.Verbose {
-				fmt.Fprintf(stderr(), "[watch] %s %s\n", ev.Op, ev.Name)
+				_, _ = fmt.Fprintf(stderr(), "[watch] %s %s\n", ev.Op, ev.Name)
 			}
 			if timer != nil {
 				timer.Stop()
@@ -126,7 +126,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 			if !ok {
 				return ferrors.New("watch.run", "fsnotify errors channel closed")
 			}
-			fmt.Fprintf(stderr(), "[watch] fsnotify error: %v\n", err)
+			_, _ = fmt.Fprintf(stderr(), "[watch] fsnotify error: %v\n", err)
 		}
 	}
 }
@@ -154,10 +154,10 @@ func (w *Watcher) runCommand(ctx context.Context, cmd string, file string) error
 // runCommands runs every command in order, logging non-zero results
 // but never stopping the watcher.
 func (w *Watcher) runCommands(ctx context.Context, file string) {
-	fmt.Fprintf(stderr(), "[watch] change → %s\n", runLabel(file))
+	_, _ = fmt.Fprintf(stderr(), "[watch] change → %s\n", runLabel(file))
 	for _, cmd := range w.opts.Commands {
 		if err := w.runCommand(ctx, cmd, file); err != nil {
-			fmt.Fprintf(stderr(), "[watch] %v\n", err)
+			_, _ = fmt.Fprintf(stderr(), "[watch] %v\n", err)
 		}
 	}
 }

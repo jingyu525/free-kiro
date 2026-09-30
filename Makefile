@@ -14,8 +14,16 @@ PKG   := ./cmd/free-kiro
 
 # ---------- 工具检测 ----------
 
-# 是否安装了 golangci-lint（推荐 v1.61+；Go 1.27 项目需 ≥ v1.65）
+# 是否安装了 golangci-lint（推荐 v2.x；Go 1.27 项目需 v2+）
 HAS_GOLANGCI_LINT := $(shell command -v golangci-lint 2>/dev/null)
+# PATH 上的版本是 v2.x 时直接用；否则回退到 brew / Linuxbrew 安装的 v2。
+# v1.x 自带 go1.26，无法解析 go.mod 的 go 1.27 module。
+LINT_BIN := $(shell \
+  if [ -n "$(HAS_GOLANGCI_LINT)" ] && $(HAS_GOLANGCI_LINT) version 2>/dev/null | head -1 | grep -qE "version v[2-9]\."; then \
+    echo "$(HAS_GOLANGCI_LINT)"; \
+  else \
+    ls /opt/homebrew/bin/golangci-lint /usr/local/bin/golangci-lint /home/linuxbrew/.linuxbrew/bin/golangci-lint 2>/dev/null | head -1; \
+  fi)
 
 # 是否安装了 free-kiro（spec/lint 入口）
 HAS_FREE_KIRO := $(shell command -v free-kiro 2>/dev/null)
@@ -63,20 +71,23 @@ lint: ## spec 门禁（free-kiro lint，CI 与本地一致）
 
 .PHONY: lint-go
 lint-go: ## Go 源码 lint（golangci-lint，按 .golangci.yml）
-	@if [ -z "$(HAS_GOLANGCI_LINT)" ]; then \
-		echo "golangci-lint not found on PATH; install:"; \
+	@if [ -z "$(LINT_BIN)" ]; then \
+		echo "golangci-lint v2.x not found; install:"; \
 		echo "  brew install golangci-lint"; \
 		echo "  # 或"; \
-		echo "  go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
+		echo "  go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest"; \
 		exit 3; \
 	fi
-	golangci-lint run --timeout 5m ./...
+	@if [ "$(LINT_BIN)" != "$(HAS_GOLANGCI_LINT)" ]; then \
+		echo "golangci-lint on PATH < v2; using $(LINT_BIN)"; \
+	fi
+	$(LINT_BIN) run --timeout 5m ./...
 
 .PHONY: fmt
 fmt: ## gofmt + goimports 格式化
 	$(GO) fmt ./...
-	@if [ -n "$(HAS_GOLANGCI_LINT)" ]; then \
-		golangci-lint run --no-config --disable-all -E goimports --fix ./...; \
+	@if [ -n "$(LINT_BIN)" ]; then \
+		$(LINT_BIN) run --no-config --disable-all -E goimports --fix ./...; \
 	fi
 
 # ---------- 组合 ----------

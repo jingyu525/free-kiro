@@ -51,7 +51,7 @@ func FetchPRD(ctx context.Context, rawURL string) (title, body string, err error
 	if err != nil {
 		return "", "", ferrors.Wrap("spec.from-prd", err, "GET "+rawURL)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != 200 {
 		return "", "", ferrors.New("spec.from-prd",
 			fmt.Sprintf("GET %s returned HTTP %d", rawURL, resp.StatusCode))
@@ -192,7 +192,7 @@ func collapseSpaces(s string) string {
 func looksLikeHTML(b []byte) bool {
 	s := strings.TrimSpace(string(b))
 	return strings.HasPrefix(s, "<!DOCTYPE") || strings.HasPrefix(s, "<html") ||
-		(strings.HasPrefix(s, "<") && strings.Contains(s[:min(200, len(s))], ">"))
+		(strings.HasPrefix(s, "<") && strings.Contains(s[:pickMin(200, len(s))], ">"))
 }
 
 func extractTitleFromFilename(u *url.URL) string {
@@ -213,7 +213,7 @@ func extractTitleFromFilename(u *url.URL) string {
 	return last
 }
 
-func min(a, b int) int {
+func pickMin(a, b int) int {
 	if a < b {
 		return a
 	}

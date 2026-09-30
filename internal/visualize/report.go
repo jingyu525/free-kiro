@@ -17,11 +17,11 @@ import (
 
 // SpecReport is the per-spec subset included in a project report.
 type SpecReport struct {
-	Meta    *models.SpecMeta   `json:"meta"`
-	Current map[string]int      `json:"current"`
-	Drift   []DriftEntry        `json:"drift"`
-	Tasks   TaskProgress        `json:"tasks"`
-	Active  bool                `json:"active"`
+	Meta    *models.SpecMeta `json:"meta"`
+	Current map[string]int   `json:"current"`
+	Drift   []DriftEntry     `json:"drift"`
+	Tasks   TaskProgress     `json:"tasks"`
+	Active  bool             `json:"active"`
 }
 
 // TaskProgress captures the implementation status for one spec.
@@ -124,8 +124,8 @@ func taskProgressFromStatus(st map[string]any) TaskProgress {
 
 // RenderReport writes a complete markdown report.
 func RenderReport(w io.Writer, r *ProjectReport) {
-	fmt.Fprintf(w, "# free-kiro Report\n\n")
-	fmt.Fprintf(w, "generated: %s\n\n", r.GeneratedAt.Format(time.RFC3339))
+	_, _ = fmt.Fprintf(w, "# free-kiro Report\n\n")
+	_, _ = fmt.Fprintf(w, "generated: %s\n\n", r.GeneratedAt.Format(time.RFC3339))
 
 	phases := map[models.Phase]int{}
 	for _, s := range r.Specs {
@@ -137,16 +137,16 @@ func RenderReport(w io.Writer, r *ProjectReport) {
 			active++
 		}
 	}
-	fmt.Fprintf(w, "specs: %d total (%d done, %d active, %d in planning, %d draft)\n\n",
+	_, _ = fmt.Fprintf(w, "specs: %d total (%d done, %d active, %d in planning, %d draft)\n\n",
 		len(r.Specs), phases[models.PhaseDone], active,
 		phases[models.PhaseRequirements]+phases[models.PhaseDesign]+phases[models.PhaseTasks],
 		phases[models.PhaseDraft])
 
 	// Summary table.
-	fmt.Fprintln(w, "## Summary")
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, "| spec | phase | approved | drift | tasks |")
-	fmt.Fprintln(w, "|------|-------|----------|-------|-------|")
+	_, _ = fmt.Fprintln(w, "## Summary")
+	_, _ = fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w, "| spec | phase | approved | drift | tasks |")
+	_, _ = fmt.Fprintln(w, "|------|-------|----------|-------|-------|")
 	for _, s := range r.Specs {
 		marker := ""
 		if s.Active {
@@ -160,11 +160,11 @@ func RenderReport(w io.Writer, r *ProjectReport) {
 		if s.Tasks.Total == 0 {
 			tasks = "—"
 		}
-		fmt.Fprintf(w, "| %s%s | %s | %s | %s | %s |\n",
+		_, _ = fmt.Fprintf(w, "| %s%s | %s | %s | %s | %s |\n",
 			s.Meta.Name, marker, s.Meta.Phase,
 			yesNo(s.Meta.Approved), drift, tasks)
 	}
-	fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w)
 
 	// Drift alerts.
 	var allDrift []DriftEntry
@@ -172,44 +172,44 @@ func RenderReport(w io.Writer, r *ProjectReport) {
 		allDrift = append(allDrift, s.Drift...)
 	}
 	if len(allDrift) > 0 {
-		fmt.Fprintln(w, "## Drift alerts")
-		fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w, "## Drift alerts")
+		_, _ = fmt.Fprintln(w)
 		RenderMermaidDrift(w, allDrift)
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Fix: `free-kiro spec sync <spec>` to accept as new baseline, or revert.")
-		fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w, "Fix: `free-kiro spec sync <spec>` to accept as new baseline, or revert.")
+		_, _ = fmt.Fprintln(w)
 	}
 
 	// Project overview mermaid.
 	if len(r.Specs) > 0 {
-		fmt.Fprintln(w, "## Project overview")
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "```mermaid")
+		_, _ = fmt.Fprintln(w, "## Project overview")
+		_, _ = fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w, "```mermaid")
 		specMetas := make([]*models.SpecMeta, 0, len(r.Specs))
 		for _, s := range r.Specs {
 			specMetas = append(specMetas, s.Meta)
 		}
 		RenderMermaidProject(w, specMetas)
-		fmt.Fprintln(w, "```")
-		fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w, "```")
+		_, _ = fmt.Fprintln(w)
 	}
 
 	// Per-spec detail.
 	for _, s := range r.Specs {
-		fmt.Fprintf(w, "## %s\n\n", s.Meta.Name)
-		fmt.Fprintf(w, "- phase: %s\n", s.Meta.Phase)
-		fmt.Fprintf(w, "- workflow: %s\n", s.Meta.Workflow)
-		fmt.Fprintf(w, "- spec_type: %s\n", s.Meta.SpecType)
-		fmt.Fprintf(w, "- tasks: %d/%d done, %d wave(s)\n",
+		_, _ = fmt.Fprintf(w, "## %s\n\n", s.Meta.Name)
+		_, _ = fmt.Fprintf(w, "- phase: %s\n", s.Meta.Phase)
+		_, _ = fmt.Fprintf(w, "- workflow: %s\n", s.Meta.Workflow)
+		_, _ = fmt.Fprintf(w, "- spec_type: %s\n", s.Meta.SpecType)
+		_, _ = fmt.Fprintf(w, "- tasks: %d/%d done, %d wave(s)\n",
 			s.Tasks.Done, s.Tasks.Total, s.Tasks.Waves)
-		fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w)
 		// Embedded mermaid for this spec.
 		tasks, waves := loadSpecTasks(s.Meta.Name)
 		if len(tasks) > 0 {
-			fmt.Fprintln(w, "```mermaid")
+			_, _ = fmt.Fprintln(w, "```mermaid")
 			RenderMermaidSpec(w, s.Meta.Name, s.Meta.Phase, tasks, waves)
-			fmt.Fprintln(w, "```")
-			fmt.Fprintln(w)
+			_, _ = fmt.Fprintln(w, "```")
+			_, _ = fmt.Fprintln(w)
 		}
 	}
 }
@@ -262,7 +262,7 @@ func RenderAndWriteReport(path string, ws *workspace.Workspace, eng *spec.Engine
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	RenderReport(f, r)
 	return r, nil
 }

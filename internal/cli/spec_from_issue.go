@@ -12,8 +12,8 @@ import (
 // GitHubIssueURL holds the parsed components of a github.com/<owner>/<repo>/issues/<n>
 // URL. Path components only — query / fragment are ignored.
 type GitHubIssueURL struct {
-	Owner string
-	Repo  string
+	Owner  string
+	Repo   string
 	Number int
 }
 

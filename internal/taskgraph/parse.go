@@ -2,9 +2,9 @@
 //
 // Tasks are written as:
 //
-//	- [ ] #1 Set up module layout
-//	- [x] #2 Implement core domain model [deps: #1]
-//	- [X] #3 Polish            [deps: #1,#2]
+//   - [ ] #1 Set up module layout
+//   - [x] #2 Implement core domain model [deps: #1]
+//   - [X] #3 Polish            [deps: #1,#2]
 //
 // The engine groups tasks into *waves* (tasks within a wave share no
 // dependencies and may run concurrently). Cycle detection uses DFS with

@@ -38,20 +38,20 @@ func steeringListCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "列出全部 steering 文档",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			store, err := newSteeringStore()
 			if err != nil {
 				return err
 			}
 			docs := store.LoadAll()
 			if len(docs) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "(no steering docs)")
+				writeOutln(cmd.OutOrStdout(), "(no steering docs)")
 				return nil
 			}
 			sort.Slice(docs, func(i, j int) bool { return docs[i].Name < docs[j].Name })
-			fmt.Fprintf(cmd.OutOrStdout(), "%-20s %-10s %-10s DESCRIPTION\n", "NAME", "SCOPE", "MODE")
+			writeOut(cmd.OutOrStdout(), "%-20s %-10s %-10s DESCRIPTION\n", "NAME", "SCOPE", "MODE")
 			for _, d := range docs {
-				fmt.Fprintf(cmd.OutOrStdout(), "%-20s %-10s %-10s %s\n",
+				writeOut(cmd.OutOrStdout(), "%-20s %-10s %-10s %s\n",
 					d.Name, d.Scope, d.Mode, d.Description)
 			}
 			return nil
@@ -73,7 +73,7 @@ func steeringShowCmd() *cobra.Command {
 			if doc == nil {
 				return exitWithError(ferrors.NewUsage("steering.show", fmt.Sprintf("steering doc %q not found", args[0])))
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "# %s (mode=%s, scope=%s)\n\n%s\n",
+			writeOut(cmd.OutOrStdout(), "# %s (mode=%s, scope=%s)\n\n%s\n",
 				doc.Name, doc.Mode, doc.Scope, doc.Content)
 			return nil
 		},
@@ -90,7 +90,7 @@ func steeringContextCmd() *cobra.Command {
   --prompt <text>   触发 auto 模式（关键词命中 description 的文档会被拉起）
 
 agent 的工具应在每次生成前调用此命令（按需加 --file），把输出拼到生成 prompt 前缀。`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			store, err := newSteeringStore()
 			if err != nil {
 				return err
@@ -99,10 +99,10 @@ agent 的工具应在每次生成前调用此命令（按需加 --file），把�
 			fileFlag, _ := cmd.Flags().GetString("file")
 			ctx := store.Assemble(promptFlag, nil, fileFlag)
 			if ctx == "" {
-				fmt.Fprintln(cmd.OutOrStdout(), "(no steering matched)")
+				writeOutln(cmd.OutOrStdout(), "(no steering matched)")
 				return nil
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), ctx)
+			writeOutln(cmd.OutOrStdout(), ctx)
 			return nil
 		},
 	}

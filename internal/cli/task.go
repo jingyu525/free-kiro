@@ -59,12 +59,12 @@ func taskListCmd() *cobra.Command {
 			}
 			tasks := taskgraph.ParseTasks(string(data))
 			if len(tasks) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "(no tasks parsed)")
+				writeOutln(cmd.OutOrStdout(), "(no tasks parsed)")
 				return nil
 			}
 			waves, cycleErr := safeWaves(tasks)
 			if cycleErr != nil {
-				fmt.Fprintln(cmd.OutOrStdout(), cycleErr)
+				writeOutln(cmd.OutOrStdout(), cycleErr)
 				return exitWithError(cycleErr)
 			}
 			printWaves(cmd, waves, args[0])
@@ -97,7 +97,7 @@ func formatCycle(cycle []int) string {
 
 func printWaves(cmd *cobra.Command, waves [][]models.Task, specName string) {
 	for i, wave := range waves {
-		fmt.Fprintf(cmd.OutOrStdout(), "Wave %d:\n", i+1)
+		writeOut(cmd.OutOrStdout(), "Wave %d:\n", i+1)
 		for _, t := range wave {
 			mark := " "
 			if t.Done {
@@ -113,12 +113,12 @@ func printWaves(cmd *cobra.Command, waves [][]models.Task, specName string) {
 					deps += fmt.Sprintf("#%d", d)
 				}
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "  [%s] #%d %s  (deps: %s)\n",
+			writeOut(cmd.OutOrStdout(), "  [%s] #%d %s  (deps: %s)\n",
 				mark, t.ID, t.Title, deps)
 		}
 	}
 	s := taskgraph.Summary(tasksOf(waves))
-	fmt.Fprintf(cmd.OutOrStdout(), "\n%s: %d/%d done, %d wave(s)\n",
+	writeOut(cmd.OutOrStdout(), "\n%s: %d/%d done, %d wave(s)\n",
 		specName, s.Done, s.Total, s.Waves)
 }
 

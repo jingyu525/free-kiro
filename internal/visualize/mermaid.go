@@ -24,10 +24,10 @@ import (
 // Tasks within the same wave are grouped under a single node to keep the
 // diagram readable. Use the `wave N` link to navigate to the textual
 // task list (`free-kiro task list <spec>`).
-func RenderMermaidSpec(w io.Writer, name string, phase models.Phase, tasks []models.Task, waves [][]models.Task) {
-	fmt.Fprintf(w, "graph LR\n")
+func RenderMermaidSpec(w io.Writer, name string, phase models.Phase, _ []models.Task, waves [][]models.Task) {
+	_, _ = fmt.Fprintf(w, "graph LR\n")
 	// Spec node.
-	fmt.Fprintf(w, "  spec_%s[\"%s<br/>phase: %s\"]\n", mermaidID(name), mermaidLabel(name), phase)
+	_, _ = fmt.Fprintf(w, "  spec_%s[\"%s<br/>phase: %s\"]\n", mermaidID(name), mermaidLabel(name), phase)
 	for i, wave := range waves {
 		wn := fmt.Sprintf("w%d_%s", i+1, mermaidID(name))
 		count := len(wave)
@@ -35,14 +35,14 @@ func RenderMermaidSpec(w io.Writer, name string, phase models.Phase, tasks []mod
 		if count == 1 {
 			word = "task"
 		}
-		fmt.Fprintf(w, "  spec_%s --> %s[\"Wave %d: %d %s\"]\n", mermaidID(name), wn, i+1, count, word)
+		_, _ = fmt.Fprintf(w, "  spec_%s --> %s[\"Wave %d: %d %s\"]\n", mermaidID(name), wn, i+1, count, word)
 		_ = word
 	}
 	// Wave-to-wave dependencies.
 	for i := 0; i+1 < len(waves); i++ {
 		prev := fmt.Sprintf("w%d_%s", i+1, mermaidID(name))
 		next := fmt.Sprintf("w%d_%s", i+2, mermaidID(name))
-		fmt.Fprintf(w, "  %s --> %s\n", prev, next)
+		_, _ = fmt.Fprintf(w, "  %s --> %s\n", prev, next)
 	}
 }
 
@@ -50,9 +50,9 @@ func RenderMermaidSpec(w io.Writer, name string, phase models.Phase, tasks []mod
 // workspace, with their current phase. Useful as a project-wide overview
 // at the top of REPORT.md.
 func RenderMermaidProject(w io.Writer, specs []*models.SpecMeta) {
-	fmt.Fprintln(w, "graph LR")
+	_, _ = fmt.Fprintln(w, "graph LR")
 	for _, s := range specs {
-		fmt.Fprintf(w, "  spec_%s[\"%s<br/>phase: %s\"]\n",
+		_, _ = fmt.Fprintf(w, "  spec_%s[\"%s<br/>phase: %s\"]\n",
 			mermaidID(s.Name), mermaidLabel(s.Name), s.Phase)
 	}
 }
@@ -64,8 +64,8 @@ func RenderMermaidDrift(w io.Writer, entries []DriftEntry) {
 	if len(entries) == 0 {
 		return
 	}
-	fmt.Fprintln(w, "| spec | key | baseline | current | delta |")
-	fmt.Fprintln(w, "|------|-----|----------|---------|-------|")
+	_, _ = fmt.Fprintln(w, "| spec | key | baseline | current | delta |")
+	_, _ = fmt.Fprintln(w, "|------|-----|----------|---------|-------|")
 	for _, e := range entries {
 		sign := ""
 		switch {
@@ -74,7 +74,7 @@ func RenderMermaidDrift(w io.Writer, entries []DriftEntry) {
 		case e.Delta < 0:
 			sign = "-"
 		}
-		fmt.Fprintf(w, "| %s | %s | %d | %d | %s%d |\n",
+		_, _ = fmt.Fprintf(w, "| %s | %s | %d | %d | %s%d |\n",
 			e.Spec, e.Key, e.Baseline, e.Current, sign, absDelta(e.Delta))
 	}
 }
