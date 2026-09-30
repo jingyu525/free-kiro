@@ -1,0 +1,17 @@
+{
+  "name": "cli-version-flag",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "给 free-kiro CLI 加 --version flag，输出含版本号、commit、构建日期；dev build 也需正确显示（不能 panic 或空字符串）；--version 必须符合 GNU 惯例：单行输出到 stdout，exit 0",
+  "created_at": "2026-09-29T13:14:53Z",
+  "updated_at": "2026-09-29T13:38:18Z",
+  "baseline": {
+    "ac_count": 5,
+    "design_sections": 6,
+    "task_count": 4
+  }
+}

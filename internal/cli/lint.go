@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/lint"
 	"github.com/jingyu525/free-kiro/internal/workspace"
 )
@@ -83,7 +84,10 @@ func lintAll(ws *workspace.Workspace, cmd *cobra.Command) error {
 	}
 	if failed > 0 {
 		// Surface a non-zero exit code via the cobra error machinery.
-		return fmt.Errorf("%d spec(s) failed lint", failed)
+		// LintFailureError maps to exit 1, matching the contract in
+		// docs/CLI.md and the smoke test's `expect exit 1 (placeholder)`.
+		return ferrors.NewLintFailureError("lint.all",
+			fmt.Sprintf("%d spec(s) failed lint", failed))
 	}
 	return nil
 }
@@ -118,9 +122,11 @@ func anyError(issues []lint.LintIssue) bool {
 
 // gateExitCode returns an error so cobra exits with code 1 when any
 // ERROR-severity issue is present, 0 otherwise. Used by `lint <name>`.
+// Uses LintFailureError so main.go's ExitCode maps it to exit 1
+// (matches the contract in docs/CLI.md + the smoke test).
 func gateExitCode(issues []lint.LintIssue) error {
 	if anyError(issues) {
-		return fmt.Errorf("lint gate failed")
+		return ferrors.NewLintFailureError("lint.one", "lint gate failed")
 	}
 	return nil
 }

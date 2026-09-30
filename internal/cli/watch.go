@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/watch"
 )
 
@@ -79,9 +80,9 @@ func watchCmdFactory() *cobra.Command {
 				if p, ok := presetCommands[preset]; ok {
 					cmds = p
 				} else {
-					return exitWithError(fmt.Errorf(
+					return exitWithError(ferrors.NewUsage("watch.preset", fmt.Sprintf(
 						"unknown preset %q (valid: default, lint, status, reactive, full)",
-						preset))
+						preset)))
 				}
 			}
 			opts := watch.Options{

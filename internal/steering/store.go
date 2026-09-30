@@ -173,7 +173,7 @@ func trimTrailingWS(s string) string {
 // first H1 (`# Title`); if missing, fall back to the first non-empty
 // line. Used when the filename is non-meaningful (e.g. AGENTS.md).
 func deriveName(body string) string {
-	for _, line := range splitLinesForSteering(body) {
+	for _, line := range splitLines(body) {
 		if line == "" {
 			continue
 		}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/steering"
 )
 
@@ -70,7 +71,7 @@ func steeringShowCmd() *cobra.Command {
 			}
 			doc := store.Get(args[0])
 			if doc == nil {
-				return exitWithError(fmt.Errorf("steering doc %q not found", args[0]))
+				return exitWithError(ferrors.NewUsage("steering.show", fmt.Sprintf("steering doc %q not found", args[0])))
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "# %s (mode=%s, scope=%s)\n\n%s\n",
 				doc.Name, doc.Mode, doc.Scope, doc.Content)

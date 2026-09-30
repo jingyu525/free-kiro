@@ -49,7 +49,7 @@ func (r *Registry) LoadAll() ([]*models.Hook, error) {
 		// Detect shape: object → single or envelope; array → list of flat.
 		var probe any
 		if err := json.Unmarshal(data, &probe); err != nil {
-			return nil, &ferrors.HookError{ferrors.Wrap("hooks.load", err, "parse "+path)}
+			return nil, &ferrors.HookError{KiroError: ferrors.Wrap("hooks.load", err, "parse "+path)}
 		}
 		switch v := probe.(type) {
 		case []any:

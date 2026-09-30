@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/models"
 	"github.com/jingyu525/free-kiro/internal/taskgraph"
 )
@@ -52,9 +53,9 @@ func taskListCmd() *cobra.Command {
 			tasksPath := filepath.Join(specDir, "tasks.md")
 			data, err := os.ReadFile(tasksPath)
 			if err != nil {
-				return exitWithError(fmt.Errorf(
+				return exitWithError(ferrors.NewUsage("task.list", fmt.Sprintf(
 					"tasks.md not generated yet (run `free-kiro spec generate %s --phase tasks`)",
-					args[0]))
+					args[0])))
 			}
 			tasks := taskgraph.ParseTasks(string(data))
 			if len(tasks) == 0 {
@@ -73,10 +74,12 @@ func taskListCmd() *cobra.Command {
 }
 
 // safeWaves wraps taskgraph.ExecutionWaves so the CLI can report cycles
-// gracefully instead of returning nil.
+// gracefully instead of returning nil. Cycles surface as a typed
+// TaskGraphError so main.go's ExitCode maps them to exit 1 (the existing
+// IDE hook contract for unparseable tasks.md).
 func safeWaves(tasks []models.Task) ([][]models.Task, error) {
 	if cycle := taskgraph.DetectCycle(tasks); cycle != nil {
-		return nil, fmt.Errorf("dependency cycle detected: %s", formatCycle(cycle))
+		return nil, ferrors.NewTaskGraphError("task.list", "dependency cycle detected: "+formatCycle(cycle))
 	}
 	return taskgraph.ExecutionWaves(tasks), nil
 }
