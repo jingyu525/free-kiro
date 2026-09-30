@@ -69,6 +69,15 @@ func NewTaskGraphError(op, msg string) *TaskGraphError {
 	return &TaskGraphError{KiroError: New(op, msg)}
 }
 
+// NewLintFailureError constructs a LintFailureError (exit code 1) for
+// `free-kiro lint [name]` ERROR-severity findings. Distinct from
+// LintGateError (exit 2, used by `spec approve`) so callers can tell
+// "the lint subcommand itself failed" apart from "an upstream
+// operation was blocked by lint".
+func NewLintFailureError(op, msg string) *LintFailureError {
+	return &LintFailureError{KiroError: New(op, msg)}
+}
+
 // Typed KiroError subclasses — each represents a distinct failure mode that
 // the CLI layer may want to react to specifically. Use these instead of bare
 // New() when the failure mode is recognisable.
@@ -81,6 +90,14 @@ type TransitionError struct{ *KiroError }
 
 // LintGateError: lint gate blocked an advance/approve. Exit 2.
 type LintGateError struct{ *KiroError }
+
+// LintFailureError: the `free-kiro lint [name]` subcommand found at
+// least one ERROR-severity issue. Exit 1 — matches the contract in
+// docs/CLI.md / errors.go header ("1 = lint gate failure"). Distinct
+// from LintGateError (exit 2) which is used when an upstream caller
+// like `spec approve` is blocked by lint and the operation itself
+// failed.
+type LintFailureError struct{ *KiroError }
 
 // TaskGraphError: tasks.md has a cycle or other unparseable structure. Exit 1.
 type TaskGraphError struct{ *KiroError }
@@ -103,8 +120,12 @@ func ExitCode(err error) int {
 	if errors.As(err, &u) {
 		return 3
 	}
-	var l *LintGateError
+	var l *LintFailureError
 	if errors.As(err, &l) {
+		return 1
+	}
+	var lge *LintGateError
+	if errors.As(err, &lge) {
 		return 2
 	}
 	var t *TaskGraphError

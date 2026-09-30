@@ -84,10 +84,10 @@ func lintAll(ws *workspace.Workspace, cmd *cobra.Command) error {
 	}
 	if failed > 0 {
 		// Surface a non-zero exit code via the cobra error machinery.
-		// LintGateError maps to exit 2, which keeps the IDE hook contract
-		// `free-kiro lint || exit 2` working (parent process receives 2
-		// regardless of whether it comes from lint or from the fallback).
-		return ferrors.New("lint.all", fmt.Sprintf("%d spec(s) failed lint", failed))
+		// LintFailureError maps to exit 1, matching the contract in
+		// docs/CLI.md and the smoke test's `expect exit 1 (placeholder)`.
+		return ferrors.NewLintFailureError("lint.all",
+			fmt.Sprintf("%d spec(s) failed lint", failed))
 	}
 	return nil
 }
@@ -120,13 +120,13 @@ func anyError(issues []lint.LintIssue) bool {
 	return false
 }
 
-// gateExitCode returns an error so cobra exits with a non-zero code when
-// any ERROR-severity issue is present, 0 otherwise. Used by `lint <name>`.
-// Uses the plain KiroError type so main.go's ExitCode maps it to exit 2,
-// preserving the existing IDE hook contract (`free-kiro lint || exit 2`).
+// gateExitCode returns an error so cobra exits with code 1 when any
+// ERROR-severity issue is present, 0 otherwise. Used by `lint <name>`.
+// Uses LintFailureError so main.go's ExitCode maps it to exit 1
+// (matches the contract in docs/CLI.md + the smoke test).
 func gateExitCode(issues []lint.LintIssue) error {
 	if anyError(issues) {
-		return ferrors.New("lint.one", "lint gate failed")
+		return ferrors.NewLintFailureError("lint.one", "lint gate failed")
 	}
 	return nil
 }

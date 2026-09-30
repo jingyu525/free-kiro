@@ -64,6 +64,7 @@ func TestExitCode(t *testing.T) {
 	}{
 		{"nil", nil, 0},
 		{"UsageError", NewUsage("op", "msg"), 3},
+		{"LintFailureError", NewLintFailureError("op", "msg"), 1},
 		{"LintGateError", &LintGateError{KiroError: New("op", "msg")}, 2},
 		{"TaskGraphError", NewTaskGraphError("op", "msg"), 1},
 		{"KiroError", New("op", "msg"), 2},
