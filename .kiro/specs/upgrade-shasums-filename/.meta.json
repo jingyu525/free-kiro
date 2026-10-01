@@ -1,0 +1,17 @@
+{
+  "name": "upgrade-shasums-filename",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "修 free-kiro upgrade 命令的 SHA256SUMS 校验失败 bug：当前 free-kiro upgrade 报 'no SHA256 entry found for free-kiro in SHA256SUMS' 而失败。根因：internal/upgrade/upgrade.go 的 LookupSHA256 用错误的 key（'free-kiro'）去查 SHA256SUMS，但 release 资产里的条目是完整文件名（free-kiro_\u003cversion\u003e_\u003cos\u003e_\u003carch\u003e.tar.gz）。期望：'free-kiro upgrade' 能从 release SHA256SUMS 中正确匹配到当前平台的 tarball 条目并校验通过。",
+  "created_at": "2026-10-01T11:32:23Z",
+  "updated_at": "2026-10-01T11:46:46Z",
+  "baseline": {
+    "ac_count": 6,
+    "design_sections": 7,
+    "task_count": 6
+  }
+}

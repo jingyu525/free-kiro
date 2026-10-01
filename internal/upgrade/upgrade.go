@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -96,7 +97,7 @@ func Apply(ctx context.Context, p *Plan, force bool) error {
 	if err != nil {
 		return err
 	}
-	expected, err := LookupSHA256(string(sumsFile), p.Binary)
+	expected, err := verifyTarballSHA256(sumsFile, p.Download)
 	if err != nil {
 		return err
 	}
@@ -238,8 +239,9 @@ func Download(ctx context.Context, url string) ([]byte, error) {
 
 // LookupSHA256 finds the expected hash for `tarball` in the SHA256SUMS
 // file format used by GoReleaser: each line is `<hex>  <filename>`.
-// Matches by exact filename; the caller can pre-resolve the canonical
-// name. Falls back to "free-kiro" for the binary inside a tarball.
+// Matches by exact filename; the caller passes the canonical tarball
+// filename (e.g. "free-kiro_0.8.0_darwin_arm64.tar.gz") obtained from
+// `path.Base(p.Download)`.
 func LookupSHA256(sums, tarball string) (string, error) {
 	for line := range strings.SplitSeq(sums, "\n") {
 		line = strings.TrimSpace(line)
@@ -251,13 +253,22 @@ func LookupSHA256(sums, tarball string) (string, error) {
 			continue
 		}
 		hash, name := parts[0], parts[1]
-		// Match either the full tarball name or the binary inside it.
-		if name == tarball || name == "free-kiro" {
+		// Match by exact filename. GoReleaser SHA256SUMS lists tarball
+		// names, not the binaries inside them — there is no fallback.
+		if name == tarball {
 			return hash, nil
 		}
 	}
 	return "", ferrors.New("upgrade.apply",
 		fmt.Sprintf("no SHA256 entry found for %s in SHA256SUMS", tarball))
+}
+
+// verifyTarballSHA256 extracts the basename from `tarballURL` and looks
+// up its expected SHA256 in `sumsFile`. Returns the hex sha256 string.
+// Extracted from Apply so the path.Base + LookupSHA256 integration
+// path is unit-testable without spinning up an HTTP Download.
+func verifyTarballSHA256(sumsFile []byte, tarballURL string) (string, error) {
+	return LookupSHA256(string(sumsFile), path.Base(tarballURL))
 }
 
 // extractBinary uncompresses `tarball` (tar.gz) and writes the
