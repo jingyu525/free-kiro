@@ -29,7 +29,8 @@ lint gate：前向进阶会被门禁拦截（draft→requirements→design→tas
 			}
 			phaseStr, _ := cmd.Flags().GetString("phase")
 			if phaseStr == "all" || phaseStr == "" {
-				paths, err := eng.GenerateAll(args[0], force)
+				var paths []string
+				paths, err = eng.GenerateAll(args[0], force)
 				if err != nil {
 					return exitWithError(err)
 				}

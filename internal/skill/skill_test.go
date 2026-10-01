@@ -219,19 +219,19 @@ func TestUninstallOne_Idempotent(t *testing.T) {
 	}
 	// Now install then uninstall
 	src := t.TempDir()
-	if err := os.WriteFile(filepath.Join(src, "skill.json"),
+	if err = os.WriteFile(filepath.Join(src, "skill.json"),
 		[]byte(`{"name":"x","version":"1.0.0"}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(src, "SKILL.md"), []byte("x"), 0o644); err != nil {
+	if err = os.WriteFile(filepath.Join(src, "SKILL.md"), []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(filepath.Join(home, ".claude", "skills", "free-kiro"), 0o755); err != nil {
+	if err = os.MkdirAll(filepath.Join(home, ".claude", "skills", "free-kiro"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	// Use a manual write to simulate prior install (since InstallOne requires same source format)
 	target := filepath.Join(home, ".claude", "skills", "free-kiro")
-	if err := os.WriteFile(filepath.Join(target, "skill.json"),
+	if err = os.WriteFile(filepath.Join(target, "skill.json"),
 		[]byte(`{"name":"x","version":"1.0.0"}`), 0o644); err != nil {
 		t.Fatal(err)
 	}

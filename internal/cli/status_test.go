@@ -193,8 +193,8 @@ func TestStatusIsReadOnly(t *testing.T) {
 	cmd.SetOut(&out)
 	cmd.SetErr(&errBuf)
 	cmd.SetArgs([]string{})
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("status: %v", err)
+	if execErr := cmd.Execute(); execErr != nil {
+		t.Fatalf("status: %v", execErr)
 	}
 
 	// Sleep so any spurious write would shift it past equal().

@@ -33,7 +33,8 @@ func specShowCmd() *cobra.Command {
 				return renderSpecTree(cmd.OutOrStdout(), eng, args[0])
 			}
 			if phaseStr == "all" {
-				meta, err := loadMetaViaEngine(eng, args[0])
+				var meta *models.SpecMeta
+				meta, err = loadMetaViaEngine(eng, args[0])
 				if err != nil {
 					return exitWithError(err)
 				}

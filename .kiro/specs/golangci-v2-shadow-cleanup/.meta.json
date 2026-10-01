@@ -1,0 +1,17 @@
+{
+  "name": "golangci-v2-shadow-cleanup",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "启用 .golangci.yml 的 govet.enable-all: true 并修仓库里 13 处因此暴露的 govet shadow 违规（err 变量在嵌套作用域里 shadow，例如 'if err := ...; err != nil { ... }' 重新声明了 err）。这些违规历史上因为原 .golangci.yml 写法不完整（linters-settings 顶层键在 v2 schema 下被静默忽略，enable-all: true 从未真正生效）从未被 lint 抓到。期望：13 处 shadow 全部修干净，golangci-lint run 输出 0 issues，开启 enable-all: true 后仍 0 issues。",
+  "created_at": "2026-10-01T12:13:50Z",
+  "updated_at": "2026-10-01T12:26:45Z",
+  "baseline": {
+    "ac_count": 4,
+    "design_sections": 7,
+    "task_count": 18
+  }
+}
