@@ -52,9 +52,10 @@ func InstallOne(ctx context.Context, opts InstallOptions) InstallResult {
 
 	// Detect existing install.
 	existingVersion := ""
-	if _, err := os.Stat(filepath.Join(res.SkillsDir, "skill.json")); err == nil {
+	if _, err = os.Stat(filepath.Join(res.SkillsDir, "skill.json")); err == nil {
 		// Existing install — read its version.
-		if m, err := LoadManifest(res.SkillsDir); err == nil {
+		var m *Manifest
+		if m, err = LoadManifest(res.SkillsDir); err == nil {
 			existingVersion = m.Version
 		}
 	}
@@ -98,7 +99,7 @@ func InstallOne(ctx context.Context, opts InstallOptions) InstallResult {
 	res.SHA256OK = true
 
 	// Copy bundle files into the target dir.
-	if err := os.MkdirAll(res.SkillsDir, 0o755); err != nil {
+	if err = os.MkdirAll(res.SkillsDir, 0o755); err != nil {
 		res.Err = ferrors.Wrap("skill.install", err, "mkdir "+res.SkillsDir)
 		return res
 	}

@@ -38,8 +38,8 @@ func FetchBrowserHTML(ctx context.Context, rawURL string) (title, body string, e
 	// 1. Navigate. We use `bsk navigate` against the user's existing
 	// session (browser-skill re-uses one session per command by default).
 	nav := exec.CommandContext(ctx, path, "navigate", rawURL)
-	if out, err := nav.CombinedOutput(); err != nil {
-		return "", "", ferrors.Wrap("spec.from-browser", err,
+	if out, navErr := nav.CombinedOutput(); navErr != nil {
+		return "", "", ferrors.Wrap("spec.from-browser", navErr,
 			fmt.Sprintf("bsk navigate failed for %s: %s", rawURL, trimTrailing(string(out))))
 	}
 
@@ -53,8 +53,8 @@ func FetchBrowserHTML(ctx context.Context, rawURL string) (title, body string, e
 	defer func() { _ = os.Remove(tmpPath) }() // best-effort cleanup
 
 	dump := exec.CommandContext(ctx, path, "get-html", "--out", tmpPath)
-	if out, err := dump.CombinedOutput(); err != nil {
-		return "", "", ferrors.Wrap("spec.from-browser", err,
+	if out, dumpErr := dump.CombinedOutput(); dumpErr != nil {
+		return "", "", ferrors.Wrap("spec.from-browser", dumpErr,
 			"bsk get-html failed: "+trimTrailing(string(out)))
 	}
 

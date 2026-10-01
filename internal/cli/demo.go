@@ -75,7 +75,7 @@ func runDemo(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return ferrors.Wrap("demo.cwd", err, "resolve cwd")
 	}
-	if _, err := os.Stat(filepath.Join(cwd, demoExampleRelPath)); err != nil {
+	if _, err = os.Stat(filepath.Join(cwd, demoExampleRelPath)); err != nil {
 		return ferrors.NewUsage("demo",
 			"未找到 "+demoExampleRelPath+"/；请先 `cd` 到 free-kiro 仓库根目录再跑 `free-kiro demo`")
 	}

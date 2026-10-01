@@ -236,8 +236,8 @@ func InstallHooks(id ID, home string) (path string, note string, err error) {
 		return "", "", ferrors.New("ide.install", "unsupported IDE: "+string(id))
 	}
 	dir := filepath.Dir(cfgPath)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return "", "", ferrors.Wrap("ide.install", err, "mkdir "+dir)
+	if mkdirErr := os.MkdirAll(dir, 0o755); mkdirErr != nil {
+		return "", "", ferrors.Wrap("ide.install", mkdirErr, "mkdir "+dir)
 	}
 
 	settings, rawBlob, err := readOrLoadSettings(cfgPath)

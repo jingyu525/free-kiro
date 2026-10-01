@@ -36,11 +36,10 @@ linters:
   # v2 schema: 顶层 `linters-settings` 已迁移到 `linters.settings`
   settings:
     govet:
-      # v2 schema 下 govet 默认 checks（与 v1 时代 `enable-all: true`
-      # 行为不同：v2 默认已包含 nilness 等，shadow 等扩展 check 不会自动
-      # 启用）。保留 `enable-all: false`（即默认）以匹配仓库历史 lint 行为，
-      # 避免 CI 暴露 13 处历史 shadow 违规（另开 spec 处理）。
-      enable-all: false
+      # 启用 govet enable-all（v2 schema 真正生效）：shadow / nilness /
+      # printf / httpresponse 等扩展 check 全开。新代码必须满足扩展检查，
+      # 仓库历史 13 处 shadow 已由 golangci-v2-shadow-cleanup spec 修干净。
+      enable-all: true
       disable:
         - fieldalignment  # 与本规范"不过度优化结构体对齐"原则冲突
     revive:

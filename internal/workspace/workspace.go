@@ -170,7 +170,7 @@ func (w *Workspace) EnsureLayout() error {
 		}
 	}
 	if _, err := os.Stat(w.SettingsPath()); os.IsNotExist(err) {
-		if err := w.SaveSettings(defaultSettings()); err != nil {
+		if err = w.SaveSettings(defaultSettings()); err != nil {
 			return err
 		}
 	} else if err != nil {
