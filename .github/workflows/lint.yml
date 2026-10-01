@@ -33,7 +33,11 @@ jobs:
       - name: Verify installation
         run: |
           free-kiro --version
-          free-kiro doctor --strict
+          # doctor is best-effort: CI runner has no IDE install, so
+          # `free-kiro doctor --strict` would flip the "IDE not found"
+          # warning into a fatal and block the PR. Compare with
+          # spec-lint.yml.example (run doctor with continue-on-error: true).
+          free-kiro doctor || true
 
       - name: Lint all specs (gate)
         run: |
