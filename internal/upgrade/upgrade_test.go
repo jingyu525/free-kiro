@@ -18,16 +18,59 @@ func TestLookupSHA256_ExactMatch(t *testing.T) {
 	}
 }
 
-func TestLookupSHA256_FallbackToBinaryName(t *testing.T) {
-	// When the SHA256SUMS file uses just the binary name, the lookup
-	// should still match.
-	sums := "deadbeef  free-kiro\n"
-	got, err := LookupSHA256(sums, "free-kiro_0.1.0_linux_amd64.tar.gz")
-	if err != nil {
-		t.Fatal(err)
+// TestVerifyTarballSHA256 covers the path.Base + LookupSHA256 integration
+// path that Apply uses after the upgrade-shasums-filename fix. Splitting
+// this out of Apply lets the regression run without an HTTP Download.
+// The negative case guards against accidentally reintroducing the
+// "free-kiro" fallback that was deleted in the same fix.
+func TestVerifyTarballSHA256(t *testing.T) {
+	sums := []byte("abc123  free-kiro_0.8.0_darwin_arm64.tar.gz\n" +
+		"def456  free-kiro_0.8.0_darwin_amd64.tar.gz\n" +
+		"789abc  free-kiro_0.8.0_linux_arm64.tar.gz\n")
+
+	cases := []struct {
+		name       string
+		tarballURL string
+		wantHash   string
+		wantErr    bool
+	}{
+		{
+			name:       "darwin_arm64 happy path",
+			tarballURL: "https://github.com/jingyu525/free-kiro/releases/download/v0.8.0/free-kiro_0.8.0_darwin_arm64.tar.gz",
+			wantHash:   "abc123",
+		},
+		{
+			name:       "darwin_amd64 happy path",
+			tarballURL: "https://github.com/jingyu525/free-kiro/releases/download/v0.8.0/free-kiro_0.8.0_darwin_amd64.tar.gz",
+			wantHash:   "def456",
+		},
+		{
+			name:       "linux_arm64 happy path",
+			tarballURL: "https://github.com/jingyu525/free-kiro/releases/download/v0.8.0/free-kiro_0.8.0_linux_arm64.tar.gz",
+			wantHash:   "789abc",
+		},
+		{
+			name:       "internal binary name rejected (regression guard)",
+			tarballURL: "https://github.com/jingyu525/free-kiro/releases/download/v0.8.0/free-kiro",
+			wantErr:    true,
+		},
 	}
-	if got != "deadbeef" {
-		t.Errorf("expected deadbeef, got %s", got)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := verifyTarballSHA256(sums, tc.tarballURL)
+			if tc.wantErr {
+				if err == nil {
+					t.Errorf("expected error for URL %q, got hash %q", tc.tarballURL, got)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error for URL %q: %v", tc.tarballURL, err)
+			}
+			if got != tc.wantHash {
+				t.Errorf("hash mismatch for %q: got %q, want %q", tc.tarballURL, got, tc.wantHash)
+			}
+		})
 	}
 }
 
