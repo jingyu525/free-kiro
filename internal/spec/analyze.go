@@ -60,12 +60,9 @@ func (e *Engine) Analyze(specName string) []AnalysisFinding {
 	text, _ := os.ReadFile(filepath.Join(dir, doc))
 	docText := string(text)
 
-	var findings []AnalysisFinding
+	findings := []AnalysisFinding{}
 
 	// 1. vague language — case-insensitive whole-word match.
-	if findings == nil {
-		findings = []AnalysisFinding{}
-	}
 	for _, m := range vagueWordRe.FindAllString(docText, -1) {
 		findings = append(findings, AnalysisFinding{
 			Severity: "info",
