@@ -61,9 +61,11 @@ jobs:
 
       # golangci-lint-action 自动装匹配 Go 版本 + go.mod 的最新 linter；
       # 与本地 `make lint-go` 同一配置入口（.golangci.yml）。
-      # version 不锁 v1.x，让 action 自动选，避免 Go 1.27 module 与旧 linter 不兼容。
+      # 必须 v8+：.golangci.yml 用 version: "2"（v2 schema），v6/v7 action 装
+      # 的 golangci-lint v1.64.x 是用 Go 1.24 编译的，无法加载 go.mod 的
+      # `go 1.27` module（"language version lower than targeted Go version"）。
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           args: --timeout 5m
