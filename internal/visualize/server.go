@@ -139,11 +139,16 @@ func (s *Server) Shutdown() error {
 	}
 	// Drain the watcher with a bounded wait. watcherRunning is closed
 	// by the watcher's defer when it exits, so a never-started watcher
-	// would hang here forever; the time.After fallback guarantees
-	// Shutdown() returns within shutdownTimeout.
+	// would hang here forever; the timer fallback guarantees
+	// Shutdown() returns within shutdownTimeout. We use NewTimer +
+	// defer Stop instead of time.After so the timer is released as
+	// soon as watcherRunning fires (zero GC pressure on the hot
+	// shutdown path).
+	t := time.NewTimer(shutdownTimeout)
+	defer t.Stop()
 	select {
 	case <-s.watcherRunning:
-	case <-time.After(shutdownTimeout):
+	case <-t.C:
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
