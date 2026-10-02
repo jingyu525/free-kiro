@@ -104,10 +104,17 @@ func NewServer(addr string, ws WorkspacePaths, eng *spec.Engine) *Server {
 	mux.HandleFunc("/api/specs", s.handleSpecs)
 	mux.HandleFunc("/api/spec/", s.handleSpec)
 	mux.HandleFunc("/api/events", s.handleEvents)
+	mux.HandleFunc("/assets/", s.handleStatic)
 
+	// Middleware chain: recover → logger → cache → mux. Order matters:
+	// recover outermost catches panics from any inner layer (including
+	// the logger itself), logger records every request including 500s
+	// produced by recover, cache attaches headers before the first
+	// WriteHeader (after which headers are locked).
+	handler := withRecover(withLogger(withCacheHeaders(mux)))
 	s.srv = &http.Server{
 		Addr:    addr,
-		Handler: mux,
+		Handler: handler,
 	}
 	return s
 }
@@ -236,4 +243,53 @@ func (s *Server) handleSpec(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, status)
+}
+
+// handleStatic serves files embedded under static/dist/ at /assets/*.
+// Built artifacts (main.<hash>.js / main.<hash>.css) live there after
+// the dashboard-frontend-foundation spec's `make dashboard-dist`
+// produces them. Returns 400 on path-traversal attempts, 404 on
+// missing files, 405 on non-GET methods.
+func (s *Server) handleStatic(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+	rel := strings.TrimPrefix(r.URL.Path, "/assets/")
+	if rel == "" || strings.Contains(rel, "..") || strings.HasPrefix(rel, "/") {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid path"})
+		return
+	}
+	data, err := staticFS.ReadFile("static/dist/" + rel)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "asset not found"})
+		return
+	}
+	w.Header().Set("Content-Type", contentTypeForAsset(rel))
+	_, _ = w.Write(data)
+}
+
+// contentTypeForAsset picks a Content-Type by file extension. Keeps
+// the lookup table next to handleStatic so adding a new asset type
+// is a one-place change.
+func contentTypeForAsset(rel string) string {
+	switch {
+	case strings.HasSuffix(rel, ".js"):
+		return "application/javascript; charset=utf-8"
+	case strings.HasSuffix(rel, ".css"):
+		return "text/css; charset=utf-8"
+	case strings.HasSuffix(rel, ".json"):
+		return "application/json; charset=utf-8"
+	case strings.HasSuffix(rel, ".svg"):
+		return "image/svg+xml"
+	case strings.HasSuffix(rel, ".png"):
+		return "image/png"
+	default:
+		return "application/octet-stream"
+	}
 }

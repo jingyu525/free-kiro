@@ -1,0 +1,17 @@
+{
+  "name": "dashboard-backend-middleware",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "free-kiro serve dashboard 后端硬化：在 internal/visualize 包新增 middleware.go 实现三个中间件：(1) withRecover 捕获 panic 返回 500 + 日志，不挂死 http.Server；(2) withLogger 记录 access log（method/path/status/latency）；(3) withCacheHeaders 按前缀分支：静态资源 /assets/* 设 public,max-age=31536000,immutable；/ 设 no-cache；/api/* 设 no-cache。同时新增 handleStatic handler 走 embed.FS 的 dist 子树供前端打包产物加载。改动 internal/visualize/server.go 装配中间件链。保留 dashboard-sse-bugfix 所有修复不变。",
+  "created_at": "2026-10-02T01:53:56Z",
+  "updated_at": "2026-10-02T02:26:10Z",
+  "baseline": {
+    "ac_count": 44,
+    "design_sections": 5,
+    "task_count": 8
+  }
+}

@@ -131,8 +131,11 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+	// Cache-Control is owned by withCacheHeaders middleware (sets
+	// "no-cache, no-store, must-revalidate" for /api/events so proxies
+	// don't buffer SSE). Don't re-set it here — that would clobber
+	// the middleware's stricter no-store directive.
 
 	// Best-effort: drop the client when it disconnects.
 	ch := s.subscribe()
