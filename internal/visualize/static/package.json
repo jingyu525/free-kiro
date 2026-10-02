@@ -1,14 +1,32 @@
 {
   "name": "free-kiro-dashboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Frontend bundle for free-kiro serve dashboard — vanilla TS, no runtime deps.",
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "description": "Frontend bundle for free-kiro serve dashboard — React 18 + Vite 5 + FSD architecture.",
   "scripts": {
-    "build": "node esbuild.config.mjs",
-    "watch": "node esbuild.config.mjs --watch"
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint --ext .ts,.tsx src/",
+    "lint:fsd": "node scripts/check-fsd-layers.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.62.7",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "esbuild": "^0.24.0",
-    "typescript": "^5.6.0"
+    "@types/node": "^26.6.4",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "4.3.4",
+    "typescript": "5.6.3",
+    "vite": "5.4.11"
   }
 }

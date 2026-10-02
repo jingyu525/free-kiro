@@ -40,6 +40,7 @@ import (
 )
 
 //go:embed static/*
+//go:embed all:static/dist/assets/*
 var staticFS embed.FS
 
 // shutdownTimeout caps how long Shutdown() waits for the watcher and
@@ -296,6 +297,12 @@ func (s *Server) handleStatic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, err := staticFS.ReadFile("static/dist/" + rel)
+	if err != nil {
+		// Vite emits bundled assets under dist/assets/<rel> when base is /assets/.
+		// Fall back to that subdirectory lookup so legacy handleStatic callers
+		// see hashed bundles without rewriting the existing route.
+		data, err = staticFS.ReadFile("static/dist/assets/" + rel)
+	}
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusNotFound)
