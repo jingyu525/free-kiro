@@ -117,6 +117,11 @@ func (w *Workspace) SpecDir(name string) string { return filepath.Join(w.SpecsDi
 // Exists returns true if .kiro is present at the root.
 func (w *Workspace) Exists() bool { return isDir(w.KiroDir()) }
 
+// KiroDirExists is a method-form alias for Exists() so the
+// visualize.WorkspacePaths interface can advertise it without
+// leaking the full Exists semantics into dashboard code.
+func (w *Workspace) KiroDirExists() bool { return w.Exists() }
+
 // ReadCurrent returns the name of the active spec, or "" if no spec is
 // marked current (or the file is unreadable for any reason — callers
 // treat empty as "no current spec").

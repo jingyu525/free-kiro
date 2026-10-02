@@ -1,0 +1,17 @@
+{
+  "name": "dashboard-backend-api-extensions",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "free-kiro serve dashboard 后端 API 扩展：在 internal/visualize 包新增 4 个端点：(1) GET /api/spec/\u003cname\u003e/tasks 返回完整 task 列表按 wave 分组（含 id/title/done/deps/wave_index），需新增 Engine.TaskList(name) 方法封装 taskgraph.ParseTasks+ExecutionWaves；(2) GET /api/spec/\u003cname\u003e/drift 独立返回 drift signals；(3) GET /api/spec/\u003cname\u003e/timeline 返回该 spec 目录下文件 mtime 列表；(4) GET /api/health 返回 liveness 与上次 refresh 时间。同时扩 BuildReport 的 ProjectReport 加 mode 字段（workspace-missing|no-specs|ok）供前端空状态三态分桶。所有变更向后兼容：现有 /api/summary 只增字段不删。",
+  "created_at": "2026-10-02T01:53:54Z",
+  "updated_at": "2026-10-02T02:40:11Z",
+  "baseline": {
+    "ac_count": 40,
+    "design_sections": 6,
+    "task_count": 10
+  }
+}

@@ -74,6 +74,13 @@ type Server struct {
 	// Tests read this to assert the S8 dedup invariant without poking
 	// at unexported runtime state.
 	watcherStartCount atomic.Int32
+
+	// startedAt records NewServer wall-clock time so /api/health can
+	// report uptime. lastRefreshAt is updated each time the file
+	// watcher broadcasts a refresh event so health also surfaces
+	// "last successful refresh" for monitoring integrations.
+	startedAt      time.Time
+	lastRefreshAt atomic.Int64
 }
 
 // WorkspacePaths is the subset of workspace.Workspace the Server needs.
@@ -86,6 +93,7 @@ type WorkspacePaths interface {
 	SpecDir(name string) string
 	Root() string
 	ReadCurrent() string
+	KiroDirExists() bool
 }
 
 // NewServer constructs a Server with the dashboard's HTTP routes wired.
@@ -97,6 +105,7 @@ func NewServer(addr string, ws WorkspacePaths, eng *spec.Engine) *Server {
 		eng:            eng,
 		stop:           make(chan struct{}),
 		watcherRunning: make(chan struct{}),
+		startedAt:      time.Now().UTC(),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handleIndex)
@@ -104,6 +113,8 @@ func NewServer(addr string, ws WorkspacePaths, eng *spec.Engine) *Server {
 	mux.HandleFunc("/api/specs", s.handleSpecs)
 	mux.HandleFunc("/api/spec/", s.handleSpec)
 	mux.HandleFunc("/api/events", s.handleEvents)
+	mux.HandleFunc("/api/health", s.handleHealth)
+	mux.HandleFunc("/api/hooks", s.handleHooks)
 	mux.HandleFunc("/assets/", s.handleStatic)
 
 	// Middleware chain: recover → logger → cache → mux. Order matters:
@@ -230,19 +241,40 @@ func (s *Server) handleSpecs(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, map[string]any{"specs": specs})
 }
 
-// handleSpec returns the full status of one named spec.
+// handleSpec is the router for /api/spec/<name> and its sub-routes
+// /api/spec/<name>/{tasks,drift,timeline}. Distinguishes by counting
+// path segments after the prefix. Sub-routes are forwarded to
+// dedicated handlers in server_handlers.go; the bare /api/spec/<name>
+// shape returns the legacy status map (preserves dashboard-sse-bugfix
+// + `free-kiro status --json` consumers).
 func (s *Server) handleSpec(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Path[len("/api/spec/"):]
+	rest := strings.TrimPrefix(r.URL.Path, "/api/spec/")
+	parts := strings.SplitN(rest, "/", 2)
+	name := parts[0]
 	if name == "" {
 		http.Error(w, "missing spec name", http.StatusBadRequest)
 		return
 	}
-	status, err := s.eng.Status(name)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+	if len(parts) == 1 {
+		status, err := s.eng.Status(name)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		writeJSON(w, status)
 		return
 	}
-	writeJSON(w, status)
+	// Sub-route: dispatch by second segment.
+	switch parts[1] {
+	case "tasks":
+		s.handleSpecTasks(w, r)
+	case "drift":
+		s.handleSpecDrift(w, r)
+	case "timeline":
+		s.handleSpecTimeline(w, r)
+	default:
+		http.NotFound(w, r)
+	}
 }
 
 // handleStatic serves files embedded under static/dist/ at /assets/*.

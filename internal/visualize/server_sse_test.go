@@ -13,10 +13,11 @@ import (
 // SSE / shutdown paths don't actually consult the workspace.
 type stubWS struct{}
 
-func (stubWS) KiroDir() string       { return "" }
-func (stubWS) SpecDir(string) string { return "" }
-func (stubWS) Root() string          { return "" }
-func (stubWS) ReadCurrent() string   { return "" }
+func (stubWS) KiroDir() string        { return "" }
+func (stubWS) SpecDir(string) string  { return "" }
+func (stubWS) Root() string           { return "" }
+func (stubWS) ReadCurrent() string    { return "" }
+func (stubWS) KiroDirExists() bool    { return true }
 
 // TestServer_ShutdownWithoutWatcher covers AC-3 (V1): Shutdown must
 // return within shutdownTimeout when watchChanges was never started.

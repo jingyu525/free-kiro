@@ -1,7 +1,6 @@
 package visualize
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -50,11 +49,13 @@ func (s *Server) unsubscribe(ch chan struct{}) {
 // broadcast signals every subscriber that the dashboard should refresh.
 // Takes a snapshot of the subscriber list under the mutex so we don't
 // hold the lock while sending to (potentially slow) client channels.
+// Also updates lastRefreshAt so /api/health can surface it.
 func (s *Server) broadcast() {
 	s.notifierMu.Lock()
 	subs := make([]chan struct{}, len(s.subscribers))
 	copy(subs, s.subscribers)
 	s.notifierMu.Unlock()
+	s.lastRefreshAt.Store(time.Now().UTC().UnixNano())
 	for _, ch := range subs {
 		select {
 		case ch <- struct{}{}:
@@ -63,6 +64,14 @@ func (s *Server) broadcast() {
 			// pick up the next refresh on its 5s polling fallback.
 		}
 	}
+}
+
+// subscribersCount returns the number of currently-connected SSE
+// clients. Used by /api/health. Safe to call concurrently.
+func (s *Server) subscribersCount() int {
+	s.notifierMu.Lock()
+	defer s.notifierMu.Unlock()
+	return len(s.subscribers)
 }
 
 // watchChanges polls .kiro/ for file modifications and broadcasts a
@@ -163,6 +172,3 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-
-// keep imports referenced after split (os is used by collectMtimes, etc.).
-var _ = context.Background

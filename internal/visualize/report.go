@@ -36,6 +36,7 @@ type ProjectReport struct {
 	GeneratedAt time.Time     `json:"generated_at"`
 	Specs       []*SpecReport `json:"specs"`
 	Active      string        `json:"active"` // name of active spec (from .kiro/.current)
+	Mode        string        `json:"mode"`   // "workspace-missing" | "no-specs" | "ok" — drives dashboard empty-state tri-state
 }
 
 // BuildReport gathers everything needed for a project report. Engine
@@ -54,6 +55,7 @@ func BuildReport(ws WorkspacePaths, eng *spec.Engine) (*ProjectReport, error) {
 	out := &ProjectReport{
 		GeneratedAt: time.Now().UTC(),
 		Active:      active,
+		Mode:        computeReportMode(ws, specs),
 	}
 	for _, m := range specs {
 		st, err := eng.Status(m.Name)
@@ -235,6 +237,25 @@ func loadSpecTasks(name string) ([]models.Task, [][]models.Task) {
 		return nil, nil
 	}
 	return tasks, taskgraph.ExecutionWaves(tasks)
+}
+
+// computeReportMode classifies the workspace state for the dashboard's
+// empty-state tri-state. O(1) — single stat + len check. The frontend
+// (`dashboard-frontend-foundation`) renders different CTAs per mode:
+//   - "workspace-missing" → "Run `free-kiro init`"
+//   - "no-specs"          → "Run `free-kiro spec new <name>`"
+//   - "ok"                → render the normal table
+//
+// computeReportMode is a pure function so report_test.go can table-drive
+// it without touching the filesystem.
+func computeReportMode(ws WorkspacePaths, specs []*models.SpecMeta) string {
+	if !ws.KiroDirExists() {
+		return "workspace-missing"
+	}
+	if len(specs) == 0 {
+		return "no-specs"
+	}
+	return "ok"
 }
 
 // workspaceRef is a thin pointer-ish struct for the report module to

@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	ferrors "github.com/jingyu525/free-kiro/internal/errors"
 	"github.com/jingyu525/free-kiro/internal/lint"
 	"github.com/jingyu525/free-kiro/internal/models"
+	"github.com/jingyu525/free-kiro/internal/taskgraph"
 )
 
 // Status returns a structured snapshot of the spec's lifecycle position
@@ -198,4 +200,74 @@ func formatGate(issues []lint.Issue) string {
 		}
 	}
 	return strings.Join(parts, ", ")
+}
+
+// ErrSpecNotFound is returned by Engine methods when the named spec
+// does not exist on disk. Callers map this to a 404 in the HTTP layer.
+// Defined here (not in errors.go) because only spec-engine code raises
+// it; centralising in errors.go would invite unrelated packages to
+// fabricate it.
+var ErrSpecNotFound = errors.New("spec not found")
+
+// Wave groups tasks that share the same topological level and may
+// run concurrently. Index is 1-based; Done / Total are pre-computed
+// so handlers don't have to re-count on every render.
+type Wave struct {
+	Index int
+	Tasks []models.Task
+	Done  int
+	Total int
+}
+
+// TaskList returns the full task structure for one spec, parsed
+// from tasks.md and grouped into execution waves. Reuses
+// taskgraph.ParseTasks + ExecutionWaves (no re-implementation).
+//
+// Spec missing → ErrSpecNotFound (handler maps to 404).
+// tasks.md missing or empty → ([]Wave{}, nil) — a spec still in
+// planning has no tasks yet, this is not an error.
+// tasks.md unparseable → wrapped error so callers can surface a 500.
+func (e *Engine) TaskList(specName string) ([]Wave, error) {
+	specDir := e.ws.SpecDir(specName)
+	if _, err := os.Stat(specDir); err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrSpecNotFound
+		}
+		return nil, ferrors.Wrap("spec.tasklist", err, "stat "+specDir)
+	}
+	tasksPath := filepath.Join(specDir, "tasks.md")
+	data, err := os.ReadFile(tasksPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []Wave{}, nil
+		}
+		return nil, ferrors.Wrap("spec.tasklist", err, "read "+tasksPath)
+	}
+	tasks := taskgraph.ParseTasks(string(data))
+	if len(tasks) == 0 {
+		return []Wave{}, nil
+	}
+	groups := taskgraph.ExecutionWaves(tasks)
+	if groups == nil {
+		// Cycle detected — taskgraph.ExecutionWaves returns nil on cycle.
+		// Lint will have surfaced it; here we return empty so the dashboard
+		// renders a blank task list rather than crashing.
+		return []Wave{}, nil
+	}
+	out := make([]Wave, 0, len(groups))
+	for i, g := range groups {
+		done := 0
+		for _, t := range g {
+			if t.Done {
+				done++
+			}
+		}
+		out = append(out, Wave{
+			Index: i + 1,
+			Tasks: g,
+			Done:  done,
+			Total: len(g),
+		})
+	}
+	return out, nil
 }
