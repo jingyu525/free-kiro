@@ -334,3 +334,239 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---- dashboard-frontend-components: a11y + spec-detail-dialog + 4 widgets ---- */
+
+/* Skip-link (AC-25): hidden by default, slides in on Tab focus. */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-elevated);
+  color: var(--color-link);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  z-index: 1000;
+  text-decoration: underline;
+  transition: top 150ms ease-out;
+}
+.skip-link:focus {
+  top: var(--space-3);
+}
+
+/* Spec detail dialog (AC-9..AC-15). */
+.spec-detail-dialog {
+  width: min(720px, 92vw);
+  max-height: 88vh;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-elevated);
+  color: var(--color-fg);
+}
+.spec-detail-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.spec-detail-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.spec-detail-dialog__header h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.spec-detail-dialog__tabs {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-overlay);
+}
+.spec-detail-dialog__tabs button {
+  background: transparent;
+  color: var(--color-fg-muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.spec-detail-dialog__tabs button[aria-selected="true"] {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border-color: var(--color-border);
+}
+.spec-detail-dialog__body {
+  padding: var(--space-4);
+  overflow: auto;
+  max-height: calc(88vh - 130px);
+}
+
+/* Drift table (AC-16..AC-18). */
+.drift-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.drift-table caption {
+  text-align: left;
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+  margin-bottom: var(--space-2);
+}
+.drift-table th,
+.drift-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  font-size: var(--text-sm);
+}
+.drift-table td[data-trend="up"] {
+  background: rgba(248, 81, 73, 0.12);
+  color: var(--color-err);
+  font-weight: 500;
+}
+.drift-table td[data-trend="down"] {
+  background: rgba(63, 185, 80, 0.12);
+  color: var(--color-ok);
+  font-weight: 500;
+}
+.drift-table td[data-trend="flat"] {
+  color: var(--color-fg-muted);
+}
+
+/* Waves progress (AC-19..AC-21). */
+.waves-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.waves-progress__wave {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.waves-progress__wave h3 {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+  width: 5em;
+}
+.waves-progress__wave progress {
+  flex: 1;
+  height: 8px;
+}
+.waves-progress__wave.wave-1 progress { accent-color: var(--color-link); }
+.waves-progress__wave.wave-2 progress { accent-color: var(--color-ok); }
+.waves-progress__wave.wave-3 progress { accent-color: var(--color-warn); }
+.waves-progress__wave.wave-4 progress { accent-color: var(--color-state-planning); }
+.waves-progress__wave.wave-5 progress { accent-color: var(--color-state-implementing); }
+.waves-progress__wave.wave-6 progress { accent-color: var(--color-state-draft); }
+.waves-progress__wave.wave-7 progress { accent-color: var(--color-state-drift); }
+.waves-progress__wave.wave-8 progress { accent-color: var(--color-err); }
+.waves-progress__ratio {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  width: 4em;
+  text-align: right;
+}
+
+/* Task list (AC-22..AC-24). */
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.task-list__item {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+.task-list__item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+.task-list__id {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+.task-list__title {
+  font-size: var(--text-sm);
+}
+.task-list__wave {
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+}
+.task-list__deps code {
+  background: var(--color-bg-overlay);
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+}
+
+/* Overview meta (dl). */
+.overview-meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+}
+.overview-meta dt {
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+}
+.overview-meta dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+/* Timeline (ol). */
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.timeline-item {
+  display: grid;
+  grid-template-columns: 8em 6em 1fr;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-border);
+  background: var(--color-bg);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.timeline-item[data-kind="approved"] { border-left-color: var(--color-ok); }
+.timeline-item[data-kind="completed"] { border-left-color: var(--color-ok); }
+.timeline-item[data-kind="started"] { border-left-color: var(--color-link); }
+.timeline-item time {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-fg-muted);
+}
+.timeline-item strong {
+  text-transform: capitalize;
+  font-size: var(--text-sm);
+}
+.timeline-item span {
+  font-size: var(--text-sm);
+}

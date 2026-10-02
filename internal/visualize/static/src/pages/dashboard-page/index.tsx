@@ -42,7 +42,7 @@ export function DashboardPage(): JSX.Element {
       {isError && data === undefined ? (
         <RetryBanner error={error} onRetry={() => void refetch()} />
       ) : null}
-      <main role="main">
+      <main role="main" id="main">
         {showSkeleton ? (
           <SkeletonOverlay visible rows={6} />
         ) : data && (mode === 'workspace-missing' || (mode === 'ok' && data.specs.length === 0) || mode === 'no-specs') ? (

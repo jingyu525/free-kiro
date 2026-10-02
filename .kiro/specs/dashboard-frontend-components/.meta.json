@@ -1,0 +1,17 @@
+{
+  "name": "dashboard-frontend-components",
+  "phase": "implementing",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "修 free-kiro serve dashboard React 渲染期的 TypeError 'Cannot read properties of null (reading length)' runtime bug（dashboard-frontend-foundation MVP 已知 + dashboard-frontend-react-vite-fsd 迁移后仍存在，ErrorBoundary 兜底但首屏不全）；补 4 个剩余 widget（spec-detail-dialog / drift-table / waves-progress / task-list）+ 完整 a11y（role / aria-* / 屏幕阅读器 / focus management）+ Playwright E2E 端到端验证。保留 dashboard-frontend-react-vite-fsd 的 FSD 6 层 + React 18 + react-query 5 + ErrorBoundary + Vite 5 + pnpm 9。零后端 API 变更；移动端深度适配（\u003c 768px 全屏 sheet）属于 dashboard-mobile-a11y 独立 spec。",
+  "created_at": "2026-10-02T08:32:41Z",
+  "updated_at": "2026-10-02T08:37:06Z",
+  "baseline": {
+    "ac_count": 36,
+    "design_sections": 6,
+    "task_count": 18
+  }
+}

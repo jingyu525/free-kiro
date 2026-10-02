@@ -10,6 +10,7 @@ import { ToastProvider } from '@shared/lib/toast';
 import { AppRouter } from '@app/router';
 import { SUMMARY_QUERY_KEY } from '@entities/summary/use-summary-query';
 import { ErrorBoundary } from '@app/error-boundary';
+import { SpecDetailDialog } from '@widgets/spec-detail-dialog';
 
 import '@shared/styles/globals.css';
 
@@ -25,9 +26,13 @@ function Root(): JSX.Element {
         <ThemeProvider>
           <ConnectionProvider>
             <ToastProvider>
+              <a href="#main" className="skip-link">
+                Skip to main content
+              </a>
               <ErrorBoundary>
                 <SSEBridge />
                 <AppRouter />
+                <SpecDetailDialog />
               </ErrorBoundary>
             </ToastProvider>
           </ConnectionProvider>
