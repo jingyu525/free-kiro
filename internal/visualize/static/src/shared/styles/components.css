@@ -570,3 +570,48 @@ button {
 .timeline-item span {
   font-size: var(--text-sm);
 }
+
+/* ---- dashboard-spec-detail-view: sparkline + dialog-toolbar ---- */
+
+.sparkline {
+  display: inline-block;
+  vertical-align: middle;
+}
+.sparkline-up { color: var(--color-err); }
+.sparkline-down { color: var(--color-ok); }
+.sparkline-flat { color: var(--color-fg-muted); }
+.sparkline-empty {
+  display: inline-block;
+  min-width: 60px;
+  text-align: center;
+  color: var(--color-fg-muted);
+  font-family: var(--font-mono);
+}
+
+.dialog-toolbar {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+.dialog-toolbar .btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Cross-spec dep link (in task-list). */
+.task-list__deps a {
+  display: inline-block;
+  margin-right: var(--space-1);
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-overlay);
+  color: var(--color-link);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-decoration: none;
+}
+.task-list__deps a:hover,
+.task-list__deps a:focus-visible {
+  background: var(--color-link);
+  color: var(--color-bg);
+}

@@ -8,5 +8,5 @@ export function DriftTab({ name }: { name: string }): JSX.Element {
   const { data, isLoading, isError, error, refetch } = useSpecDriftQuery(name);
   if (isLoading) return <Spinner />;
   if (isError) return <RetryBanner error={error} onRetry={() => void refetch()} />;
-  return <DriftTable drift={data ?? []} />;
+  return <DriftTable drift={data ?? []} specName={name} />;
 }

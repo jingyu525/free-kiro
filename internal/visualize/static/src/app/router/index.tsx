@@ -6,8 +6,8 @@ import { useHashRoute } from '@shared/lib/hash-router';
 import { DashboardPage } from '@pages/dashboard-page';
 
 export function AppRouter(): JSX.Element {
-  const route = useHashRoute();
-  if (route.startsWith('spec/')) {
+  const { name } = useHashRoute();
+  if (name !== '') {
     // Reserved for dashboard-spec-detail-view; fall through to dashboard for now.
     return <DashboardPage />;
   }

@@ -1,0 +1,17 @@
+{
+  "name": "dashboard-spec-detail-view",
+  "phase": "implementing",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "free-kiro serve dashboard spec 详情视图增强（dashboard-frontend-components 已落基本盘：原生 \u003cdialog\u003e + 4 tab + focus 管理 + announce + a11y）：本 spec 在此基础上做 — (1) deep-link 同步 hash 当前选中的 tab (#/spec/\u003cname\u003e??tab=drift）；(3) 内嵌其他 spec detail page 链接 (按 deps 链交叉跳转)；(4) spec detail 内可查看 baseline/current/delta + 趋势 sparkline (来自后端 timeline 端点)；(5) URL hash 持久化，刷新页面后恢复 tab 状态。零后端 API 变更：复用 /api/spec/\u003cname\u003e/{tasks,drift,timeline}。保留 dashboard-frontend-react-vite-fsd 的 FSD 6 层 + React 18 + react-query 2 + Vite 2 + ErrorBoundary。",
+  "created_at": "2026-10-02T09:50:47Z",
+  "updated_at": "2026-10-02T09:52:56Z",
+  "baseline": {
+    "ac_count": 27,
+    "design_sections": 6,
+    "task_count": 15
+  }
+}

@@ -1,4 +1,10 @@
 // app/index — React 18 root mount with all providers.
+//
+// SpecDetailDialog is intentionally NOT mounted at runtime in this build:
+// react-query 5 + dialog's useSyncExternalStore getSnapshot triggers a
+// "Maximum update depth exceeded" loop in React 18 prod minified. The
+// dialog widget code lives at widgets/spec-detail-dialog/* for future fix.
+// See dashboard-spec-detail-view spec for known-issue tracking.
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -10,7 +16,6 @@ import { ToastProvider } from '@shared/lib/toast';
 import { AppRouter } from '@app/router';
 import { SUMMARY_QUERY_KEY } from '@entities/summary/use-summary-query';
 import { ErrorBoundary } from '@app/error-boundary';
-import { SpecDetailDialog } from '@widgets/spec-detail-dialog';
 
 import '@shared/styles/globals.css';
 
@@ -32,7 +37,7 @@ function Root(): JSX.Element {
               <ErrorBoundary>
                 <SSEBridge />
                 <AppRouter />
-                <SpecDetailDialog />
+                {/* SpecDetailDialog temporarily unmounted — see file header. */}
               </ErrorBoundary>
             </ToastProvider>
           </ConnectionProvider>
