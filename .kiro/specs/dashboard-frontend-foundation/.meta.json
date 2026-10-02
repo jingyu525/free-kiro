@@ -1,0 +1,17 @@
+{
+  "name": "dashboard-frontend-foundation",
+  "phase": "implementing",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "free-kiro serve dashboard 前端基建：引入 esbuild + TypeScript strict 构建链，拆分单文件 index.html 为模块化结构（components / stores / lib / styles），建立 dark/light 双主题 token 系统，实现 loading skeleton、错误重试、空状态三态分桶（workspace-missing/no-specs/ok）、refresh 按钮去抖与视觉反馈、最后成功刷新时间相对显示、SSE/轮询连接状态指示。零后端依赖，复用现有 /api/summary 与 /api/events 端点，保留 dashboard-sse-bugfix 的 SSE 事件名 ping/refresh 与向后兼容。",
+  "created_at": "2026-10-02T01:53:51Z",
+  "updated_at": "2026-10-02T02:41:12Z",
+  "baseline": {
+    "ac_count": 47,
+    "design_sections": 5,
+    "task_count": 17
+  }
+}

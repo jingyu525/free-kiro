@@ -1,0 +1,25 @@
+/* light.css — light theme concrete values. */
+
+:root[data-theme="light"] {
+  --color-fallback-bg: #ffffff;
+  --color-fallback-bg-elevated: #f6f8fa;
+  --color-fallback-bg-overlay: #eaeef2;
+  --color-fallback-border: #d0d7de;
+  --color-fallback-border-strong: #afb8c1;
+  --color-fallback-fg: #1f2328;
+  --color-fallback-fg-muted: #656d76;
+  --color-fallback-link: #0969da;
+  --color-fallback-focus: #0969da;
+  --color-fallback-skel-base: #f6f8fa;
+  --color-fallback-skel-shine: #eaeef2;
+  --color-fallback-ok: #1a7f37;
+  --color-fallback-warn: #9a6700;
+  --color-fallback-err: #d1242f;
+  --color-fallback-err-bg: rgba(209, 36, 47, 0.10);
+  --color-fallback-state-draft: #656d76;
+  --color-fallback-state-planning: #0969da;
+  --color-fallback-state-implementing: #9a6700;
+  --color-fallback-state-done: #1a7f37;
+  --color-fallback-state-drift: #d1242f;
+  --color-fallback-state-neutral: #656d76;
+}

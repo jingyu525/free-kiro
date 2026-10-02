@@ -1,0 +1,38 @@
+/* color.css — colour tokens consumed by dark.css + light.css.
+   Concrete values live in the theme files so this file is just a
+   reference for which tokens exist. */
+
+:root {
+  /* Backgrounds */
+  --color-bg: var(--color-fallback-bg, #0e1116);
+  --color-bg-elevated: var(--color-fallback-bg-elevated, #161b22);
+  --color-bg-overlay: var(--color-fallback-bg-overlay, #1f242c);
+
+  /* Borders */
+  --color-border: var(--color-fallback-border, #30363d);
+  --color-border-strong: var(--color-fallback-border-strong, #444c56);
+
+  /* Text */
+  --color-fg: var(--color-fallback-fg, #c9d1d9);
+  --color-fg-muted: var(--color-fallback-fg-muted, #8b949e);
+  --color-link: var(--color-fallback-link, #58a6ff);
+
+  /* Accents */
+  --color-focus: var(--color-fallback-focus, #58a6ff);
+  --color-skel-base: var(--color-fallback-skel-base, #161b22);
+  --color-skel-shine: var(--color-fallback-skel-shine, #21262d);
+
+  /* Status */
+  --color-ok: var(--color-fallback-ok, #3fb950);
+  --color-warn: var(--color-fallback-warn, #d29922);
+  --color-err: var(--color-fallback-err, #f85149);
+  --color-err-bg: var(--color-fallback-err-bg, rgba(248, 81, 73, 0.12));
+
+  /* Phase state colours */
+  --color-state-draft: var(--color-fallback-state-draft, #8b949e);
+  --color-state-planning: var(--color-fallback-state-planning, #58a6ff);
+  --color-state-implementing: var(--color-fallback-state-implementing, #d29922);
+  --color-state-done: var(--color-fallback-state-done, #3fb950);
+  --color-state-drift: var(--color-fallback-state-drift, #f85149);
+  --color-state-neutral: var(--color-fallback-state-neutral, #8b949e);
+}

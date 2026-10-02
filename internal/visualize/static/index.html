@@ -1,184 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0e1116">
   <title>free-kiro dashboard</title>
-  <style>
-    :root {
-      --bg: #0e1116;
-      --card: #161b22;
-      --border: #30363d;
-      --fg: #c9d1d9;
-      --muted: #8b949e;
-      --accent: #58a6ff;
-      --green: #3fb950;
-      --orange: #d29922;
-      --red: #f85149;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--fg);
-    }
-    header {
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: baseline; gap: 16px;
-    }
-    h1 { margin: 0; font-size: 18px; }
-    .meta { color: var(--muted); font-size: 12px; }
-    main { padding: 24px; max-width: 1100px; margin: 0 auto; }
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px; margin-bottom: 24px;
-    }
-    .stat {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 6px; padding: 12px 16px;
-    }
-    .stat .label { font-size: 12px; color: var(--muted); }
-    .stat .value { font-size: 24px; font-weight: 600; margin-top: 4px; }
-    .stat.draft .value { color: var(--muted); }
-    .stat.planning .value { color: var(--accent); }
-    .stat.implementing .value { color: var(--orange); }
-    .stat.done .value { color: var(--green); }
-    .stat.drift .value { color: var(--red); }
-    table {
-      width: 100%; border-collapse: collapse;
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 6px; overflow: hidden;
-    }
-    th, td { padding: 8px 12px; text-align: left; }
-    th { background: rgba(255,255,255,0.03); font-weight: 600; font-size: 12px; color: var(--muted); }
-    tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
-    .phase { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12px; padding: 2px 6px; border-radius: 3px; }
-    .phase.draft { background: rgba(139,148,158,0.15); color: var(--muted); }
-    .phase.requirements, .phase.design, .phase.tasks { background: rgba(88,166,255,0.15); color: var(--accent); }
-    .phase.approved { background: rgba(88,166,255,0.25); color: var(--accent); }
-    .phase.implementing { background: rgba(210,153,34,0.20); color: var(--orange); }
-    .phase.done { background: rgba(63,185,80,0.20); color: var(--green); }
-    .drift-warn { color: var(--red); }
-    .spec-link { color: var(--accent); text-decoration: none; }
-    .spec-link:hover { text-decoration: underline; }
-    .active-marker { color: var(--accent); font-weight: 600; }
-    .empty { color: var(--muted); font-style: italic; padding: 24px; text-align: center; }
-    footer {
-      padding: 12px 24px; color: var(--muted); font-size: 12px;
-      border-top: 1px solid var(--border); text-align: center;
-    }
-    .refresh { color: var(--accent); cursor: pointer; background: none; border: 1px solid var(--border); padding: 4px 10px; border-radius: 4px; }
-    .refresh:hover { background: rgba(88,166,255,0.1); }
-  </style>
+  <link rel="preload" href="/assets/main.css" as="style">
+  <link rel="stylesheet" href="/assets/main.css">
 </head>
 <body>
-  <header>
-    <h1>free-kiro dashboard</h1>
-    <span class="meta" id="meta">loading…</span>
-    <button class="refresh" onclick="loadAll()">refresh</button>
-  </header>
-  <main>
-    <div class="summary" id="summary"></div>
-    <table id="specs">
-      <thead>
-        <tr>
-          <th>spec</th>
-          <th>phase</th>
-          <th>approved</th>
-          <th>drift</th>
-          <th>tasks</th>
-        </tr>
-      </thead>
-      <tbody id="specs-body"></tbody>
-    </table>
-    <p class="empty" id="empty" style="display:none">No specs in this workspace.</p>
-  </main>
-  <footer>
-    Polling every 5s · SSE auto-refresh on file change. Powered by free-kiro + stdlib net/http.
-  </footer>
-  <script>
-    const $ = id => document.getElementById(id);
-
-    // loadAll() pulls /api/summary ONCE per cycle (previously: parallel
-    // loadSummary + loadSpecs both fetched /api/summary, doubling the
-    // request count). The summary payload carries both the stats data
-    // (specs.length, phases, drift keys) and the full per-spec details
-    // (meta / tasks / drift) that the table renders.
-    async function loadAll() {
-      try {
-        const r = await fetch('/api/summary');
-        const j = await r.json();
-        renderSummary(j);
-        renderSpecs(j.specs);
-        $('meta').textContent = `${j.specs.length} specs · generated ${new Date(j.generated_at || Date.now()).toLocaleTimeString()}`;
-      } catch (e) {
-        $('meta').textContent = 'load error: ' + e;
-      }
-    }
-
-    function renderSummary(j) {
-      const phases = {};
-      let active = 0, drift = 0;
-      for (const s of j.specs) {
-        phases[s.meta.phase] = (phases[s.meta.phase] || 0) + 1;
-        if (s.active) active++;
-        drift += (s.drift || []).length;
-      }
-      const cards = [
-        { label: 'total', value: j.specs.length },
-        { label: 'active', value: active, kind: active > 0 ? 'implementing' : '' },
-        { label: 'draft', value: (phases.draft || 0), kind: 'draft' },
-        { label: 'in planning', value: (phases.requirements||0)+(phases.design||0)+(phases.tasks||0), kind: 'planning' },
-        { label: 'implementing', value: (phases.implementing || 0), kind: 'implementing' },
-        { label: 'done', value: (phases.done || 0), kind: 'done' },
-        { label: 'drift keys', value: drift, kind: drift > 0 ? 'drift' : '' },
-      ];
-      $('summary').innerHTML = cards.map(c =>
-        `<div class="stat ${c.kind||''}"><div class="label">${c.label}</div><div class="value">${c.value}</div></div>`
-      ).join('');
-    }
-
-    function renderSpecs(specs) {
-      const body = $('specs-body');
-      if (!specs.length) {
-        $('specs').style.display = 'none';
-        $('empty').style.display = '';
-        return;
-      }
-      $('specs').style.display = '';
-      $('empty').style.display = 'none';
-      body.innerHTML = specs.map(s => {
-        const drift = (s.drift||[]).length;
-        const driftCell = drift > 0
-          ? `<span class="drift-warn">${drift} key${drift>1?'s':''}</span>`
-          : 'none';
-        const marker = s.active ? ' <span class="active-marker">★</span>' : '';
-        return `<tr>
-          <td><a class="spec-link" href="#">${s.meta.name}${marker}</a></td>
-          <td><span class="phase ${s.meta.phase}">${s.meta.phase}</span></td>
-          <td>${s.meta.approved ? 'yes' : 'no'}</td>
-          <td>${driftCell}</td>
-          <td>${s.tasks.total > 0 ? `${s.tasks.done}/${s.tasks.total}` : '—'}</td>
-        </tr>`;
-      }).join('');
-    }
-
-    loadAll();
-    setInterval(loadAll, 5000);
-
-    // Server-Sent Events: receive a 'refresh' signal whenever the
-    // workspace files are touched (spec generate / edit / etc.).
-    // EventSource auto-reconnects on disconnect.
-    try {
-      const es = new EventSource('/api/events');
-      es.addEventListener('refresh', () => loadAll());
-      es.onerror = () => { /* EventSource handles reconnect */ };
-    } catch (e) {
-      console.warn('SSE unavailable, falling back to polling only');
-    }
-  </script>
+  <noscript>
+    <p>This dashboard requires JavaScript to display live spec status.</p>
+    <p>Visit the <a href="/legacy/">legacy single-page view</a> for a static fallback, or use the <code>free-kiro status --json</code> CLI command.</p>
+  </noscript>
+  <div id="app"></div>
+  <script type="module" src="/assets/main.js"></script>
 </body>
 </html>

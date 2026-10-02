@@ -1,0 +1,7 @@
+/* radius.css — corner radius scale. */
+
+:root {
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+}

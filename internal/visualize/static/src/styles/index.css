@@ -1,0 +1,14 @@
+/* index.css — entry CSS aggregator. esbuild pulls this in via main.ts
+   and bundles every referenced stylesheet into main.css. We keep
+   per-file tokens + themes so the structure stays browsable; this
+   aggregator just guarantees load order (tokens first, then themes,
+   then components on top). */
+
+@import './tokens/color.css';
+@import './tokens/spacing.css';
+@import './tokens/typography.css';
+@import './tokens/radius.css';
+@import './tokens/shadow.css';
+@import './themes/dark.css';
+@import './themes/light.css';
+@import './components.css';

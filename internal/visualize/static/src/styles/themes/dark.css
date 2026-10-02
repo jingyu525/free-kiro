@@ -1,0 +1,25 @@
+/* dark.css — dark theme concrete values for the colour tokens. */
+
+:root[data-theme="dark"] {
+  --color-fallback-bg: #0e1116;
+  --color-fallback-bg-elevated: #161b22;
+  --color-fallback-bg-overlay: #1f242c;
+  --color-fallback-border: #30363d;
+  --color-fallback-border-strong: #444c56;
+  --color-fallback-fg: #c9d1d9;
+  --color-fallback-fg-muted: #8b949e;
+  --color-fallback-link: #58a6ff;
+  --color-fallback-focus: #58a6ff;
+  --color-fallback-skel-base: #161b22;
+  --color-fallback-skel-shine: #21262d;
+  --color-fallback-ok: #3fb950;
+  --color-fallback-warn: #d29922;
+  --color-fallback-err: #f85149;
+  --color-fallback-err-bg: rgba(248, 81, 73, 0.12);
+  --color-fallback-state-draft: #8b949e;
+  --color-fallback-state-planning: #58a6ff;
+  --color-fallback-state-implementing: #d29922;
+  --color-fallback-state-done: #3fb950;
+  --color-fallback-state-drift: #f85149;
+  --color-fallback-state-neutral: #8b949e;
+}
