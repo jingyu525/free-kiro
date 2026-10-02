@@ -8,8 +8,12 @@
 // We flatten these into the TaskProgress[] / DriftDetail[] shapes that
 // widgets expect, doing null-safety on `deps: null` (backend omits deps for
 // wave-1 root tasks).
+//
+// All wrappers go through fetchJsonWithEtag so the module-level ETag
+// cache is keyed on the *flattened* result — react-query consumers see
+// consistent array shapes across 200 / 304 responses.
 
-import { fetchJson } from '@shared/api/client';
+import { fetchJsonWithEtag, fetchJson } from '@shared/api/client';
 import type { DriftDetail, SpecOverview, TaskProgress, SpecTimelineEvent } from './types';
 
 interface TasksResponse {
@@ -34,11 +38,14 @@ interface DriftResponse {
 }
 
 export async function fetchSpecTasks(name: string): Promise<TaskProgress[]> {
-  const r = await fetchJson<TasksResponse>(`/spec/${encodeURIComponent(name)}/tasks`, {
-    allow404: true,
-  });
-  if (!r || !Array.isArray(r.waves)) return [];
-  return r.waves.flatMap((w) =>
+  // We fetch raw tasks and flatten in this function so the ETag cache
+  // holds the *flattened* result that react-query consumers expect. If
+  // we cached the raw `{spec, waves}` response here, 304 would return
+  // that object — and downstream `.map(...)` on it would throw.
+  const encoded = encodeURIComponent(name);
+  const raw = await fetchJson<TasksResponse>(`/spec/${encoded}/tasks`, { allow404: true });
+  if (!raw || !Array.isArray(raw.waves)) return [];
+  return raw.waves.flatMap((w) =>
     (w.tasks ?? []).map((t) => ({
       task_id: String(t.id),
       title: t.title ?? '',
@@ -50,17 +57,19 @@ export async function fetchSpecTasks(name: string): Promise<TaskProgress[]> {
 }
 
 export async function fetchSpecDrift(name: string): Promise<DriftDetail[]> {
-  const r = await fetchJson<DriftResponse>(`/spec/${encodeURIComponent(name)}/drift`, {
+  const r = await fetchJsonWithEtag<DriftResponse>(`/spec/${encodeURIComponent(name)}/drift`, {
     allow404: true,
   });
-  return Array.isArray(r?.signals) ? r.signals : [];
+  const body = r.data;
+  return Array.isArray(body?.signals) ? body.signals : [];
 }
 
 export async function fetchSpecTimeline(name: string): Promise<SpecTimelineEvent[]> {
-  const raw = await fetchJson<Array<{ ts: string; kind: string; message: string }>>(
+  const r = await fetchJsonWithEtag<Array<{ ts: string; kind: string; message: string }>>(
     `/spec/${encodeURIComponent(name)}/timeline`,
     { allow404: true },
   );
+  const raw = r.data;
   return Array.isArray(raw)
     ? raw.map((e) => ({
         ts: e.ts,
@@ -79,14 +88,15 @@ export async function fetchSpecTimeline(name: string): Promise<SpecTimelineEvent
 /** Aggregate meta + drift + current + tasks_summary in parallel. */
 export async function fetchSpecOverview(name: string): Promise<SpecOverview> {
   const encoded = encodeURIComponent(name);
-  const [statusRaw, drift, tasksList] = await Promise.all([
-    fetchJson<{
+  const [statusRes, drift, tasksList] = await Promise.all([
+    fetchJsonWithEtag<{
       meta?: SpecOverview['meta'];
       current?: Record<string, number>;
     }>(`/spec/${encoded}`, { allow404: true }),
     fetchSpecDrift(name),
     fetchSpecTasks(name),
   ]);
+  const statusRaw = statusRes.data;
   const waves = tasksList.length === 0 ? 0 : Math.max(...tasksList.map((t) => t.wave));
   return {
     meta: statusRaw?.meta ?? {

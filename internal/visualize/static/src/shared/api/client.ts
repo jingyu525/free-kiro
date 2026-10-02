@@ -107,3 +107,100 @@ export async function fetchRetry<T>(path: string, opts: FetchRetryOptions = {}):
   }
   throw lastErr;
 }
+
+// ---- ETag / If-None-Match support (dashboard-realtime-fsnotify) ----
+
+export interface EtagResponse<T> {
+  /** HTTP status: 200 (new body) or 304 (cached body, etag matched). */
+  status: 200 | 304;
+  /** Parsed JSON body — only set when status === 200. */
+  data: T | null;
+  /** Strong ETag header (quoted). Always set so callers can store it. */
+  etag: string | null;
+}
+
+/**
+ * Raw fetch returning status + etag + parsed body. Distinct from
+ * fetchJson because we need to short-circuit 304 (no body) rather
+ * than throw. 4xx/5xx still surface as ApiHttpError so the
+ * dashboard's retry banner can show them.
+ */
+export async function fetchRaw(
+  path: string,
+  opts: FetchJsonOptions = {},
+): Promise<{ status: number; body: Response }> {
+  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...opts,
+      headers: { Accept: 'application/json', ...(opts.headers ?? {}) },
+    });
+  } catch (cause) {
+    throw new ApiTypeError(cause);
+  }
+  if (!response.ok && !(response.status === 304)) {
+    if (response.status === 404 && opts.allow404) {
+      return { status: 404, body: response };
+    }
+    const body = await response.text().catch(() => '');
+    throw new ApiHttpError(response.status, body);
+  }
+  return { status: response.status, body: response };
+}
+
+const ETAG_CACHE = new Map<string, { etag: string; data: unknown }>();
+
+/**
+ * Fetch with ETag cache. Sends `If-None-Match: <last-etag>` when we
+ * have a cached ETag for this path; interprets 304 as "your cached
+ * body is still valid" and returns the previously-cached data with
+ * status=304. On 200, parses + stores the new ETag for next call.
+ *
+ * The cache is module-scoped (one entry per path string). SSE-driven
+ * query invalidation in react-query is the only way to force a real
+ * refetch — see useSSESubscription.
+ */
+export async function fetchJsonWithEtag<T>(
+  path: string,
+  opts: FetchJsonOptions = {},
+): Promise<EtagResponse<T>> {
+  const cached = ETAG_CACHE.get(path);
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    ...(opts.headers as Record<string, string> | undefined),
+  };
+  if (cached?.etag) headers['If-None-Match'] = cached.etag;
+
+  const { status, body } = await fetchRaw(path, { ...opts, headers });
+
+  if (status === 304) {
+    // Server says our cached body is still good — recover the parsed
+    // body from the module-level cache so callers keep working without
+    // a network roundtrip.
+    return {
+      status: 304,
+      data: (cached?.data as T | undefined) ?? null,
+      etag: cached?.etag ?? null,
+    };
+  }
+  if (status === 404 && opts.allow404) {
+    return { status: 200, data: null as unknown as T, etag: null };
+  }
+  // 200 path
+  const newEtag = body.headers.get('ETag');
+  let data: T;
+  try {
+    data = (await body.json()) as T;
+  } catch (cause) {
+    throw new ApiParseError(cause);
+  }
+  if (newEtag) ETAG_CACHE.set(path, { etag: newEtag, data });
+  return { status: 200, data, etag: newEtag };
+}
+
+/** Test-only: drop a cached ETag (used by spec/api on path change). */
+export function clearEtagCache(path?: string): void {
+  if (path === undefined) ETAG_CACHE.clear();
+  else ETAG_CACHE.delete(path);
+}

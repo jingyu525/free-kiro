@@ -123,7 +123,7 @@ func NewServer(addr string, ws WorkspacePaths, eng *spec.Engine) *Server {
 	// the logger itself), logger records every request including 500s
 	// produced by recover, cache attaches headers before the first
 	// WriteHeader (after which headers are locked).
-	handler := withRecover(withLogger(withCacheHeaders(mux)))
+	handler := withRecover(withLogger(withCacheHeaders(withETag(mux))))
 	s.srv = &http.Server{
 		Addr:    addr,
 		Handler: handler,

@@ -6,13 +6,20 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/fsnotify/fsnotify"
 )
 
-// watchTickInterval is the polling cadence for watchChanges. Exported
-// only as a package-level const so tests can shorten it (or override
-// the ticker in a refactor). Kept short enough that authors see their
-// edits within a second; long enough to debounce filesystem noise.
+// watchTickInterval is the polling cadence used only when fsnotify is
+// unavailable (containers / network filesystems). With a working inotify
+// watch we get < 200ms notification latency via OS-level events instead.
+//
+// Exported as a package-level const so tests can shorten it.
 const watchTickInterval = 2 * time.Second
+
+// watchFsnotifyDebounce is the quiet period after the last fs event
+// before we broadcast. Coalesces the editor's truncate+write two-step.
+const watchFsnotifyDebounce = 300 * time.Millisecond
 
 // subscribe registers a new SSE client channel on this Server. The
 // returned channel is buffered so a slow client never blocks broadcast.
@@ -74,13 +81,78 @@ func (s *Server) subscribersCount() int {
 	return len(s.subscribers)
 }
 
-// watchChanges polls .kiro/ for file modifications and broadcasts a
-// refresh signal when something changes. Exits when s.stop is closed
-// and closes s.watcherRunning so Shutdown() can wait for it.
+// watchChanges is the single per-Server watcher loop started by
+// watcherOnce. It tries fsnotify first (OS-level events, < 200ms
+// latency); if fsnotify.NewWatcher fails (no inotify/FSEvents — e.g.
+// in some container/network-FS mounts), it falls back to a 2s mtime
+// polling ticker so the dashboard still gets refresh signals.
+//
+// Exits when s.stop is closed and closes s.watcherRunning so Shutdown()
+// can wait for it.
 func (s *Server) watchChanges() {
 	s.watcherStartCount.Add(1)
 	defer close(s.watcherRunning)
-	last := s.collectMtimes()
+
+	root := s.ws.KiroDir()
+	fs, err := fsnotify.NewWatcher()
+	if err != nil {
+		s.watchChangesFallback(root)
+		return
+	}
+	defer func() { _ = fs.Close() }()
+
+	if err := addKiroTree(fs, root); err != nil {
+		// Couldn't add the root; fall back to polling so the
+		// dashboard still gets *some* signal (slower but functional).
+		s.watchChangesFallback(root)
+		return
+	}
+
+	var (
+		timer   *time.Timer
+		timerCh <-chan time.Time
+	)
+	for {
+		select {
+		case <-s.stop:
+			if timer != nil {
+				timer.Stop()
+			}
+			return
+		case ev, ok := <-fs.Events:
+			if !ok {
+				return
+			}
+			if !isMeaningfulOp(ev.Op) {
+				continue
+			}
+			if timer != nil {
+				timer.Stop()
+			}
+			timer = time.NewTimer(watchFsnotifyDebounce)
+			timerCh = timer.C
+		case <-timerCh:
+			timerCh = nil
+			timer = nil
+			s.broadcast()
+		case err, ok := <-fs.Errors:
+			if !ok {
+				return
+			}
+			// fsnotify errors are usually transient (inode gone, file
+			// removed). Log to stderr and keep the loop alive so the
+			// next event still triggers a refresh.
+			fmt.Fprintf(os.Stderr, "[watch] fsnotify: %v\n", err)
+		}
+	}
+}
+
+// watchChangesFallback polls .kiro/ for mtime changes every
+// watchTickInterval. Used when fsnotify.NewWatcher fails or the root
+// can't be added to the watcher (containers / network FS / read-only
+// mounts).
+func (s *Server) watchChangesFallback(root string) {
+	last := collectMtimes(root)
 	tick := time.NewTicker(watchTickInterval)
 	defer tick.Stop()
 	for {
@@ -88,7 +160,7 @@ func (s *Server) watchChanges() {
 		case <-s.stop:
 			return
 		case <-tick.C:
-			cur := s.collectMtimes()
+			cur := collectMtimes(root)
 			if !mtimesEqual(last, cur) {
 				last = cur
 				s.broadcast()
@@ -97,11 +169,48 @@ func (s *Server) watchChanges() {
 	}
 }
 
-// collectMtimes returns a path → mtime map for every file under .kiro/.
+// isMeaningfulOp returns true for fsnotify events that signal an
+// actual content change worth broadcasting.
+func isMeaningfulOp(op fsnotify.Op) bool {
+	switch op {
+	case fsnotify.Write, fsnotify.Create, fsnotify.Remove, fsnotify.Rename:
+		return true
+	}
+	return false
+}
+
+// addKiroTree adds root + every subdirectory under it to the watcher.
+// Skips noisy editor / VCS directories. fsnotify doesn't recurse on
+// its own — we have to enumerate.
+func addKiroTree(fs *fsnotify.Watcher, root string) error {
+	if err := fs.Add(root); err != nil {
+		return err
+	}
+	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			// Permission errors on individual subdirs are non-fatal;
+			// skip and continue.
+			return nil
+		}
+		if !d.IsDir() || path == root {
+			return nil
+		}
+		name := d.Name()
+		if name == ".git" || name == "node_modules" {
+			return filepath.SkipDir
+		}
+		if err := fs.Add(path); err != nil {
+			// Subdir watch failure shouldn't kill the whole watcher.
+			return nil
+		}
+		return nil
+	})
+}
+
+// collectMtimes returns a path → mtime map for every file under root.
 // Missing directory → empty map (treat as "no changes").
-func (s *Server) collectMtimes() map[string]time.Time {
+func collectMtimes(root string) map[string]time.Time {
 	out := map[string]time.Time{}
-	root := s.ws.KiroDir()
 	_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil
