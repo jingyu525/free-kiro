@@ -35,6 +35,27 @@ SessionStart hook 会自动跑同样的命令。
 IDE 的 PreToolUse hook 会自动跑。如果看到 lint ERROR，先编辑 spec 文档
 （而不是代码），直到 `free-kiro lint` 全绿，再继续。
 
+## 编码规范（SessionStart 必须先 Read）
+
+**在写任何 Go 代码之前，先 Read [`docs/CODING_STYLE.md`](../../docs/CODING_STYLE.md)、
+[`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) 与 [`docs/POLICY.md`](../../docs/POLICY.md)**。
+
+- `docs/CODING_STYLE.md` 仅承载 7 章 Go 社区通用编码规范（命名 / 错误处理 /
+  并发 / 接口 / 测试 / 注释 / 依赖）。它是**通用**规范，不是 free-kiro
+  专属。
+- [`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) 承载 AI agent 协作硬性要求
+  + 零豁免 / 零死代码政策（违反任意一条 = PR 拒收）。
+- [`docs/POLICY.md`](../../docs/POLICY.md) 承载 free-kiro 项目特定策略（覆盖率门槛、
+  TODO 注释 owner、协议合规、commit 格式、代码规模上限、PR 范围约束）。
+
+硬约束摘录（来源：[`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) §1）：
+
+1. 零 `// TODO` / `// FIXME` / `// XXX` — 未完成的功能**不要写代码**，先
+   回 spec 阶段补 requirements/design。
+2. 零吞错误（`_ = doX()` / `log.Print(err)` 后继续）。
+3. 零硬编码 magic number（端口、超时、阈值都要 `const` 或在 `internal/config`）。
+4. 改动 > 50 行先 `free-kiro spec new`，三件套全绿再动代码（**工具特定硬约束**，仅对 free-kiro 仓库有效）。
+
 ## 完成实现时
 
     free-kiro spec complete <name>
@@ -185,4 +206,3 @@ free-kiro/
 文件，不要往 `server_handlers.go` 里堆。
 
 <!-- free-kiro-managed:end -->
-

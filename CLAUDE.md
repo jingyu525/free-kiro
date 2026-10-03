@@ -28,20 +28,6 @@ SessionStart hook 会自动跑同样的命令。
 如果 `.kiro/.current` 不存在（没活跃 spec），先跑 `free-kiro spec new <name>`，
 新 spec 会自动被标记为活跃。
 
-## 项目上下文（自动注入的 steering）
-
-本文件末尾由 `<!-- free-kiro-managed:start -->` /
-`<!-- free-kiro-managed:end -->` marker 包裹的 markdown 块，由
-`free-kiro steering inject` 在每次 `init` / `inject` 运行时自动生成，
-内容来自 `.kiro/steering/*.md` 中 `mode: always` 的文档（当前为
-`product.md` / `structure.md` / `tech.md`）。
-
-**这段内容不是用户手写的**——它是项目级 steering store 的 always 模式
-快照。若要修改，请编辑 `.kiro/steering/<name>.md` 后跑
-`free-kiro steering inject`（或 `free-kiro init --ide auto
---overwrite-instructions`）同步到这里。详见 `docs/STEERING.md`
-§"自动注入到 IDE 指令文件"。
-
 ## 编码规范（SessionStart 必须先 Read）
 
 **在写任何 Go 代码之前，先 Read [`docs/CODING_STYLE.md`](../../docs/CODING_STYLE.md)、
@@ -220,4 +206,3 @@ free-kiro/
 文件，不要往 `server_handlers.go` 里堆。
 
 <!-- free-kiro-managed:end -->
-

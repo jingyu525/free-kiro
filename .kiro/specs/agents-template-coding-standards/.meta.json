@@ -1,0 +1,13 @@
+{
+  "name": "agents-template-coding-standards",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": false,
+  "generator": "template",
+  "prompt": "把 .kiro/AGENTS.md 中的 \"## 编码规范（SessionStart 必须先 Read）\"段固化进 init 模板 internal/ide/templates/agents_zh.md 与 agents_en.md，让 init 重跑（free-kiro init --ide auto --overwrite-instructions）后 .kiro/AGENTS.md 仍包含该段、不会被 init 模板覆盖丢失。",
+  "created_at": "2026-10-03T07:27:19Z",
+  "updated_at": "2026-10-03T07:34:57Z",
+  "baseline": {}
+}

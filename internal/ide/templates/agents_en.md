@@ -36,6 +36,26 @@ The IDE's PreToolUse hook will run this automatically. If you see lint
 ERRORs in the output, edit the spec documents (not the code) until
 `free-kiro lint` is green, then continue.
 
+## Coding Standards (SessionStart must Read first)
+
+**Before writing any Go code, Read [`docs/CODING_STYLE.md`](../../docs/CODING_STYLE.md),
+[`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md), and [`docs/POLICY.md`](../../docs/POLICY.md)**.
+
+- `docs/CODING_STYLE.md` covers 7 chapters of generic Go community conventions (naming / error handling /
+  concurrency / interfaces / testing / comments / dependencies). It is **generic** guidance, not free-kiro-specific.
+- [`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) carries AI agent hard requirements +
+  the zero-exemptions / zero-dead-code policy (violating any one = PR rejected).
+- [`docs/POLICY.md`](../../docs/POLICY.md) carries free-kiro project-specific policy (coverage thresholds,
+  TODO comment ownership, license compliance, commit format, code size limits, PR scope constraints).
+
+Hard constraints excerpt (source: [`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) §1):
+
+1. Zero `// TODO` / `// FIXME` / `// XXX` — unfinished features **do not write code**, go back
+   to the spec phase and complete requirements/design first.
+2. Zero swallowed errors (`_ = doX()` / `log.Print(err)` then continue).
+3. Zero hard-coded magic numbers (ports, timeouts, thresholds must be `const` or live in `internal/config`).
+4. Changes > 50 lines first run `free-kiro spec new`, all 3 spec docs green before touching code (**tool-specific hard constraint**, only applies to the free-kiro repo).
+
 ## When you finish implementing a spec
 
     free-kiro spec complete <name>
