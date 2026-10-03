@@ -1,0 +1,17 @@
+{
+  "name": "example-test-driven-spec-evolve",
+  "phase": "implementing",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "把 unify-ears-template-and-hints 的实现过程作为方法论示例 spec 永久保留：先写 TestLintHintsResolve 暴露 bugfix.go:44 引用 #bugfix-spec-bugfixmd 但 docs/EARS.md 无对应锚点 → 同步扩 AC-3 字面从 3 处 heading 改 4 处 + 在 docs/EARS.md 的 '## bugfix.md（bugfix spec）' heading 加 {#bugfix-spec-bugfixmd} Pandoc 锚点 → 重跑测试 PASS。这是「测试驱动发现 spec 漏想并同步扩展」的标准模板，供 demo 与错误治理复用。",
+  "created_at": "2026-10-03T08:57:23Z",
+  "updated_at": "2026-10-03T08:59:43Z",
+  "baseline": {
+    "ac_count": 4,
+    "design_sections": 8,
+    "task_count": 5
+  }
+}
