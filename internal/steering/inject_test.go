@@ -276,3 +276,111 @@ func TestIndexLineContaining(t *testing.T) {
 		})
 	}
 }
+
+// TestInject_IgnoresMarkerInProse is the regression guard for spec
+// `.kiro/specs/fix-inject-marker-match/`. The init template's
+// explanation paragraph quotes the marker literals inline (e.g.
+// `本文件末尾由 <!-- free-kiro-managed:start --> / ... <!-- free-kiro-managed:end --> marker 包裹的 markdown 块`).
+// A naive substring match on these lines would treat them as the
+// real marker region and write the always-mode block between them
+// — corrupting the prose. After the fix, only whole-line matches
+// (after strings.TrimSpace) are recognized as the marker region.
+func TestInject_IgnoresMarkerInProse(t *testing.T) {
+	root := t.TempDir()
+	// Always-mode steering docs (product + structure), no tech — keeps
+	// the assertion focused on "did the block land in the right slot"
+	// rather than on per-doc content.
+	writeFile(t, filepath.Join(root, ".kiro", "steering", "product.md"),
+		"---\nmode: always\ndescription: product fixture\n---\n\n# Product\n\nPROD_BODY\n")
+	writeFile(t, filepath.Join(root, ".kiro", "steering", "structure.md"),
+		"---\nmode: always\ndescription: structure fixture\n---\n\n# Structure\n\nSTRUCT_BODY\n")
+
+	// Target file mimics init's CLAUDE.md layout: hand-written
+	// preamble, an explanation paragraph that quotes the marker
+	// literals inline, a coding-standards section, then the real
+	// standalone marker block at the end.
+	const prose1 = "本文件末尾由 `<!-- free-kiro-managed:start -->` /"
+	const prose2 = "`<!-- free-kiro-managed:end -->` marker 包裹的 markdown 块，由"
+	target := strings.Join([]string{
+		"# free-kiro-managed:",
+		"",
+		"Hand-written preamble line 1.",
+		"Hand-written preamble line 2.",
+		"",
+		"## 项目上下文（自动注入的 steering）",
+		"",
+		prose1,
+		prose2 + " `free-kiro steering inject` 在每次 `init` / `inject` 运行时自动生成，",
+		"内容来自 `.kiro/steering/*.md` 中 `mode: always` 的文档。",
+		"",
+		"## 编码规范（SessionStart 必须先 Read）",
+		"",
+		"CODING_STANDARDS_SECTION",
+		"",
+		InjectMarkerStart,
+		"", // empty marker block — inject fills this
+		InjectMarkerEnd,
+		"",
+	}, "\n")
+	writeFile(t, filepath.Join(root, "CLAUDE.md"), target)
+
+	ws := workspace.New(root)
+	store := NewStore(ws, "")
+	res := store.InjectAll("")
+	if len(res.Written) != 1 {
+		t.Fatalf("expected 1 written file, got %d (skipped: %+v)", len(res.Written), res.Skipped)
+	}
+
+	got, err := os.ReadFile(filepath.Join(root, "CLAUDE.md"))
+	if err != nil {
+		t.Fatalf("read back: %v", err)
+	}
+	gotStr := string(got)
+
+	// AC-6: prose paragraph MUST remain verbatim (not overwritten by
+	// the always-mode block). If the bug regresses, "PROD_BODY" /
+	// "STRUCT_BODY" would appear in this paragraph.
+	if !strings.Contains(gotStr, prose1) {
+		t.Errorf("prose1 marker-quote line was lost — inject wrote into the explanation paragraph")
+	}
+	if !strings.Contains(gotStr, prose2) {
+		t.Errorf("prose2 marker-quote line was lost")
+	}
+	if strings.Contains(gotStr, "PROD_BODY") && !strings.Contains(gotStr, "## product.md") {
+		t.Errorf("PROD_BODY leaked into prose without a heading — inject wrote into prose")
+	}
+
+	// AC-4: real marker block MUST have been filled with the always
+	// docs in alphabetical order (product → structure).
+	if !strings.Contains(gotStr, "## product.md") {
+		t.Errorf("real marker block missing ## product.md heading")
+	}
+	if !strings.Contains(gotStr, "## structure.md") {
+		t.Errorf("real marker block missing ## structure.md heading")
+	}
+	if !strings.Contains(gotStr, "PROD_BODY") {
+		t.Errorf("real marker block missing PROD_BODY content")
+	}
+	if !strings.Contains(gotStr, "STRUCT_BODY") {
+		t.Errorf("real marker block missing STRUCT_BODY content")
+	}
+
+	// Pre-amble + coding-standards section also preserved verbatim.
+	if !strings.Contains(gotStr, "Hand-written preamble line 1.") {
+		t.Errorf("preamble was modified")
+	}
+	if !strings.Contains(gotStr, "CODING_STANDARDS_SECTION") {
+		t.Errorf("coding-standards section was modified")
+	}
+
+	// The standalone marker lines themselves are preserved (inject
+	// replaces the block BETWEEN them, not the lines themselves).
+	startCount := strings.Count(gotStr, InjectMarkerStart)
+	endCount := strings.Count(gotStr, InjectMarkerEnd)
+	if startCount != 2 {
+		t.Errorf("expected 2 occurrences of start marker (1 prose quote + 1 standalone), got %d", startCount)
+	}
+	if endCount != 2 {
+		t.Errorf("expected 2 occurrences of end marker (1 prose quote + 1 standalone), got %d", endCount)
+	}
+}

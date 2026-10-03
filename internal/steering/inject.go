@@ -179,8 +179,13 @@ func indexLineContaining(content, substr string) int {
 // themselves are preserved verbatim.
 //
 // Returns (true, nil) on success, (false, &InjectSkip{...}) on failure
-// (missing marker, IO error). The marker lines are located by line
-// substring match — they may appear anywhere on a line.
+// (missing marker, IO error). The marker lines are located by EXACT
+// line match (after strings.TrimSpace) — they must occupy a whole
+// line. Prose that quotes the marker literals (e.g. the init
+// template's "本文件末尾由 <!-- free-kiro-managed:start --> / ...
+// <!-- free-kiro-managed:end --> marker 包裹的 markdown 块"
+// explanation paragraph) is intentionally NOT matched. See spec
+// `.kiro/specs/fix-inject-marker-match/`.
 func injectToFile(absPath, relPath, block string) (bool, *InjectSkip) {
 	data, err := os.ReadFile(absPath)
 	if err != nil {
@@ -192,10 +197,11 @@ func injectToFile(absPath, relPath, block string) (bool, *InjectSkip) {
 	startIdx := -1
 	endIdx := -1
 	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
 		switch {
-		case startIdx == -1 && strings.Contains(line, InjectMarkerStart):
+		case startIdx == -1 && trimmed == InjectMarkerStart:
 			startIdx = i
-		case startIdx != -1 && endIdx == -1 && strings.Contains(line, InjectMarkerEnd):
+		case startIdx != -1 && endIdx == -1 && trimmed == InjectMarkerEnd:
 			endIdx = i
 		}
 		if endIdx != -1 {
