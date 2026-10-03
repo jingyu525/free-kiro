@@ -212,7 +212,7 @@ func injectToFile(absPath, relPath, block string) (bool, *InjectSkip) {
 	suffix = strings.TrimLeft(suffix, "\n")
 	blockContent := strings.TrimRight(block, "\n")
 
-	newContent := prefix + "\n\n" + blockContent + "\n\n" + suffix + "\n"
+	newContent := prefix + "\n\n" + blockContent + "\n\n" + suffix
 	if err := os.WriteFile(absPath, []byte(newContent), 0o644); err != nil {
 		return false, &InjectSkip{Path: relPath, Reason: err.Error()}
 	}

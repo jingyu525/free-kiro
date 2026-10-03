@@ -70,6 +70,26 @@ jobs:
           version: latest
           args: --timeout 5m
 
+  # Drift 门禁：保证项目根 4 个 IDE 指令文件（CLAUDE.md / AGENTS.md /
+  # .cursorrules / .cursor/rules/free-kiro.md）与 .kiro/steering/*.md
+  # 同步；本仓库主开发者改 steering 后必须跑 `make install-hooks` 让
+  # pre-commit 自动同步，未跑时本 step 拦截 PR。
+  drift-check-steering:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Install free-kiro
+        run: go install ./cmd/free-kiro
+
+      - name: Drift check (steering inject)
+        run: make drift-check
+
   build:
     runs-on: ubuntu-latest
     needs: test

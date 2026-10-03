@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit — auto-run free-kiro steering inject on commit.
+#
+# 配置：make install-hooks （一次性设 git core.hooksPath）
+# 跳过条件：staged diff 不含 .kiro/steering/*.md 或 internal/ide/templates/*.md
+
+set -euo pipefail
+
+# 仅在 .kiro/steering/*.md / internal/ide/templates/*.md 改动时跑
+# （避免每次 commit 都跑 inject；inject ~50ms 开销可忽略但仍可省）
+if ! git diff --cached --name-only -- \
+    .kiro/steering/ internal/ide/templates/ 2>/dev/null \
+    | grep -q .; then
+    exit 0
+fi
+
+if ! command -v free-kiro >/dev/null 2>&1; then
+    echo "free-kiro not on PATH; install: brew install jingyu525/free-kiro/free-kiro" >&2
+    echo "or: make install && export PATH=\$HOME/go/bin:\$PATH" >&2
+    exit 1
+fi
+
+# inject 退出码非 0 可能是 skipped（如 .continue/rules/... 缺失），
+# 也可能是真错（无 always 文档 / glob 非法）。区分：stderr 含 "error:"
+# 才是真错；只有 warning 是可接受的（让 CI drift-check 兜底）。
+inject_out=$(free-kiro steering inject 2>&1) || true
+inject_rc=$?
+echo "$inject_out"
+if [ $inject_rc -ne 0 ] && echo "$inject_out" | grep -q "^error:"; then
+    echo "free-kiro steering inject failed; commit aborted" >&2
+    exit 1
+fi
+
+git add CLAUDE.md AGENTS.md .cursorrules .cursor/rules/free-kiro.md 2>/dev/null || true

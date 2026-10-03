@@ -1,0 +1,13 @@
+{
+  "name": "ci-steering-inject-drift-check",
+  "phase": "implementing",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": false,
+  "generator": "template",
+  "prompt": "新增 pre-commit hook 与 CI drift check，自动跑 free-kiro steering inject 让项目根 IDE 指令文件（CLAUDE.md / AGENTS.md / .cursorrules / .cursor/rules/free-kiro.md）始终与 .kiro/steering/*.md 中 mode: always 文档保持同步。pre-commit hook 在 git commit 前自动 inject + 自动 add；CI step 用 git diff --exit-code 检查 4 个文件是否 drift，drift 则拒收 PR。",
+  "created_at": "2026-10-03T07:47:44Z",
+  "updated_at": "2026-10-03T07:50:39Z",
+  "baseline": {}
+}

@@ -97,5 +97,25 @@ ci: lint lint-go test ## CI 全量（spec 门禁 + Go lint + test）
 	@echo "✓ ci passed"
 
 .PHONY: precommit
-precommit: fmt lint-go test ## 本地提交前（fmt + Go lint + test，不含 spec lint）
+precommit: fmt lint-go test drift-check ## 本地提交前（fmt + Go lint + test + drift check，不含 spec lint）
 	@echo "✓ precommit passed"
+
+.PHONY: install-hooks
+install-hooks: ## 配置 git core.hooksPath 指向 .githooks（一次性）
+	git config core.hooksPath .githooks
+	@chmod +x .githooks/pre-commit
+	@echo "✓ git hooks installed; pre-commit will run \`free-kiro steering inject\`"
+
+.PHONY: drift-check
+drift-check: ## 检查 IDE 指令文件与 .kiro/steering/ 是否 drift
+	@if [ -z "$(HAS_FREE_KIRO)" ]; then \
+		echo "free-kiro not on PATH"; exit 3; \
+	fi
+	@free-kiro steering inject || true   # 容忍 skipped 退出码（如 .continue/rules/ 缺失）
+	@if git diff --exit-code CLAUDE.md AGENTS.md .cursorrules .cursor/rules/free-kiro.md >/dev/null 2>&1; then \
+		echo "✓ steering inject drift check passed"; \
+	else \
+		echo "drift: $(git diff --name-only CLAUDE.md AGENTS.md .cursorrules .cursor/rules/free-kiro.md | tr '\n' ' ')"; \
+		echo "→ 跑 'free-kiro steering inject' 同步 IDE 指令文件"; \
+		exit 1; \
+	fi
