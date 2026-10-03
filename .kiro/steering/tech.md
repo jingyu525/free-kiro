@@ -34,7 +34,7 @@ description: Go 技术栈、依赖、构建、测试与发布规范
 - 不引入 testify / gomock / mockery
 - table-driven 测试优先
 - fixture 放 `testdata/`，不要在测试里 inline 大段 mock 数据
-- 目标覆盖率：核心 lint 引擎 ≥ 80%，其他 ≥ 60%
+- 建议覆盖率目标：核心 lint 引擎 ≥ 80%，其他 ≥ 60%；CI 当前仅打印总数 `go test -cover`，不强制阈值
 
 ## 错误处理
 
@@ -54,7 +54,7 @@ description: Go 技术栈、依赖、构建、测试与发布规范
 ## 构建与发布
 
 - **GoReleaser v2**（`.goreleaser.yaml`）
-- 跨 6 个平台：`darwin` / `linux` / `windows` × `amd64` / `arm64`
+- 跨 5 个平台：darwin / linux × amd64+arm64；windows × amd64（windows+arm64 在 `.goreleaser.yaml` 的 `ignore` 段中当前被跳过）
 - 二进制名固定 `free-kiro`，产物在 `dist/`
 - release 流程：`git tag vX.Y.Z && git push --tags` → CI 自动跑
   - `go mod tidy` + `go test ./...`
@@ -66,14 +66,17 @@ description: Go 技术栈、依赖、构建、测试与发布规范
 
 - `free-kiro upgrade` 从 GitHub Releases API 拉最新 tag
 - 下载 + `sha256sum -c` 校验 → `os.Exec` 重启自己
-- 失败回滚路径：保留上一份二进制到 `~/.local/share/free-kiro/.prev`
+- 升级失败行为：失败时不替换旧二进制，进程继续以旧版本运行；用户可重新运行 `free-kiro upgrade --check` 排查
+- 当前未实现 `~/.prev` 回滚路径；如需自愈能力，待后续 spec 单独跟踪
 
 ## 性能预算
 
-- CLI 冷启动 < 100ms（不要在 init 路径上做重 IO / 重计算）
-- `free-kiro lint` 在 10 个 spec 的 `.kiro/` 下 < 500ms
-- web dashboard SSE 推送延迟 < 200ms
-- dashboard 首屏 < 500ms（HTML 直出 + 静态资源 + fsnotify 订阅）
+- 目标预算（待基准验证）：
+  - CLI 冷启动 < 100ms（不要在 init 路径上做重 IO / 重计算）
+  - `free-kiro lint` 在 10 个 spec 的 `.kiro/` 下 < 500ms
+  - web dashboard SSE 推送延迟 < 200ms（fsnotify 不可用时降级为 2s mtime 轮询，端到端延迟可达 2s+）
+  - dashboard 首屏 < 500ms（HTML 直出 + 静态资源 + fsnotify 订阅）
+- 当前未在 `internal/cli/` `internal/lint/` `internal/visualize/` 中定义命名常量，也无对应 `go test -bench` 测试
 
 ## 命名规范
 
