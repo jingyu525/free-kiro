@@ -1,6 +1,6 @@
 {
   "name": "dashboard-frontend-react-vite-fsd",
-  "phase": "implementing",
+  "phase": "done",
   "workflow": "requirements-first",
   "spec_type": "feature",
   "quick": false,
@@ -8,7 +8,7 @@
   "generator": "template",
   "prompt": "把 free-kiro serve dashboard 的前端从 esbuild + vanilla TypeScript + npm 迁移到 Vite + React 18 + TypeScript strict + pnpm，并按 Feature-Sliced Design (FSD) 分层重构 src/（app / pages / widgets / features / entities / shared）。零后端 API 变更：保留 dashboard-sse-bugfix 的 SSE 事件名（ping/refresh）、dashboard-backend-api-extensions 的 5 个端点 + ProjectReport.mode 三态字段；保留 //go:embed static/* + handleStatic Cache-Control: immutable 链路。",
   "created_at": "2026-10-02T05:58:34Z",
-  "updated_at": "2026-10-02T06:55:30Z",
+  "updated_at": "2026-10-02T08:27:54Z",
   "baseline": {
     "ac_count": 50,
     "design_sections": 6,

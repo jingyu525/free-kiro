@@ -1,6 +1,6 @@
 {
   "name": "dashboard-realtime-fsnotify",
-  "phase": "implementing",
+  "phase": "done",
   "workflow": "requirements-first",
   "spec_type": "feature",
   "quick": false,
@@ -8,7 +8,7 @@
   "generator": "template",
   "prompt": "把 free-kiro serve dashboard 的实时更新链路从 2 秒 mtime 轮询升级到 fsnotify（OS 级 inotify/FSEvents）+ 给 /api/summary、/api/specs、/api/spec/\u003cname\u003e、/api/spec/\u003cname\u003e/{tasks,drift,timeline}、/api/health、/api/hooks 加 ETag/If-None-Match → 304 缓存复用，缩短 dashboard 端到端 latency。同时承担 dashboard-spec-detail-view 遗留的 spec 详情 dialog 在 prod 模式 React #185 死循环 bug 的修复（dialog 组件代码已存在但 app/index.tsx 注释挂载）。零破坏：保留 dashboard-sse-bugfix 的 ping/refresh 事件名 + dashboard-backend-api-extensions 的 5 端点 + dashboard-frontend-react-vite-fsd 的 FSD 6 层 + react-query 5。",
   "created_at": "2026-10-02T23:30:45Z",
-  "updated_at": "2026-10-02T23:32:40Z",
+  "updated_at": "2026-10-02T23:53:14Z",
   "baseline": {
     "ac_count": 23,
     "design_sections": 5,
