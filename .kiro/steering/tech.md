@@ -1,5 +1,5 @@
 ---
-mode: auto
+mode: always
 description: Go 技术栈、依赖、构建、测试与发布规范
 ---
 
