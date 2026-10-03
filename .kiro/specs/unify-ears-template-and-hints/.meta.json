@@ -1,0 +1,17 @@
+{
+  "name": "unify-ears-template-and-hints",
+  "phase": "implementing",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "把 EARS spec 模板示范行加上 [AC-N] 前缀（避免新 spec 一生成就被 ears-ac-missing-id WARNING 淹没），并把 linter Hint 字符串里的英文锚点（#five-templates / #vague-words / #semantic-quality-gates）改成能解析的中文锚点（按 docs/EARS.md 当前 heading 实际 slug），消除 GitHub 上打不开的死链。",
+  "created_at": "2026-10-03T08:38:30Z",
+  "updated_at": "2026-10-03T08:44:54Z",
+  "baseline": {
+    "ac_count": 4,
+    "design_sections": 7,
+    "task_count": 5
+  }
+}

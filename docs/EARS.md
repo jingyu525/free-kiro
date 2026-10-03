@@ -4,7 +4,7 @@
 > 变成"可被机器 + 人双重校验的契约"。free-kiro 的 lint 模块强制所有 requirements.md
 > / bugfix.md 必须用 EARS 写验收标准。
 
-## 五种模板 + 无条件基线
+## 五种模板 + 无条件基线 {#five-templates}
 
 | 场景 | 句式 | 触发词 |
 |---|---|---|
@@ -62,7 +62,7 @@ WHEN the session expires THE SYSTEM SHALL CONTINUE TO redirect to /login.
 - AC 行里**禁止**残留 `<TODO:...>` 占位符（缺则 `placeholder-ac` ERROR）
 - 必须包含 `User Stories` 段（缺则 `no-user-stories` **ERROR**，从 WARNING 升级）
 
-#### 语义质量门禁（新增 10 条）
+#### 语义质量门禁（新增 10 条） {#semantic-quality-gates}
 
 | Code | 严重级别 | 触发条件 | ❌ 反例 |
 |---|---|---|---|
@@ -80,7 +80,7 @@ WHEN the session expires THE SYSTEM SHALL CONTINUE TO redirect to /login.
 > （RE2 不支持跨两个 `.+?\s+` 的反向引用,IF-THEN 必须用 prefix+suffix 拼接）,
 > 无条件基线（`THE SYSTEM SHALL`）也算一种模板。
 
-### bugfix.md（bugfix spec）
+### bugfix.md（bugfix spec） {#bugfix-spec-bugfixmd}
 
 - **Current Behavior** 段**禁止**使用 `THE SYSTEM SHALL`（缺陷是错的，不是"应当"——`defect-uses-shall` ERROR）
 - **Expected Behavior** 段必须含 `THE SYSTEM SHALL`（缺则 `no-ears-expected` ERROR）
@@ -102,7 +102,7 @@ WHEN the session expires THE SYSTEM SHALL CONTINUE TO redirect to /login.
 
 7. **UNLESS 写默认**：UNLESS 用于说明"例外之外"的行为，等价于默认行为 + 豁免条件。
 
-## 模糊词黑名单
+## 模糊词黑名单 {#vague-words}
 
 `etc` 和 `and/or` 由 lint `ears-etc-list` **ERROR** 拦截（直接阻断 advance/approve）；
 其余 9 个词仍由 `spec analyze` 以 **info** 提示（advisory，不阻断）。

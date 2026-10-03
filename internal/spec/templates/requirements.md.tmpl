@@ -12,23 +12,23 @@
 
 <!--
 EARS 句式（每个 AC 用其中一种，必填）：
-  WHEN <trigger>            THE SYSTEM SHALL <response>     ← 事件驱动
-  WHILE <state>             THE SYSTEM SHALL <behavior>     ← 状态驱动
-  WHERE <feature>           THE SYSTEM SHALL <behavior>     ← 可选特性
-  UNLESS <exception>        THE SYSTEM SHALL <default>      ← 异常
-  IF <cond> THEN <event>    THE SYSTEM SHALL <response>     ← 复合
-  THE SYSTEM SHALL <requirement>                              ← 无条件基线
+  [AC-1] WHEN <trigger>            THE SYSTEM SHALL <response>     ← 事件驱动
+  [AC-2] WHILE <state>             THE SYSTEM SHALL <behavior>     ← 状态驱动
+  [AC-3] WHERE <feature>           THE SYSTEM SHALL <behavior>     ← 可选特性
+  [AC-4] UNLESS <exception>        THE SYSTEM SHALL <default>      ← 异常
+  [AC-5] IF <cond> THEN <event>    THE SYSTEM SHALL <response>     ← 复合
+  [AC-6] THE SYSTEM SHALL <requirement>                              ← 无条件基线
 
 技巧：trigger 要具体可观测（不要 "busy"），response 要可测量（不要 "fast"）。
 详见 docs/EARS.md
 -->
 
-- WHEN <TODO:trigger> THE SYSTEM SHALL <TODO:response>.
-- WHILE <TODO:state> THE SYSTEM SHALL <TODO:behavior>.
-- WHERE <TODO:feature flag / option> THE SYSTEM SHALL <TODO:behavior>.
-- UNLESS <TODO:exception> THE SYSTEM SHALL <TODO:default behavior>.
-- IF <TODO:condition> THEN <TODO:event> THE SYSTEM SHALL <TODO:response>.
-- THE SYSTEM SHALL <TODO:ubiquitous baseline requirement>.
+[AC-1] WHEN <TODO:trigger> THE SYSTEM SHALL <TODO:response>.
+[AC-2] WHILE <TODO:state> THE SYSTEM SHALL <TODO:behavior>.
+[AC-3] WHERE <TODO:feature flag / option> THE SYSTEM SHALL <TODO:behavior>.
+[AC-4] UNLESS <TODO:exception> THE SYSTEM SHALL <TODO:default behavior>.
+[AC-5] IF <TODO:condition> THEN <TODO:event> THE SYSTEM SHALL <TODO:response>.
+[AC-6] THE SYSTEM SHALL <TODO:ubiquitous baseline requirement>.
 
 ## Out of Scope
 
