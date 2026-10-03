@@ -49,6 +49,25 @@ build: ## 编译二进制到 ./bin/free-kiro
 install: ## go install 到 $(GOBIN)/free-kiro
 	$(GO) install $(PKG)
 
+# 改完 internal/ide/templates/*.md 后用这个：
+#   1) go install 把新模板编进 binary（否则 PATH 上的 free-kiro 还是旧的）
+#   2) steering inject 把 IDE 指令文件同步成新模板
+#   3) drift 校验（exit 0 = 无漂移；有漂移时打印 diff stat 供 review，不阻断）
+# 详见 memory: free-kiro-template-embed-rebuild
+.PHONY: reinstall-templates
+reinstall-templates: install ## 改完 templates/*.md 后：重编 binary + 注入 IDE 指令文件 + drift 校验
+	@if [ -z "$(HAS_FREE_KIRO)" ]; then \
+		echo "free-kiro not on PATH"; exit 3; \
+	fi
+	@free-kiro steering inject || true
+	@git_root=$$(git rev-parse --show-toplevel 2>/dev/null) || git_root=.; \
+		if git -C $$git_root diff --exit-code CLAUDE.md AGENTS.md .cursorrules .cursor/rules/free-kiro.md >/dev/null 2>&1; then \
+			echo "✓ reinstall-templates: no drift"; \
+		else \
+			echo "drift (review then commit):"; \
+			git -C $$git_root diff --stat CLAUDE.md AGENTS.md .cursorrules .cursor/rules/free-kiro.md; \
+		fi
+
 .PHONY: clean
 clean: ## 删除 ./bin 与临时构建产物
 	rm -rf bin/ coverage.out benchdata/current.txt benchdata/report.txt
