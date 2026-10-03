@@ -31,6 +31,7 @@ func steeringCmdFactory() *cobra.Command {
 	c.AddCommand(steeringListCmd())
 	c.AddCommand(steeringShowCmd())
 	c.AddCommand(steeringContextCmd())
+	c.AddCommand(steeringInjectCmd())
 	return c
 }
 

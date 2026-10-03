@@ -105,7 +105,10 @@ func TestWriteSingleInstruction(t *testing.T) {
 					t.Errorf("expected file %s to exist: %v", rel, readErr)
 					continue
 				}
-				if !strings.HasPrefix(string(body), freeKiroInstructionMarker) {
+				// Templates now lead with a YAML frontmatter block, so
+				// the marker is injected AFTER the closing `---`. Check
+				// presence anywhere in the file rather than strict prefix.
+				if !strings.Contains(string(body), freeKiroInstructionMarker) {
 					t.Errorf("file %s missing %q marker; body starts with %q",
 						rel, freeKiroInstructionMarker, firstLine(string(body)))
 				}
@@ -204,7 +207,11 @@ func TestIsFreeKiroInstruction(t *testing.T) {
 }
 
 // TestWriteAgentsMD_PrependsMarker ensures the legacy workspace writer
-// also prepends the marker so doctor can identify its output.
+// also writes the marker so doctor can identify its output. Since
+// agents_*.md templates now lead with a YAML frontmatter block (so the
+// steering store does not classify the file as an always-mode doc), the
+// marker is injected AFTER the closing `---` line, not on the very first
+// line.
 func TestWriteAgentsMD_PrependsMarker(t *testing.T) {
 	root := t.TempDir()
 	dest, err := WriteAgentsMD(root, "zh", false)
@@ -215,7 +222,7 @@ func TestWriteAgentsMD_PrependsMarker(t *testing.T) {
 	if readErr != nil {
 		t.Fatalf("read %s: %v", dest, readErr)
 	}
-	if !strings.HasPrefix(string(body), freeKiroInstructionMarker) {
+	if !strings.Contains(string(body), freeKiroInstructionMarker) {
 		t.Errorf(".kiro/AGENTS.md missing marker; body starts with %q", firstLine(string(body)))
 	}
 }

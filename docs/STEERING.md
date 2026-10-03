@@ -158,6 +158,52 @@ $USER_PROMPT"
 
 `filematch` + `auto` 会被自动筛选，只有真正相关的文档会被拉起，避免污染上下文。
 
+## 自动注入到 IDE 指令文件
+
+`free-kiro steering context` 适用于**自定义 agent runner**（CLI / IDE
+插件 / 测试 harness），把 context 拼到生成 prompt 前缀。但 Claude Code /
+CodeBuddy / Cursor / Continue / OpenCode 这些 IDE 内置的 agent loader
+**不会**调 free-kiro CLI，它们只在会话开始时一次性读项目根的指令文件
+（`CLAUDE.md` / `AGENTS.md` / `.cursorrules` / `.cursor/rules/*.md` /
+`.continue/rules/*.md`），见 `docs/HOOKS.md` §"Agent instructions per
+IDE"。
+
+为了让 steering 内容**自动**进入这些 IDE 的 agent 上下文，新增
+`free-kiro steering inject` 子命令：
+
+```bash
+free-kiro steering inject [--dry-run] [--only <glob>]
+```
+
+行为：
+
+- 读取 `.kiro/steering/*.md` 中 `mode: always` 的文档
+- 按文件名字母序拼成 1 个 markdown 块
+- 写入 5 个 IDE 指令文件（`CLAUDE.md` / `AGENTS.md` / `.cursorrules` /
+  `.cursor/rules/free-kiro.md` / `.continue/rules/free-kiro.md`）的
+  `<!-- free-kiro-managed:start -->` / `<!-- free-kiro-managed:end -->`
+  marker 区域内
+- marker **之外**的所有内容（包括首行 `# free-kiro-managed:` 注释与
+  用户手写段落）原样保留
+
+退出码（与 spec `.kiro/specs/steering-inject-to-ide/` 对齐）：
+
+| 码 | 含义 |
+|---|---|
+| 0 | 全部目标文件写入成功 |
+| 3 | `.kiro/steering/` 中没有 `mode: always` 文档 |
+| 4 | `--only` glob 语法非法（包含 `**` 或未闭合字符类） |
+| 1–5 | 这么多目标文件被跳过（缺 marker / IO 错），上限 5 |
+
+`free-kiro init` 写入的 4 个模板（`instructions_zh/en.md` 与
+`agents_zh/en.md`）已自带 marker 块，因此 init 之后立即跑一次
+`steering inject` 即可生效。`auto` / `manual` / `filematch` 模式的文档
+**不**会被注入（它们需要 prompt 关键词或显式引用，不适合 always 注入）。
+
+> 注意：`steering inject` 写的是 IDE 指令文件，不是 steering store
+> 读取的源文件。`.kiro/steering/*.md` 仍然是 source of truth；修改
+> 文档后重跑 inject 即可同步到 IDE 指令文件。
+
 ## 完整示例：.kiro/steering/
 
 `free-kiro init` 默认生成 3 个示例文档：

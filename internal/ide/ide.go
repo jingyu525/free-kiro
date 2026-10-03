@@ -520,7 +520,20 @@ func WriteAgentInstructions(root, lang string, overwrite bool, ids []ID) ([]stri
 // prepended. Used so the legacy `agents_*.md` templates — which predate
 // the marker convention — and the new `instructions_*.md` templates —
 // which already start with the marker — produce identical on-disk files.
+// prependMarker ensures the on-disk file starts with the
+// `# free-kiro-managed:` marker line so free-kiro doctor / future
+// `init --overwrite-instructions` runs can identify it as auto-generated.
+//
+// If the template starts with a YAML frontmatter block (`---\n...\n---\n`),
+// the marker is injected AFTER the closing `---` so the frontmatter stays
+// valid for the steering store's parser. Otherwise the marker is prepended
+// on the first line.
 func prependMarker(body string) string {
+	const fmClose = "\n---\n"
+	if strings.HasPrefix(body, "---\n") && strings.Contains(body[len("---\n"):], fmClose) {
+		cutAt := len("---\n") + strings.Index(body[len("---\n"):], fmClose) + len(fmClose)
+		return body[:cutAt] + freeKiroInstructionMarker + "\n" + body[cutAt:]
+	}
 	first, rest, hasRest := strings.Cut(body, "\n")
 	if strings.HasPrefix(first, freeKiroInstructionMarker) {
 		return body

@@ -1,0 +1,13 @@
+{
+  "name": "steering-inject-to-ide",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": false,
+  "generator": "template",
+  "prompt": "把 .kiro/steering/*.md 的 always 模式内容自动注入到 IDE agent loader 会读的项目根指令文件（CLAUDE.md / AGENTS.md / .cursorrules / .cursor/rules/free-kiro.md / .continue/rules/free-kiro.md），让 Claude Code / CodeBuddy / Cursor / OpenCode / Continue 等 IDE 在会话开始时自动看到 steering 内容，而不是只服务于 free-kiro CLI 进程内。",
+  "created_at": "2026-10-03T04:03:24Z",
+  "updated_at": "2026-10-03T04:52:20Z",
+  "baseline": {}
+}
