@@ -49,10 +49,7 @@ marker, run free-kiro init first"}`。
 面量 + 文件末尾独立 marker block 两个区域；调 inject 后断言 prose 段
 保持 verbatim + 真 marker block 内填入 product/structure/tech 内容。
 
-[AC-5] THE SYSTEM SHALL `TestStore_InjectAll_WritesBlockIntoMarkerRegion`
-（已有）与 `TestInject_IgnoresMarkerInProse`（新增）+ 其他 4 个
-`Store.Inject` 测试同时 `go test -race ./internal/steering/...` PASS。
-
+[AC-5] THE SYSTEM SHALL `TestStore_InjectAll_WritesBlockIntoMarkerRegion` （已有）与 `TestInject_IgnoresMarkerInProse`（新增）+ 其他 4 个 `Store.Inject` 测试同时 `go test -race ./internal/steering/...` PASS。
 [AC-6] IF inject 后 start marker 之前的 prose 行被改写 THEN
 `TestInject_IgnoresMarkerInProse` 必须 FAIL；测试用例显式断言
 `strings.Contains(proseRegion, "本文件末尾由")` 仍为 true。

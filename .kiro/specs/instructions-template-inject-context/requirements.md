@@ -12,12 +12,12 @@
 
 ## Acceptance Criteria
 
-- WHEN `free-kiro init` 把 `instructions_zh.md` 模板写入项目根 CLAUDE.md THE SYSTEM SHALL 在"## 编码规范（SessionStart 必须先 Read）"段之前插入 1 个 `## 项目上下文（自动注入的 steering）` 段，段内至少含 2 个 marker 链接与 1 个 always-mode 文档列表（`product.md` / `structure.md` / `tech.md`），文件总行数相对插入前增加至少 10 行。
-- WHEN `free-kiro init --lang en` 把 `instructions_en.md` 模板写入项目根 CLAUDE.md THE SYSTEM SHALL 在同一位置插入英文版 `## Project context (auto-injected steering)` 段，结构对齐 zh 版（含 2 个 marker 链接 + 1 个 always-mode 文档列表），文件总行数相对插入前增加至少 10 行。
-- WHEN init 写入 CLAUDE.md 时 THE SYSTEM SHALL 保留现有的 frontmatter（`mode: manual`）与 `# free-kiro-managed:` marker 行共 2 个边界行，新插入的段位于两者之后、`## 编码规范`段之前（位置偏移 ≤ 3 行）。
-- WHEN init 写入 CLAUDE.md 时 THE SYSTEM SHALL 让 CLAUDE.md 中 2 个 inject marker 行（`<!-- free-kiro-managed:start -->` / `<!-- free-kiro-managed:end -->`）保留在文件末尾的最后 5 行内，不被新插入的项目上下文段推到 marker 块与"## 帮助"段之间。
-- WHEN `free-kiro init --ide auto --overwrite-instructions` 在已有 CLAUDE.md 的项目上重跑 THE SYSTEM SHALL 用新模板覆盖 CLAUDE.md 后，新写入的 CLAUDE.md 在 1 次 `diff` 中仍包含 1 段 `## 项目上下文（自动注入的 steering）`（即 init 1 次重写不丢失该段，diff 输出至少 1 行 hunk 标记新增）。
-- THE SYSTEM SHALL 让 init 模板中的"## 项目上下文"段固定包含 2 个 marker 字符串 `<!-- free-kiro-managed:start -->` 与 `<!-- free-kiro-managed:end -->` 的字面引用，agent 读完该段即可定位文件末尾的 inject 块（不依赖 grep）。
+- [AC-1] WHEN `free-kiro init` 把 `instructions_zh.md` 模板写入项目根 CLAUDE.md THE SYSTEM SHALL 在"## 编码规范（SessionStart 必须先 Read）"段之前插入 1 个 `## 项目上下文（自动注入的 steering）` 段，段内至少含 2 个 marker 链接与 1 个 always-mode 文档列表（`product.md` / `structure.md` / `tech.md`），文件总行数相对插入前增加至少 10 行。
+- [AC-2] WHEN `free-kiro init --lang en` 把 `instructions_en.md` 模板写入项目根 CLAUDE.md THE SYSTEM SHALL 在同一位置插入英文版 `## Project context (auto-injected steering)` 段，结构对齐 zh 版（含 2 个 marker 链接 + 1 个 always-mode 文档列表），文件总行数相对插入前增加至少 10 行。
+- [AC-3] WHEN init 写入 CLAUDE.md 时 THE SYSTEM SHALL 保留现有的 frontmatter（`mode: manual`）与 `# free-kiro-managed:` marker 行共 2 个边界行，新插入的段位于两者之后、`## 编码规范`段之前（位置偏移 ≤ 3 行）。
+- [AC-4] WHEN init 写入 CLAUDE.md 时 THE SYSTEM SHALL 让 CLAUDE.md 中 2 个 inject marker 行（`<!-- free-kiro-managed:start -->` / `<!-- free-kiro-managed:end -->`）保留在文件末尾的最后 5 行内，不被新插入的项目上下文段推到 marker 块与"## 帮助"段之间。
+- [AC-5] WHEN `free-kiro init --ide auto --overwrite-instructions` 在已有 CLAUDE.md 的项目上重跑 THE SYSTEM SHALL 用新模板覆盖 CLAUDE.md 后，新写入的 CLAUDE.md 在 1 次 `diff` 中仍包含 1 段 `## 项目上下文（自动注入的 steering）`（即 init 1 次重写不丢失该段，diff 输出至少 1 行 hunk 标记新增）。
+- [AC-6] THE SYSTEM SHALL 让 init 模板中的"## 项目上下文"段固定包含 2 个 marker 字符串 `<!-- free-kiro-managed:start -->` 与 `<!-- free-kiro-managed:end -->` 的字面引用，agent 读完该段即可定位文件末尾的 inject 块（不依赖 grep）。
 
 ## Out of Scope
 

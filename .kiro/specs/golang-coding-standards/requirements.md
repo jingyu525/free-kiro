@@ -15,24 +15,19 @@
 
 ## Acceptance Criteria
 
-- WHEN 开发者执行 `make lint` 或 `free-kiro lint` 时 THE SYSTEM SHALL
+- [AC-1] WHEN 开发者执行 `make lint` 或 `free-kiro lint` 时 THE SYSTEM SHALL
   加载 `golangci.yml` 并对 `./...` 下的所有 Go 文件运行至少 `govet`、
   `staticcheck`、`errcheck`、`gofmt`、`goimports` 五个 linter。
-- WHILE 任意 Go 源文件存在未解决的 `goimports` diff 或 `gofmt` 差异时
+- [AC-2] WHILE 任意 Go 源文件存在未解决的 `goimports` diff 或 `gofmt` 差异时
   THE SYSTEM SHALL 在 `free-kiro lint` 中以 ERROR 退出码 1 拒绝通过。
-- WHERE 规范明确要求命名/导出/错误包装等规则时 THE SYSTEM SHALL 在
-  `.golangci.yml` 中开启对应 linter（如 `revive`/`staticcheck` 的
-  `ST1003`/`ST1019`/`ST1023` 等）使其在 CI 中自动报错。
-- UNLESS 该文件位于 `vendor/`、`*.pb.go`、`*_gen.go` 生成的目录外 THE
+- [AC-3] WHERE 规范明确要求命名/导出/错误包装等规则时 THE SYSTEM SHALL 在 `.golangci.yml` 中开启对应 linter（如 `revive`/`staticcheck` 的 `ST1003`/`ST1019`/`ST1023` 等）使其在 CI 中自动报错。
+- [AC-4] UNLESS 该文件位于 `vendor/`、`*.pb.go`、`*_gen.go` 生成的目录外 THE
   SYSTEM SHALL 默认对所有 `.go` 文件应用上述检查。
-- IF 提交信息中包含 `//nolint:<linter>` 注释且未附 `//nolint:reason`
+- [AC-5] IF 提交信息中包含 `//nolint:<linter>` 注释且未附 `//nolint:reason`
   说明时 THEN `revive` 的 `exported`/`revive` 规则 THE SYSTEM SHALL
   在 lint 输出中产生 WARNING 提示要求补充原因。
-- THE SYSTEM SHALL 在仓库根目录的 `CONTRIBUTING.md` 提供指向
-  `docs/CODING_STYLE.md` 的链接，且 `docs/CODING_STYLE.md` 至少覆盖：
-  命名约定、错误处理、并发、接口设计、测试、注释与文档、依赖管理、
-  与 AI agent 协作的硬性要求 8 个章节。
-- THE SYSTEM SHALL 在 `docs/CODING_STYLE.md` 的每一节给出至少一个
+- [AC-6] THE SYSTEM SHALL 在仓库根目录的 `CONTRIBUTING.md` 提供指向 `docs/CODING_STYLE.md` 的链接，且 `docs/CODING_STYLE.md` 至少覆盖： 命名约定、错误处理、并发、接口设计、测试、注释与文档、依赖管理、 与 AI agent 协作的硬性要求 8 个章节。
+- [AC-7] THE SYSTEM SHALL 在 `docs/CODING_STYLE.md` 的每一节给出至少一个
   ✅ 推荐 写法 与一个 ❌ 反例，并以可复制的 Go 代码片段呈现。
 
 ## Out of Scope

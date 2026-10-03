@@ -22,32 +22,28 @@ workspace 里所有 spec 的整体状态（phase / approved / drift / tasks 进�
 
 ## Acceptance Criteria
 
-- WHEN the user runs `free-kiro status` in a workspace with one or
+- [AC-1] WHEN the user runs `free-kiro status` in a workspace with one or
   more specs, THE SYSTEM SHALL print a human-readable table to stdout
   that contains, for each spec, the columns `name` / `phase` /
   `approved` (yes/no) / `drift` (clean/drift/n-a) / `tasks` (done /
   total / waves), and SHALL mark the active spec (read from
   `.kiro/.current`) with a leading `*` or an `active` column set to
   `yes`.
-- WHEN the user runs `free-kiro status --json`, THE SYSTEM SHALL
-  print a JSON object with shape `{ "generated_at": RFC3339,
-  "active": "<name>|"", "specs": [ ...per-spec objects... ] }` to
-  stdout, with the same field set per spec (name / phase / approved /
-  drift / tasks-done / tasks-total / tasks-waves), and SHALL exit 0.
-- WHERE the workspace `.kiro/` directory does not exist, THE SYSTEM
+- [AC-2] WHEN the user runs `free-kiro status --json`, THE SYSTEM SHALL print a JSON object with shape `{ "generated_at": RFC3339, "active": "<name>|"", "specs": [ ...per-spec objects... ] }` to stdout, with the same field set per spec (name / phase / approved / drift / tasks-done / tasks-total / tasks-waves), and SHALL exit 0.
+- [AC-3] WHERE the workspace `.kiro/` directory does not exist, THE SYSTEM
   SHALL print an error message on stderr instructing the user to run
   `free-kiro init`, and exit with code 3 (usage error).
-- WHERE `.kiro/specs/` exists but contains no spec subdirectories, THE
+- [AC-4] WHERE `.kiro/specs/` exists but contains no spec subdirectories, THE
   SYSTEM SHALL print `No specs found` to stdout and exit 0 (in JSON
   mode: `{"active":"","specs":[]}`).
-- WHILE `.kiro/.current` exists but its value does not match any
+- [AC-5] WHILE `.kiro/.current` exists but its value does not match any
   existing spec directory, THE SYSTEM SHALL still print the spec list
   and SHALL either omit the active marker or set `active` to the
   pointer value with a `(not found)` suffix, without erroring out.
-- UNLESS `--json` is passed, THE SYSTEM SHALL emit plain text only
+- [AC-6] UNLESS `--json` is passed, THE SYSTEM SHALL emit plain text only
   (no ANSI color escapes) so the output is safe to pipe to `less`,
   `grep`, or `tee`.
-- THE SYSTEM SHALL not modify any spec, steering, hook, or `.kiro/`
+- [AC-7] THE SYSTEM SHALL not modify any spec, steering, hook, or `.kiro/`
   metadata — `status` is read-only.
 
 ## Out of Scope

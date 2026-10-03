@@ -15,23 +15,20 @@ stdout、exit 0，输出含 version / commit / build date。dev build 也能
 
 ## Acceptance Criteria
 
-- WHEN the user runs `free-kiro --version`, THE SYSTEM SHALL print a
-  single line to stdout in the form
-  `free-kiro version <version> (commit <short-sha>, built <RFC3339-date>)`
-  and exit with code 0.
-- WHILE the binary is a dev build (buildVersion == "dev"), THE SYSTEM
+- [AC-1] WHEN the user runs `free-kiro --version`, THE SYSTEM SHALL print a single line to stdout in the form `free-kiro version <version> (commit <short-sha>, built <RFC3339-date>)` and exit with code 0.
+- [AC-2] WHILE the binary is a dev build (buildVersion == "dev"), THE SYSTEM
   SHALL print a version string that contains the literal `dev` token and
   SHALL NOT panic, print an empty version, or omit the version field.
-- WHERE `--version` is combined with other flags or subcommand arguments
+- [AC-3] WHERE `--version` is combined with other flags or subcommand arguments
   (e.g. `free-kiro --version init`), THE SYSTEM SHALL only print the
   version line, ignore the remaining arguments, and exit 0.
-- WHEN the stdout is not a TTY (e.g. `free-kiro --version | cat` or
+- [AC-4] WHEN the stdout is not a TTY (e.g. `free-kiro --version | cat` or
   redirected to a file), THE SYSTEM SHALL still write exactly one line
   to stdout and SHALL NOT write any version text to stderr.
-- UNLESS the version string itself is requested, THE SYSTEM SHALL NOT
+- [AC-5] UNLESS the version string itself is requested, THE SYSTEM SHALL NOT
   print stack traces, debug info, or internal error details on the
   `--version` code path.
-- THE SYSTEM SHALL derive version / commit / date from the `buildVersion`,
+- [AC-6] THE SYSTEM SHALL derive version / commit / date from the `buildVersion`,
   `buildCommit`, `buildDate` package-level variables in `internal/cli`
   (already injected by GoReleaser ldflags in `.goreleaser.yaml`), and
   SHALL NOT introduce new ldflags variables.

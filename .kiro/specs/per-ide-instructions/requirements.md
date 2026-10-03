@@ -22,7 +22,7 @@
 
 ## Acceptance Criteria
 
-- WHEN the user runs `free-kiro init --ide <id>` for a known IDE id,
+- [AC-1] WHEN the user runs `free-kiro init --ide <id>` for a known IDE id,
   THE SYSTEM SHALL write every project-level instruction file declared for
   that id in the canonical table
   (`Claude Code → ["CLAUDE.md"]`,
@@ -32,34 +32,34 @@
   `CodeBuddy → ["AGENTS.md"]`),
   prepending the `# free-kiro-managed:` marker on the first content line so the
   file can be identified as free-kiro-owned.
-- WHILE the target instruction file already exists,
+- [AC-2] WHILE the target instruction file already exists,
   THE SYSTEM SHALL skip writing that file and reuse the existing contents,
   unless `--overwrite-instructions` is passed, in which case THE SYSTEM SHALL
   overwrite the file unconditionally.
-- WHERE `--ide none` is supplied,
+- [AC-3] WHERE `--ide none` is supplied,
   THE SYSTEM SHALL skip IDE-level instruction writes and only write
   `.kiro/AGENTS.md` so the workspace-level steering store can still load it.
-- UNLESS the workspace root is not writable,
+- [AC-4] UNLESS the workspace root is not writable,
   THE SYSTEM SHALL create any missing parent directories
   (including `.cursor/`, `.cursor/rules/`, `.continue/`, `.continue/rules/`)
   with permission `0o755` before writing.
-- IF the same instruction file path is targeted by multiple selected IDEs in
+- [AC-5] IF the same instruction file path is targeted by multiple selected IDEs in
   one init invocation (e.g. `--ide opencode --ide codebuddy` both target
   `AGENTS.md`), THEN THE SYSTEM SHALL write that path exactly once per
   invocation and return the single write in the result list.
-- THE SYSTEM SHALL continue to preserve the user's other top-level keys in
+- [AC-6] THE SYSTEM SHALL continue to preserve the user's other top-level keys in
   `~/.{ide}/settings.json` (`model`, `enabledPlugins`, etc.) when upserting
   the two canonical free-kiro hooks
   (`PreToolUse matcher="Edit|Write"` and `SessionStart`),
   matching the existing `# free-kiro-managed:` upsert contract.
-- THE SYSTEM SHALL accept the legacy `--overwrite-agents` flag, forward its
+- [AC-7] THE SYSTEM SHALL accept the legacy `--overwrite-agents` flag, forward its
   boolean to the same overwrite switch as `--overwrite-instructions`, and emit
   a stderr warning naming the new flag so existing scripts keep working for
   one minor version.
-- THE SYSTEM SHALL keep writing `.kiro/AGENTS.md` regardless of which IDE id
+- [AC-8] THE SYSTEM SHALL keep writing `.kiro/AGENTS.md` regardless of which IDE id
   is selected (including `--ide none`) so the existing steering-store loader
   at `internal/steering/store.go` continues to find it.
-- THE SYSTEM SHALL expose the IDE→instruction-files mapping as a single
+- [AC-9] THE SYSTEM SHALL expose the IDE→instruction-files mapping as a single
   `instructionFiles map[ID][]string` constant in `internal/ide/ide.go` so a
   future IDE can be added by editing one line.
 

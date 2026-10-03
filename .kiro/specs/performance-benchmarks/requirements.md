@@ -39,24 +39,12 @@
   THE SYSTEM SHALL 输出 ≥ 18 个 `BenchmarkXxx` 命名（6 包 × ≥ 3 子表），每个
   benchmark 至少跑 `-benchtime=1s` 且报告 `ns/op` / `B/op` / `allocs/op` 三列。
 
-- [AC-3] THE SYSTEM SHALL benchmark fixture 文件使用 `testdata/perf/`
-  下的 `small.md`（10 AC）/ `medium.md`（100 AC）/ `large.md`（1000 AC）三个
-  静态 spec 文本，由 `init()` 或 `helper` 一次读取 + `[]byte` 复用，避免
-  benchmark 自身被 IO 噪声污染。
-
+- [AC-3] THE SYSTEM SHALL benchmark fixture 文件使用 `testdata/perf/` 下的 `small.md`（10 AC）/ `medium.md`（100 AC）/ `large.md`（1000 AC）三个 静态 spec 文本，由 `init()` 或 `helper` 一次读取 + `[]byte` 复用，避免 benchmark 自身被 IO 噪声污染。
 ### benchstat 报告与 baseline
 
-- [AC-4] WHEN `make bench` 在仓库根目录执行 THE SYSTEM SHALL 跑完所有
-  benchmark 后调用 `benchstat`（golang.org/x/perf/cmd/benchstat 已有依赖或
-  stdlib）生成 `benchdata/baseline.txt` 与 `benchdata/current.txt` 对比报告，
-  写入 `docs/PERF.md` 的 fenced code block；任何 ns/op 单项浮动 ≥ 10%
-  THE SYSTEM SHALL 退出码非零（性能回归 fail）。
+- [AC-4] WHEN `make bench` 在仓库根目录执行 THE SYSTEM SHALL 跑完所有 benchmark 后调用 `benchstat`（golang.org/x/perf/cmd/benchstat 已有依赖或 stdlib）生成 `benchdata/baseline.txt` 与 `benchdata/current.txt` 对比报告，写入 `docs/PERF.md` 的 fenced code block；任何 ns/op 单项浮动 ≥ 10% THE SYSTEM SHALL 退出码非零（性能回归 fail）。
 
-- [AC-5] THE SYSTEM SHALL `benchdata/baseline.txt` 首次提交包含本仓库
-  v0.8.0 实测数字（commit `9412e8c` 前后），格式为 benchstat 兼容
-  `name  old time/op  new time/op  delta` 表格；后续修改 baseline 必须
-  在 PR 描述里说明改动原因（"X% 提升来自改键 Y"）。
-
+- [AC-5] THE SYSTEM SHALL `benchdata/baseline.txt` 首次提交包含本仓库 v0.8.0 实测数字（commit `9412e8c` 前后），格式为 benchstat 兼容 `name  old time/op  new time/op  delta` 表格；后续修改 baseline 必须 在 PR 描述里说明改动原因（"X% 提升来自改键 Y"）。
 ### CI 与回归门槛
 
 - [AC-6] WHERE CI 在 `.github/workflows/ci.yml` 新增 `bench-guard` job
