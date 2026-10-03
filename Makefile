@@ -28,6 +28,11 @@ LINT_BIN := $(shell \
 # 是否安装了 free-kiro（spec/lint 入口）
 HAS_FREE_KIRO := $(shell command -v free-kiro 2>/dev/null)
 
+# benchstat? golang.org/x/perf/cmd/benchstat is the standard tool for
+# comparing two benchmark output files. `go install` once; after that
+# the binary lives on PATH and `make bench` picks it up.
+HAS_BENCHSTAT := $(shell command -v benchstat 2>/dev/null)
+
 # ---------- 默认 target ----------
 
 .PHONY: help
@@ -46,7 +51,7 @@ install: ## go install 到 $(GOBIN)/free-kiro
 
 .PHONY: clean
 clean: ## 删除 ./bin 与临时构建产物
-	rm -rf bin/ coverage.out
+	rm -rf bin/ coverage.out benchdata/current.txt benchdata/report.txt
 
 # ---------- 测试 ----------
 
@@ -89,6 +94,52 @@ fmt: ## gofmt + goimports 格式化
 	@if [ -n "$(LINT_BIN)" ]; then \
 		$(LINT_BIN) run --no-config --disable-all -E goimports --fix ./...; \
 	fi
+
+# ---------- Benchmark ----------
+
+# performance-benchmarks spec 落地：6 个关键包 / 16 个 Benchmark 函数 /
+# 41 个子 bench。第一次跑 `make bench` 会初始化 benchdata/baseline.txt；
+# 后续每次跑与 baseline 对比，回归 ≥ 10% 报 exit 1。
+BENCH_TARGETS := \
+  ./internal/lint/... \
+  ./internal/spec/... \
+  ./internal/taskgraph/... \
+  ./internal/visualize/...
+
+.PHONY: bench
+bench: ## 跑全部 benchmark + benchstat 对比 baseline（回归 ≥ 10% 报错）
+	@mkdir -p benchdata
+	@echo "##### running benchmarks (-benchtime=1s) #####"
+	$(GO) test -run='^' -bench=. -benchmem -benchtime=1s $(BENCH_TARGETS) > benchdata/current.txt 2>&1 || true
+	@if [ ! -f benchdata/baseline.txt ]; then \
+		echo "##### no baseline.txt yet — initialising from current #####"; \
+		cp benchdata/current.txt benchdata/baseline.txt; \
+		echo "baseline.txt initialised (next 'make bench' will compare)"; \
+		exit 0; \
+	fi
+	@if [ -z "$(HAS_BENCHSTAT)" ]; then \
+		echo "benchstat not on PATH; install:"; \
+		echo "  go install golang.org/x/perf/cmd/benchstat@latest"; \
+		exit 4; \
+	fi
+	@echo "##### benchstat baseline → current #####"
+	benchstat -alpha=0.10 benchdata/baseline.txt benchdata/current.txt | tee benchdata/report.txt
+	@benchstat -alpha=0.10 benchdata/baseline.txt benchdata/current.txt > /dev/null; \
+		status=$$?; \
+		if [ $$status -ne 0 ]; then \
+			echo "FAIL: benchmark regression detected (see benchdata/report.txt)"; \
+			exit $$status; \
+		fi; \
+		echo "✓ no regression"
+
+.PHONY: bench-init
+bench-init: ## 把当前 current.txt 复制为 baseline.txt（首次 / 主动 reset）
+	@if [ ! -f benchdata/current.txt ]; then \
+		echo "no benchdata/current.txt — run 'make bench' first"; \
+		exit 1; \
+	fi
+	cp benchdata/current.txt benchdata/baseline.txt
+	@echo "✓ baseline.txt updated from current.txt"
 
 # ---------- 组合 ----------
 

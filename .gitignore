@@ -1,0 +1,22 @@
+# --- free-kiro workspace ---
+/free-kiro
+/bin/
+
+# --- Test caches ---
+/.playwright-mcp/
+/.playwright-mcp/**
+
+# --- Local working artifacts ---
+.kiro/.current
+.kiro/.current.*
+
+# --- Coverage ---
+coverage.out
+*.coverprofile
+
+# --- OS / IDE ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~

@@ -1,0 +1,132 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/jingyu525/free-kiro/internal/lint
+cpu: Apple M5
+BenchmarkEARSRe_FindAllString/small-10         	   17665	     68211 ns/op	  22.62 MB/s	    2306 B/op	       7 allocs/op
+BenchmarkEARSRe_FindAllString/medium-10        	    2371	    510802 ns/op	  17.70 MB/s	   13968 B/op	      10 allocs/op
+BenchmarkEARSRe_FindAllString/large-10         	     216	   5549602 ns/op	  17.55 MB/s	  133676 B/op	      13 allocs/op
+BenchmarkEARSRe_MatchString/small-10           	   71880	     16375 ns/op	  94.23 MB/s	       0 B/op	       0 allocs/op
+BenchmarkEARSRe_MatchString/medium-10          	   84165	     14451 ns/op	 625.78 MB/s	       0 B/op	       0 allocs/op
+BenchmarkEARSRe_MatchString/large-10           	   96814	     12401 ns/op	7854.07 MB/s	       0 B/op	       0 allocs/op
+BenchmarkUsesIFTHEN/small-10                   	   62917	     18905 ns/op	  81.62 MB/s	       0 B/op	       0 allocs/op
+BenchmarkUsesIFTHEN/medium-10                  	   72192	     16415 ns/op	 550.90 MB/s	       0 B/op	       0 allocs/op
+BenchmarkUsesIFTHEN/large-10                   	   87463	     13948 ns/op	6983.14 MB/s	       0 B/op	       0 allocs/op
+BenchmarkRequirements/small-10                 	    5818	    208523 ns/op	   7.40 MB/s	   16610 B/op	     123 allocs/op
+BenchmarkRequirements/medium-10                	    1071	   1127017 ns/op	   8.02 MB/s	  135396 B/op	     637 allocs/op
+BenchmarkRequirements/large-10                 	     100	  10985537 ns/op	   8.87 MB/s	 1089846 B/op	    5343 allocs/op
+BenchmarkExtractEARSLines/small-10             	  356457	      3369 ns/op	 457.96 MB/s	    1692 B/op	       8 allocs/op
+BenchmarkExtractEARSLines/medium-10            	   86734	     13846 ns/op	 653.09 MB/s	   11988 B/op	      13 allocs/op
+BenchmarkExtractEARSLines/large-10             	   10000	    120013 ns/op	 811.59 MB/s	   94993 B/op	      19 allocs/op
+PASS
+ok  	github.com/jingyu525/free-kiro/internal/lint	17.941s
+goos: darwin
+goarch: arm64
+pkg: github.com/jingyu525/free-kiro/internal/spec
+cpu: Apple M5
+BenchmarkRenderRequirements-10    	 4706218	       260.6 ns/op	    1776 B/op	       5 allocs/op
+BenchmarkRenderDesign-10          	 6347547	       185.6 ns/op	     944 B/op	       5 allocs/op
+BenchmarkRenderBugfix-10          	 5098528	       221.9 ns/op	    1264 B/op	       5 allocs/op
+BenchmarkRenderParse/requirements.md.tmpl-10         	  841947	      1226 ns/op	    4584 B/op	      31 allocs/op
+BenchmarkRenderParse/design.md.tmpl-10               	 1332768	       898.7 ns/op	    3752 B/op	      31 allocs/op
+BenchmarkRenderParse/tasks.md.tmpl-10                	 1357339	       882.5 ns/op	    3496 B/op	      31 allocs/op
+PASS
+ok  	github.com/jingyu525/free-kiro/internal/spec	6.991s
+goos: darwin
+goarch: arm64
+pkg: github.com/jingyu525/free-kiro/internal/taskgraph
+cpu: Apple M5
+BenchmarkExecutionWaves_Linear/n=10-10         	  622155	      1915 ns/op	    5736 B/op	      32 allocs/op
+BenchmarkExecutionWaves_Linear/n=100-10        	   49155	     23579 ns/op	   74264 B/op	     158 allocs/op
+BenchmarkExecutionWaves_Linear/n=1000-10       	    3976	    304386 ns/op	 1211391 B/op	    1124 allocs/op
+BenchmarkExecutionWaves_Wide/n=100-10          	   51240	     23587 ns/op	   75912 B/op	     104 allocs/op
+BenchmarkExecutionWaves_Wide/n=1000-10         	    4023	    292534 ns/op	 1145649 B/op	     200 allocs/op
+BenchmarkSummary-10                            	   26205	     45824 ns/op	  152216 B/op	     270 allocs/op
+PASS
+ok  	github.com/jingyu525/free-kiro/internal/taskgraph	7.161s
+2026/10/03 20:05:58 panic: boom
+goroutine 37 [running]:
+runtime/debug.Stack()
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/runtime/debug/stack.go:26 +0x64
+github.com/jingyu525/free-kiro/internal/visualize.withRecover.1.1()
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware.go:35 +0x3c
+panic({0x103285cf8?, 0x10322c6a0?})
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/runtime/panic.go:859 +0x120
+github.com/jingyu525/free-kiro/internal/visualize.TestWithRecover_PanicReturns500.func1.1({0x39c12d943000?, 0x1000?}, 0x1000?)
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware_test.go:29 +0x20
+net/http.HandlerFunc.ServeHTTP(0x0?, {0x1032c6d10?, 0x39c12d88d9c0?}, 0xffffffffffffffff?)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/net/http/server.go:2338 +0x38
+github.com/jingyu525/free-kiro/internal/visualize.withRecover.1({0x1032c6d10?, 0x39c12d88d9c0?}, 0x102641ff4?)
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware.go:43 +0x68
+net/http.HandlerFunc.ServeHTTP(...)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/net/http/server.go:2338
+github.com/jingyu525/free-kiro/internal/visualize.TestWithRecover_PanicReturns500.func1(0x39c12d8dc6c8)
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware_test.go:32 +0x164
+testing.tRunner(0x39c12d8dc6c8, 0x39c12d88d940)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/testing/testing.go:2193 +0xc4
+created by testing.(*T).Run in goroutine 36
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/testing/testing.go:2258 +0x3b8
+2026/10/03 20:05:58 panic: net/http: abort Handler
+goroutine 38 [running]:
+runtime/debug.Stack()
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/runtime/debug/stack.go:26 +0x64
+github.com/jingyu525/free-kiro/internal/visualize.withRecover.1.1()
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware.go:35 +0x3c
+panic({0x10323c8b0?, 0x103317740?})
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/runtime/panic.go:859 +0x120
+github.com/jingyu525/free-kiro/internal/visualize.TestWithRecover_PanicReturns500.func1.1({0x39c12d96e000?, 0x1000?}, 0x1000?)
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware_test.go:29 +0x20
+net/http.HandlerFunc.ServeHTTP(0x0?, {0x1032c6d10?, 0x39c12d88db80?}, 0xffffffffffffffff?)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/net/http/server.go:2338 +0x38
+github.com/jingyu525/free-kiro/internal/visualize.withRecover.1({0x1032c6d10?, 0x39c12d88db80?}, 0x102641ff4?)
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware.go:43 +0x68
+net/http.HandlerFunc.ServeHTTP(...)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/net/http/server.go:2338
+github.com/jingyu525/free-kiro/internal/visualize.TestWithRecover_PanicReturns500.func1(0x39c12d8dc908)
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware_test.go:32 +0x164
+testing.tRunner(0x39c12d8dc908, 0x39c12d88db00)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/testing/testing.go:2193 +0xc4
+created by testing.(*T).Run in goroutine 36
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/testing/testing.go:2258 +0x3b8
+2026/10/03 20:05:58 panic: <nil>
+goroutine 39 [running]:
+runtime/debug.Stack()
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/runtime/debug/stack.go:26 +0x64
+github.com/jingyu525/free-kiro/internal/visualize.withRecover.1.1()
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware.go:35 +0x3c
+panic({0x103242ee0?, 0x0?})
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/runtime/panic.go:859 +0x120
+github.com/jingyu525/free-kiro/internal/visualize.TestWithRecover_PanicReturns500.func1.1({0x39c12d96f000?, 0x1000?}, 0x1000?)
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware_test.go:29 +0x20
+net/http.HandlerFunc.ServeHTTP(0x0?, {0x1032c6d10?, 0x39c12d88dc40?}, 0xffffffffffffffff?)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/net/http/server.go:2338 +0x38
+github.com/jingyu525/free-kiro/internal/visualize.withRecover.1({0x1032c6d10?, 0x39c12d88dc40?}, 0x102641ff4?)
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware.go:43 +0x68
+net/http.HandlerFunc.ServeHTTP(...)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/net/http/server.go:2338
+github.com/jingyu525/free-kiro/internal/visualize.TestWithRecover_PanicReturns500.func1(0x39c12d8dcb48)
+	/Users/liujingyu/CodeBuddy/free-kiro/internal/visualize/middleware_test.go:32 +0x164
+testing.tRunner(0x39c12d8dcb48, 0x39c12d88dbc0)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/testing/testing.go:2193 +0xc4
+created by testing.(*T).Run in goroutine 36
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/testing/testing.go:2258 +0x3b8
+goos: darwin
+goarch: arm64
+pkg: github.com/jingyu525/free-kiro/internal/visualize
+cpu: Apple M5
+BenchmarkStableETag/size=1024-10    	 2155082	       539.3 ns/op	1898.83 MB/s	     256 B/op	       7 allocs/op
+BenchmarkStableETag/size=10240-10   	  378250	      3195 ns/op	3204.84 MB/s	     256 B/op	       7 allocs/op
+BenchmarkStableETag/size=102400-10  	   40158	     29860 ns/op	3429.33 MB/s	     256 B/op	       7 allocs/op
+BenchmarkStableETag_JSON/specs=5-10 	 2731831	       444.1 ns/op	1578.63 MB/s	     256 B/op	       7 allocs/op
+BenchmarkStableETag_JSON/specs=50-10         	  529465	      2271 ns/op	3100.73 MB/s	     256 B/op	       7 allocs/op
+BenchmarkStableETag_JSON/specs=500-10        	   57642	     20821 ns/op	3424.45 MB/s	     256 B/op	       7 allocs/op
+BenchmarkProjectReport_JSON/specs=5-10       	  405130	      2940 ns/op	 340.14 MB/s	    1993 B/op	      21 allocs/op
+BenchmarkProjectReport_JSON/specs=20-10      	  105650	     11354 ns/op	 352.29 MB/s	    7334 B/op	      81 allocs/op
+BenchmarkProjectReport_JSON/specs=50-10      	   42817	     27997 ns/op	 357.18 MB/s	   18401 B/op	     201 allocs/op
+BenchmarkTaskProgress_JSON/specs=20-10       	  987345	      1207 ns/op	     752 B/op	       3 allocs/op
+BenchmarkTaskProgress_JSON/specs=50-10       	  417528	      2859 ns/op	    1840 B/op	       3 allocs/op
+BenchmarkTaskProgress_JSON/specs=200-10      	  108805	     11189 ns/op	    6579 B/op	       3 allocs/op
+BenchmarkRenderMermaidProject/specs=5-10     	  935292	      1257 ns/op	    3273 B/op	      40 allocs/op
+BenchmarkRenderMermaidProject/specs=20-10    	  245650	      4928 ns/op	   13143 B/op	     147 allocs/op
+BenchmarkRenderMermaidProject/specs=50-10    	   96816	     12350 ns/op	   36083 B/op	     359 allocs/op
+PASS
+ok  	github.com/jingyu525/free-kiro/internal/visualize	23.113s

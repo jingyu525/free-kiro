@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # 每周一 03:00 UTC 跑 bench-guard：避免每次 PR 都跑 bench（3-30s/bench
+    # × 41 bench，PR 流程吃不消）。weekly + nightly main 与 baseline 对比，
+    # 任何 ≥ 10% 回归报 failure，PR review 时下载 report.txt 看具体数字。
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
 
 jobs:
   test:
@@ -69,6 +75,13 @@ jobs:
         with:
           version: latest
           args: --timeout 5m
+
+      # performance-benchmarks spec 落地：关键热路径改动必须新增 / 更新
+      # 对应 BenchmarkXxx；此 gate 检查 hot_path 列表中的文件变更是否
+      # 同时改动了同包 `_bench_test.go`。脚本 fallback 到 HEAD~5 当本地
+      # 没有 origin/main（fresh clone）。
+      - name: Bench coverage gate
+        run: ./scripts/check-bench-coverage.sh origin/${{ github.base_ref || 'main' }}
 
   # Drift 门禁：保证项目根 4 个 IDE 指令文件（CLAUDE.md / AGENTS.md /
   # .cursorrules / .cursor/rules/free-kiro.md）与 .kiro/steering/*.md
@@ -143,3 +156,37 @@ jobs:
           /tmp/free-kiro steering list
           /tmp/free-kiro hook add --id smoke --event manual --action-type shell --action "true"
           /tmp/free-kiro hook run manual
+  # performance-benchmarks spec 落地：仅 schedule + workflow_dispatch 触发，
+  # 不在常规 PR 必跑。报告作为 artifact 上传 7 天保留。
+  bench-guard:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 需要 history 才能 build meaningful baseline
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Cache modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-1.23-${{ hashFiles('**/go.sum') }}
+
+      - name: Install benchstat
+        run: go install golang.org/x/perf/cmd/benchstat@latest
+
+      - name: Run benchmarks
+        run: make bench
+
+      - name: Upload benchstat report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchstat-report
+          path: benchdata/report.txt
+          retention-days: 7

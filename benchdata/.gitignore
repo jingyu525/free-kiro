@@ -1,0 +1,6 @@
+# benchdata 当前跑出的数字以及 / 仓库，跟随 `make bench` 重写
+current.txt
+report.txt
+
+# 备份不入库
+*.txt.bak
