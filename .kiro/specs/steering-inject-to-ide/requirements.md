@@ -15,7 +15,7 @@ steering 约定，而不是只服务于 free-kiro CLI 进程内部。
 
 - WHEN 用户执行 `free-kiro steering inject` THE SYSTEM SHALL 在 1 次调用内把 `.kiro/steering/*.md` 中 mode: always 的文档按文件名字母序拼成 1 个 markdown 块，写入项目根 5 个 IDE 指令文件的 marker 区域内，且 5 个文件全部成功写入时进程以退出码 0 结束。
 - WHEN 用户执行 `free-kiro steering inject --dry-run` THE SYSTEM SHALL 在 1 次调用内把将注入的内容打印到 stdout（至少 1 行），不修改任何文件，进程以退出码 0 结束。
-- WHEN 任一目标指令文件中 inject marker 块缺失（start/end 配对缺失或不匹配）THE SYSTEM SHALL 跳过该文件、向 stderr 输出 1 条警告（含 path），继续处理其余文件，且进程退出码等于被跳过的文件数（最多 5）。
+- WHEN 任一目标指令文件中 inject marker 块缺失（start/end 配对缺失或不匹配）THE SYSTEM SHALL 跳过该文件、向 stderr 输出 1 条警告（含 path），继续处理其余文件，最终进程以退出码 0 结束（skipped 不影响 exit code，由 stderr warning 即可表达）。
 - WHERE 用户传 `--only <glob>` THE SYSTEM SHALL 只处理路径匹配 glob 的目标文件，glob 语法支持 2 种通配符（`*` 与 `?`），不接受 `**`，匹配命中数在 0 到 5 之间。
 - UNLESS 用户传 `--only` 指定具体子集 THE SYSTEM SHALL 默认处理 5 个目标文件（CLAUDE.md、AGENTS.md、.cursorrules、.cursor/rules/free-kiro.md、.continue/rules/free-kiro.md）。
 - WHEN `.kiro/steering/` 目录不存在或目录内没有 mode: always 的文档 THE SYSTEM SHALL 在 100ms 内报错退出，stderr 输出 1 行错误消息（含路径），进程以退出码 3 结束，且 0 个 IDE 指令文件被修改。

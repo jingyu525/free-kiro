@@ -11,18 +11,19 @@ import (
 )
 
 // Exit-code contract for `free-kiro steering inject`. Per spec
-// steering-inject-to-ide §AC:
+// fix-steering-inject-skipped-exit (formerly steering-inject-to-ide
+// AC-3; semantics revised to align with pre-commit / CI usage):
 //
-//	0 — all 5 target files (or the --only subset) successfully updated
+//	0 — all reachable target files processed (skipped are warning, not error)
 //	3 — no always-mode docs found in .kiro/steering/
 //	4 — --only glob pattern is invalid
-//	1..5 — that many target files were skipped (missing marker, IO err);
-//	        capped at 5 because there are at most 5 targets
+//
+// Skipped targets (missing marker / IO err) emit stderr warnings but
+// do NOT affect the exit code — see `fix-steering-inject-skipped-exit`.
 const (
-	injectExitOK          = 0
-	injectExitNoDocs      = 3
-	injectExitBadGlob     = 4
-	injectExitMaxSkipped  = 5
+	injectExitOK      = 0
+	injectExitNoDocs  = 3
+	injectExitBadGlob = 4
 )
 
 // steeringInjectCmd wires `free-kiro steering inject` — assemble the
@@ -87,18 +88,17 @@ func runInject(cmd *cobra.Command, res *steering.InjectResult, dryRun bool) {
 		fmt.Fprintln(cmd.OutOrStdout(), res.Block)
 		return
 	}
-	// Real write — surface per-target results.
+	// Real write — surface per-target results. Skipped targets emit
+	// 1 stderr warning per file but do NOT affect the exit code: they
+	// represent "unreachable" (e.g. .continue/rules/... missing when
+	// Continue IDE isn't installed), not "failure". True failures
+	// (no always docs / bad glob) were already handled at the top of
+	// runInject via os.Exit(injectExitNoDocs | injectExitBadGlob).
 	for _, rel := range res.Written {
 		fmt.Fprintf(cmd.OutOrStdout(), "✓ wrote %s\n", rel)
 	}
 	for _, sk := range res.Skipped {
 		fmt.Fprintf(cmd.ErrOrStderr(),
 			"warning: file %s: %s\n", sk.Path, sk.Reason)
-	}
-	if n := len(res.Skipped); n > 0 {
-		if n > injectExitMaxSkipped {
-			n = injectExitMaxSkipped
-		}
-		os.Exit(n)
 	}
 }
