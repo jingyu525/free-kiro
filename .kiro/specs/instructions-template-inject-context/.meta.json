@@ -1,0 +1,13 @@
+{
+  "name": "instructions-template-inject-context",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": false,
+  "generator": "template",
+  "prompt": "把 CLAUDE.md / .cursorrules / .cursor/rules/free-kiro.md 顶部手动加的\"## 项目上下文（自动注入的 steering）\"段固化进 init 模板 internal/ide/templates/instructions_zh.md 与 instructions_en.md，让 free-kiro init --ide auto --overwrite-instructions 重写这些 IDE 指令文件时保留该段、不再被 init 模板覆盖丢失。",
+  "created_at": "2026-10-03T07:36:42Z",
+  "updated_at": "2026-10-03T07:41:40Z",
+  "baseline": {}
+}
