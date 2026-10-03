@@ -186,6 +186,27 @@ free-kiro steering inject [--dry-run] [--only <glob>]
 - marker **之外**的所有内容（包括首行 `# free-kiro-managed:` 注释与
   用户手写段落）原样保留
 
+### 两套 marker 的区分
+
+IDE 指令文件里实际有 **2 套** free-kiro 维护的标记，名字都带
+`free-kiro-managed`，但来源、用途完全不同，别混淆：
+
+| 标记 | 注入源 | 用途 | 出现位置 |
+|---|---|---|---|
+| 首行 `# free-kiro-managed:` | `internal/ide/ide.go` 的 `prependMarker` 函数（行 517-545），由 `free-kiro init` 运行时调用 | `IsFreeKiroInstruction` 读取首行识别"这文件是 free-kiro 生成的"，防止后续 `init --overwrite-instructions` 覆盖用户在同路径手写的内容 | YAML frontmatter 闭合 `---` 之后的第一行 |
+| `<!-- free-kiro-managed:start -->` ... `<!-- free-kiro-managed:end -->` | `free-kiro steering inject` 在每次 `init` / `inject` 运行时写入 | 划定 `mode: always` steering 文档注入区域的边界 | 文件末尾 |
+
+修改路径：
+
+- 想改**顶部 marker** 的语义、位置或文案 → 改
+  `internal/ide/ide.go` 的 `prependMarker` 函数，然后重跑
+  `free-kiro init --ide auto --overwrite-instructions`
+- 想改**底部 marker 区域**的注入内容 → 改
+  `.kiro/steering/<name>.md` 后跑 `free-kiro steering inject`
+- 想改 IDE 指令模板里"项目上下文与文件标记"那段说明 → 改
+  `internal/ide/templates/{instructions,agents}_{zh,en}.md` 后重跑
+  `free-kiro init --ide auto --overwrite-instructions`
+
 退出码（与 spec `.kiro/specs/steering-inject-to-ide/` 对齐）：
 
 | 码 | 含义 |

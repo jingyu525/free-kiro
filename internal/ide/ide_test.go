@@ -301,6 +301,69 @@ func TestWriteAgentsMD_Idempotent(t *testing.T) {
 	}
 }
 
+// TestInstructionTemplate_ExplainsBothMarkers is a regression guard for
+// docs-template-marker-explanation. It asserts each of the four embedded
+// IDE instruction templates (instructions_zh / instructions_en / agents_zh
+// / agents_en) names both the top-of-file `# free-kiro-managed:` marker
+// (injected by `prependMarker`) and the tail-of-file
+// `<!-- free-kiro-managed:start -->` / `<!-- free-kiro-managed:end -->`
+// markers (injected by `steering inject`), and credits each marker to its
+// injection source. A failure here means a future template edit has
+// dropped one half of the explanation and is likely to confuse readers
+// into thinking the top marker is a bug.
+func TestInstructionTemplate_ExplainsBothMarkers(t *testing.T) {
+	templates := []string{
+		"templates/instructions_zh.md",
+		"templates/instructions_en.md",
+		"templates/agents_zh.md",
+		"templates/agents_en.md",
+	}
+	for _, p := range templates {
+		body, err := templatesFS.ReadFile(p)
+		if err != nil {
+			t.Fatalf("read %s: %v", p, err)
+		}
+		assertBothMarkersExplained(t, p, string(body))
+	}
+}
+
+// assertBothMarkersExplained performs the per-template assertions called
+// out by docs-template-marker-explanation AC-4 / AC-5: presence of the
+// three marker literals plus explicit attribution of each marker to its
+// injection source (`prependMarker` for the top marker, `steering inject`
+// for the tail block). Chinese templates may phrase the top marker
+// source as `init 注入` or `运行时注入` instead of `prependMarker`;
+// accept any of the three.
+func assertBothMarkersExplained(t *testing.T, path, body string) {
+	t.Helper()
+
+	// AC-4: both marker string families must appear literally.
+	mustContain := []string{
+		"# free-kiro-managed:",
+		"<!-- free-kiro-managed:start -->",
+		"<!-- free-kiro-managed:end -->",
+	}
+	for _, s := range mustContain {
+		if !strings.Contains(body, s) {
+			t.Errorf("%s missing marker string %q", path, s)
+		}
+	}
+
+	// AC-5: the top marker's injection source must be named explicitly.
+	// Accept either the Go function name or an equivalent Chinese phrase.
+	hasTopSource := strings.Contains(body, "prependMarker") ||
+		strings.Contains(body, "init 注入") ||
+		strings.Contains(body, "运行时注入")
+	if !hasTopSource {
+		t.Errorf("%s missing prependMarker / init 注入 / 运行时注入", path)
+	}
+
+	// AC-1: the tail block's injection source must be named explicitly.
+	if !strings.Contains(body, "steering inject") {
+		t.Errorf("%s missing steering inject", path)
+	}
+}
+
 func TestInstallHooks_CursorCreatesFile(t *testing.T) {
 	// Per docs/HOOKS.md, Cursor settings live at ~/.cursor/settings.json.
 	// Verify free-kiro hook installer creates the directory + file with

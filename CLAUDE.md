@@ -28,19 +28,32 @@ SessionStart hook 会自动跑同样的命令。
 如果 `.kiro/.current` 不存在（没活跃 spec），先跑 `free-kiro spec new <name>`，
 新 spec 会自动被标记为活跃。
 
-## 项目上下文（自动注入的 steering）
+## 项目上下文与文件标记
 
-本文件末尾由 `<!-- free-kiro-managed:start -->` /
-`<!-- free-kiro-managed:end -->` marker 包裹的 markdown 块，由
-`free-kiro steering inject` 在每次 `init` / `inject` 运行时自动生成，
-内容来自 `.kiro/steering/*.md` 中 `mode: always` 的文档（当前为
-`product.md` / `structure.md` / `tech.md`）。
+本项目 IDE 指令文件包含 **2 套** free-kiro 自动维护的标记，区分清楚以免误判：
+
+1. **首行 `# free-kiro-managed:`** —— 由 `free-kiro init` 运行时通过
+   `internal/ide/ide.go` 的 `prependMarker` 函数（行 517-545）注入到
+   YAML frontmatter 闭合 `---` 之后。用途：让 `IsFreeKiroInstruction`
+   识别"这文件是 free-kiro 生成的"，防后续 `init --overwrite-instructions`
+   覆盖用户在同路径手写的内容。
+
+2. **文件末尾 `<!-- free-kiro-managed:start -->` ...
+   `<!-- free-kiro-managed:end -->`** 包裹的 markdown 块 —— 由
+   `free-kiro steering inject` 在每次 `init` / `inject` 运行时自动生成，
+   内容来自 `.kiro/steering/*.md` 中 `mode: always` 的文档（当前为
+   `product.md` / `structure.md` / `tech.md`）。
+
+修改路径：
+
+- 想改顶部 marker 语义或位置 → 改 `internal/ide/ide.go` 的 `prependMarker` 函数
+- 想改底部 marker 注入内容 → 改 `.kiro/steering/<name>.md` 后跑
+  `free-kiro steering inject`
+- 想改本段说明本身 → 改 `internal/ide/templates/*.md` 后跑
+  `free-kiro init --ide auto --overwrite-instructions`
 
 **这段内容不是用户手写的**——它是项目级 steering store 的 always 模式
-快照。若要修改，请编辑 `.kiro/steering/<name>.md` 后跑
-`free-kiro steering inject`（或 `free-kiro init --ide auto
---overwrite-instructions`）同步到这里。详见 `docs/STEERING.md`
-§"自动注入到 IDE 指令文件"。
+快照 + init 注入的标记行。详见 `docs/STEERING.md` §"自动注入到 IDE 指令文件"。
 
 ## 编码规范（SessionStart 必须先 Read）
 

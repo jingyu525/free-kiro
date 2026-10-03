@@ -7,6 +7,22 @@ mode: manual
 本项目使用 **free-kiro** 管理规约工作流。free-kiro 是一个单二进制 CLI，
 把代码改动门控在已写好的 spec 文档上。所有改动**先 spec 后代码**。
 
+## 项目上下文与文件标记
+
+本项目 IDE 指令文件包含 **2 套** free-kiro 自动维护的标记，区分清楚以免误判：
+
+1. **首行 `# free-kiro-managed:`** —— 由 `free-kiro init` 运行时通过
+   `prependMarker` 函数注入到 YAML frontmatter 闭合 `---` 之后。用途：让
+   `IsFreeKiroInstruction` 识别"这文件是 free-kiro 生成的"，防后续
+   `init --overwrite-instructions` 覆盖用户在同路径手写的内容。
+
+2. **文件末尾 `<!-- free-kiro-managed:start -->` ...
+   `<!-- free-kiro-managed:end -->` 块** —— 由 `free-kiro steering inject`
+   在每次 `init` / `inject` 运行时自动生成，内容来自
+   `.kiro/steering/*.md` 中 `mode: always` 的文档。
+
+详见 `docs/STEERING.md` §"自动注入到 IDE 指令文件"。
+
 ## free-kiro 在这个项目做什么
 
 - 所有 spec 在 `.kiro/specs/<name>/` 下，包含 `requirements.md` /
