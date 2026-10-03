@@ -19,7 +19,7 @@ spec-driven 工作流的免费、跨平台、单二进制克隆版。
 开发者。痛点是：agent 一上手就开始改文件，可能性空间迅速发散，复杂
 任务经常失控。
 
-## 核心能力（v0.7.0）
+## 核心能力（v0.8.0）
 
 | 能力 | 说明 |
 |---|---|
@@ -31,12 +31,15 @@ spec-driven 工作流的免费、跨平台、单二进制克隆版。
 | hook 信封 | 写出的 JSON 兼容 Kiro IDE event-keyed 格式 |
 | drift 检测 | approve 时锁 baseline，编辑后自动暴露差异 |
 | advisory | vague / 重复 AC / 可追溯性问题（不阻塞） |
-| 可视化 | ASCII tree + Mermaid + 本地 web dashboard（SSE 实时） |
+| 可视化 CLI | ASCII tree + Mermaid |
+| 可视化 Web | 本地 dashboard，fsnotify 实时推送 + ETag/304 缓存 |
+| Dashboard UI | spec 详情面板（hash deep-link + deps 链接 + sparkline + a11y）+ 4 widget + E2E |
 | 跨多 spec | `.kiro/.current` 自动标记活跃 spec |
 | issue→spec | `free-kiro spec new --from-issue <gh-url>` |
 | PRD→spec | `--from-prd <url>` / `--from-browser <url>` |
 | 实时 watch | `free-kiro watch --preset reactive` |
 | 自升级 | `free-kiro upgrade` 校验 SHA256 + re-exec |
+| demo 流程 | `top1-demo-onboarding` spec 提供首次跑通的端到端示例 |
 
 ## 安装与分发
 
@@ -48,5 +51,5 @@ spec-driven 工作流的免费、跨平台、单二进制克隆版。
 
 - **不是** Kiro IDE 的复刻 —— 不做 IDE、不做云端协作、不做账号体系
 - **不替代** lint 工具 —— 只做 spec 文档的结构与语义门禁
-- **不引入** 新外部依赖 —— 保持 Go stdlib + 3 个直接依赖的精简哲学
+- **不引入** 与 spec 工作流无关的新外部依赖 —— 保持 Go stdlib + 3 个直接依赖的精简哲学
 - **不绑定** 单一 AI coding 工具 —— 通过 hook 信封兼容所有支持 hook 的工具

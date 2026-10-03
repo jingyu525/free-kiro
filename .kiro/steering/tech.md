@@ -7,7 +7,7 @@ description: Go 技术栈、依赖、构建、测试与发布规范
 
 ## 语言与运行时
 
-- **Go 1.22+**（README badge；go.mod 当前 go 1.27.0，往下兼容到 1.22）
+- **Go 1.27.0**（`go.mod` 当前；最低要求 1.27+，README badge 同步）
 - `CGO_ENABLED=0`：纯静态二进制，无 glibc / libc++ 运行时依赖
 - 单文件 `cmd/free-kiro/main.go` 入口
 
@@ -15,9 +15,9 @@ description: Go 技术栈、依赖、构建、测试与发布规范
 
 | 包 | 用途 |
 |---|---|
-| `github.com/spf13/cobra` | CLI 命令树 + flag 解析（间接拉 `pflag`） |
-| `github.com/fsnotify/fsnotify` | `free-kiro watch` 文件监听 |
-| `golang.org/x/net/html` | `--from-prd` HTML 解析 |
+| `github.com/spf13/cobra v1.10.2` | CLI 命令树 + flag 解析（间接拉 `pflag`） |
+| `github.com/fsnotify/fsnotify v1.10.1` | `free-kiro watch` + dashboard SSE 推送 |
+| `golang.org/x/net v0.59.0` | `--from-prd` HTML 解析 |
 
 **不引入**：`testify`、`gomock`、`mockery`、`logrus`、`zap` 等。新依赖必须
 写明理由并 review。
@@ -46,7 +46,10 @@ description: Go 技术栈、依赖、构建、测试与发布规范
 
 - `gofmt` + `goimports`（CI 必跑）
 - `go vet ./...`（GoReleaser before hook 跑）
-- **不引入** `golangangci-lint`（保持工具链极简，规则用 vet + 评审兜底）
+- **golangci-lint v2**（`.golangci.yml`，启用 `staticcheck` / `errcheck` /
+  `revive` 等软门禁 linter；零目录级豁免，全仓库 `//nolint:` 注释 ≤ 5 条，
+  每条必须附 `//nolint:reason`）
+  - 本地：`make lint-go`（走 free-kiro 链路）或 `golangci-lint run ./...`
 
 ## 构建与发布
 
@@ -70,6 +73,7 @@ description: Go 技术栈、依赖、构建、测试与发布规范
 - CLI 冷启动 < 100ms（不要在 init 路径上做重 IO / 重计算）
 - `free-kiro lint` 在 10 个 spec 的 `.kiro/` 下 < 500ms
 - web dashboard SSE 推送延迟 < 200ms
+- dashboard 首屏 < 500ms（HTML 直出 + 静态资源 + fsnotify 订阅）
 
 ## 命名规范
 

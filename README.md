@@ -4,7 +4,7 @@
 > 把"先想清楚 → 再动手"做成强约束门禁，让 AI coding 工具的可能性空间收敛，而不是发散失控。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Go 1.22+](https://img.shields.io/badge/Go-1.22+-blue.svg)](https://go.dev/)
+[![Go 1.27+](https://img.shields.io/badge/Go-1.27+-blue.svg)](https://go.dev/)
 [![Release](https://img.shields.io/github/v/release/jingyu525/free-kiro)](https://github.com/jingyu525/free-kiro/releases)
 
 ## 为什么做 free-kiro
@@ -100,7 +100,7 @@ curl -fsSL https://raw.githubusercontent.com/jingyu525/free-kiro/main/install.sh
 打开 [github.com/jingyu525/free-kiro/releases](https://github.com/jingyu525/free-kiro/releases)，
 下载对应平台的 tarball，解压即可。
 
-### 4. go install（需要 Go 1.22+）
+### 4. go install（需要 Go 1.27+）
 
 ```bash
 go install github.com/jingyu525/free-kiro/cmd/free-kiro@latest
