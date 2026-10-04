@@ -28,7 +28,7 @@
 | `internal/cli/spec_from_prd.go` | 重命名本地 `min` 函数（redefines-builtin-id） | 1 处 |
 | `internal/cli/spec_from_issue_test.go` | QF1001 De Morgan 改写 | 1 处 |
 | `internal/cli/upgrade.go` | SA4023 always-true 比较移除 | 1 处 |
-| `docs/CODING_STYLE.md` | 第 8 章追加"零豁免 + //nolint 必须附理由"条款 | 1 段 ~10 行 |
+| `.kiro/steering/coding-style.md` | 第 8 章追加"零豁免 + //nolint 必须附理由"条款 | 1 段 ~10 行 |
 | `.github/workflows/ci.yml` | `lint-go` job 移除 `continue-on-error: true` | 1 处 |
 
 ## Data Model
@@ -77,7 +77,7 @@ cobra `func(cmd *cobra.Command, args []string)` 中 `args` 未用 → 改为
 ### exported 缺注释
 
 按 `revive` `exported` 规则补 `// FuncName ...` 单行 doc，对齐
-`docs/CODING_STYLE.md` 第 6 章"注释与文档"。
+`.kiro/steering/coding-style.md` 第 6 章"注释与文档"。
 
 ## Testing Strategy
 
@@ -107,7 +107,7 @@ Wave 3 (errcheck big)  #7 internal/cli print helper + 替换 ~150 处
                        #9 internal/skill/upgrade/watch errcheck 替换
 Wave 4 (revive misc)   #10 全仓库 exported 补注释 ~20 处
 Wave 5 (staticcheck)   #11 QF1001/SA4023 改 2 处
-Wave 6 (docs)          #12 docs/CODING_STYLE.md 追加零豁免条款
+Wave 6 (docs)          #12 .kiro/steering/coding-style.md 追加零豁免条款
 Final                  #13 端到端：make lint-go + golangci-lint run ./... 双 0
 ```
 

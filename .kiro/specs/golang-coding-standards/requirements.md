@@ -26,8 +26,8 @@
 - [AC-5] IF 提交信息中包含 `//nolint:<linter>` 注释且未附 `//nolint:reason`
   说明时 THEN `revive` 的 `exported`/`revive` 规则 THE SYSTEM SHALL
   在 lint 输出中产生 WARNING 提示要求补充原因。
-- [AC-6] THE SYSTEM SHALL 在仓库根目录的 `CONTRIBUTING.md` 提供指向 `docs/CODING_STYLE.md` 的链接，且 `docs/CODING_STYLE.md` 至少覆盖： 命名约定、错误处理、并发、接口设计、测试、注释与文档、依赖管理、 与 AI agent 协作的硬性要求 8 个章节。
-- [AC-7] THE SYSTEM SHALL 在 `docs/CODING_STYLE.md` 的每一节给出至少一个
+- [AC-6] THE SYSTEM SHALL 在仓库根目录的 `CONTRIBUTING.md` 提供指向 `.kiro/steering/coding-style.md` 的链接，且 `.kiro/steering/coding-style.md` 至少覆盖： 命名约定、错误处理、并发、接口设计、测试、注释与文档、依赖管理、 与 AI agent 协作的硬性要求 8 个章节。
+- [AC-7] THE SYSTEM SHALL 在 `.kiro/steering/coding-style.md` 的每一节给出至少一个
   ✅ 推荐 写法 与一个 ❌ 反例，并以可复制的 Go 代码片段呈现。
 
 ## Out of Scope

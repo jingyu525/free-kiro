@@ -42,7 +42,7 @@ func TestParse(t *testing.T) {
 }
 
 func TestParse_UnknownReturnsUsageError(t *testing.T) {
-	// Per docs/CODING_STYLE.md 8.6 (zero-exemption), unknown IDE values
+	// Per .kiro/steering/coding-style.md 8.6 (zero-exemption), unknown IDE values
 	// must surface a UsageError so callers can map to exit code 3.
 	_, err := Parse("vscode")
 	if err == nil {

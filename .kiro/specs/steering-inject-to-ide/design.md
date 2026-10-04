@@ -174,5 +174,5 @@ newContent := lines[:startIdx+1] + blockLines + lines[endIdx:]
   到的不一定是整个文件（如 Cursor 模块化规则按 frontmatter 触发）；
   放在 marker 块内让未来可以精细化定位
 - **为什么不全量重写 5 个指令文件**：保留用户手写的硬约束段落（如
-  "SessionStart 必须先 Read docs/CODING_STYLE.md"），避免每次 inject
+  "SessionStart 必须先 Read .kiro/steering/coding-style.md"），避免每次 inject
   把项目维护者的人工编辑也覆盖掉

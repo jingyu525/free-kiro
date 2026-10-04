@@ -1,9 +1,14 @@
+---
+mode: always
+description: free-kiro 项目策略（覆盖率门槛 / TODO owner / 协议合规 / 内部依赖路径 / commit 格式 / 代码规模 / PR 范围）
+---
+
 # free-kiro 项目策略（Project Policy）
 
 > 适用对象：本仓库（`github.com/jingyu525/free-kiro`）的所有贡献者与
 > AI agent。本文档**不是** Go 编码规范——通用 Go 风格请见
-> [`CODING_STYLE.md`](./CODING_STYLE.md)；AI 协作硬性要求请见
-> [`AGENT_RULES.md`](./AGENT_RULES.md)。
+> [`.kiro/steering/coding-style.md`](./coding-style.md)；AI 协作硬性要求请见
+> [`.kiro/steering/agent-rules.md`](./agent-rules.md)。
 >
 > 这里的策略是 **free-kiro 项目** 的约定，不是 Go 社区通用规则。复制
 > 到其他 Go 项目时需要重新评估。
@@ -36,8 +41,8 @@
 - owner 格式：项目维护者 GitHub 用户名（如 `// TODO(jingyu): ...`）。
 - **不带 owner 的 `// TODO` 视为违规**，CI / review 拒收。
 - 如功能未完成，**不要写 TODO 注释**——按
-  [`AGENT_RULES.md`](./AGENT_RULES.md) 第 1 章"先 spec 后代码"回 spec
-  阶段补 requirements/design。
+  [`.kiro/steering/agent-rules.md`](./agent-rules.md) §1「硬性要求」
+  "先 spec 后代码"回 spec 阶段补 requirements/design。
 
 ## 3. 依赖协议合规
 
@@ -89,5 +94,6 @@
 
 ---
 
-> 文档结束。变更请联系 `.kiro/specs/golang-coding-standards/` 的维护者，
-> 任何修改需同步更新 `CONTRIBUTING.md` 与 `docs/STEERING.md`。
+> 文档结束。本文档作为项目级 steering（`mode: always`）注入 IDE 指令
+> 文件，变更请同步更新 `.kiro/steering/policy.md` 与 `CONTRIBUTING.md`，
+> 重跑 `free-kiro steering inject` 重生成 5 份 IDE 指令文件底部块。

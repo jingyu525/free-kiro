@@ -75,9 +75,9 @@
 - New test for `DoctorCheckInstructions` happy and missing-file paths.
 - Existing `internal/ide/ide_test.go` continues to pass (we keep
   `WriteAgentsMD` exported signature).
-- All new tests use `t.TempDir()` per docs/CODING_STYLE.md §5.2.
+- All new tests use `t.TempDir()` per .kiro/steering/coding-style.md §5.2.
 - CI gate: `go test -race ./...` and `golangci-lint run` keep passing per
-  docs/CODING_STYLE.md §8.5.
+  .kiro/steering/coding-style.md §8.5.
 
 ## Migration / Rollout
 

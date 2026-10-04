@@ -123,7 +123,7 @@ BenchmarkRenderMermaidProject/specs=50-10    	      10	     13888 ns/op	   36064
 PR review 时如果某个 bench 数字上涨 ≥ 10% 而 PR 没解释原因，按
 spec 流程该 PR 应该被打回。
 
-更新 baseline 必须在 PR 描述里说明改动原因（POLICY §1 / §5）。
+更新 baseline 必须在 PR 描述里说明改动原因（.kiro/steering/policy.md §1 / §5）。
 
 ```bash
 # 1) 本地跑 bench，确认新数字
@@ -167,7 +167,7 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
   A：benchstat 是 `go install` 一次性，间接在 go.mod；不锁版本以免给
   contributor 加额外步骤。
 - **Q：为什么 bench 不计入覆盖率统计？**
-  A：POLICY §1 明文规定 `_bench_test.go` 不计入覆盖率——benchmark 测
+  A：.kiro/steering/policy.md §1 明文规定 `_bench_test.go` 不计入覆盖率——benchmark 测
   性能而非正确性，不应消耗覆盖率预算。
 
 ## 引用

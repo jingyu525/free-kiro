@@ -76,5 +76,5 @@
 
 - "≥ 10% 浮动" 来自 free-kiro 项目惯例：HTTP API / lint 引擎属于"用户能等
   但不应该突然变慢"的范畴；10% 是用户能察觉但不至于每次 commit 都爆的阈值。
-- benchmark **不计入** 覆盖率统计（POLICY §1 明文规定 `_bench_test.go`
+- benchmark **不计入** 覆盖率统计（.kiro/steering/policy.md §1 明文规定 `_bench_test.go`
   不计入覆盖率），但新增 benchmark 仍走正常 review 流程。

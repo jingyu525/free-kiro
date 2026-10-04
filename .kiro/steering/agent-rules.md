@@ -1,12 +1,17 @@
+---
+mode: always
+description: free-kiro AI agent 协作硬性要求 + 零豁免 / 零死代码政策
+---
+
 # free-kiro AI Agent 协作规则
 
 > 适用对象：所有对本仓库（`github.com/jingyu525/free-kiro`）自动或半自动
 > 修改 Go 代码 / 文档的 AI agent（Claude Code、CodeBuddy、OpenCode 等）。
 > 本文档**不是** Go 编码规范——通用 Go 风格请见
-> [`CODING_STYLE.md`](./CODING_STYLE.md)；本仓库的项目策略（非 AI 协作、
-> 团队约定层面）请见 [`POLICY.md`](./POLICY.md)。
+> [`.kiro/steering/coding-style.md`](./coding-style.md)；本仓库的项目策略
+> （非 AI 协作、团队约定层面）请见 [`.kiro/steering/policy.md`](./policy.md)。
 >
-> **配套**：`docs/CODING_STYLE.md` 第 8 章已整体迁移至此文档；
+> **配套**：`coding-style.md` 7 章通用 Go 规范与本文档配套使用；
 > `.golangci.yml` 聚合的 linter 与 `free-kiro spec` / `free-kiro lint`
 > 是本文档的硬门禁实现。
 
@@ -32,7 +37,8 @@
    的占位符注释。如果某功能未完成，**不要写代码**，先回 spec 阶段补
    requirements/design。
 3. **零吞错误**。AI 不允许写 `_ = doX()`、`if err != nil { /* ignore */ }`、
-   `log.Print(err)` 后继续。错误必须按 `CODING_STYLE.md` 第 2 章处理或 wrap。
+   `log.Print(err)` 后继续。错误必须按 `coding-style.md` 第 2 章「错误处理」
+   处理或 wrap。
 4. **零硬编码 magic number**。常量必须有 `const` 或具名变量；端口、超时、
    阈值都要可配置或位于 `internal/config`。
 5. **必须跑 `go vet ./...` 与 `gofmt -l`** 后再交付。CI 会再跑一遍。
@@ -45,9 +51,9 @@
   1. `.kiro/specs/<current>/requirements.md`
   2. `.kiro/specs/<current>/design.md`
   3. `.kiro/specs/<current>/tasks.md`
-  4. `docs/CODING_STYLE.md`（通用 Go 风格）
-  5. `docs/AGENT_RULES.md`（本文档）
-  6. `docs/POLICY.md`（项目策略）
+  4. `.kiro/steering/coding-style.md`（通用 Go 风格）
+  5. `.kiro/steering/agent-rules.md`（本文档）
+  6. `.kiro/steering/policy.md`（项目策略）
 
 ## 3. 失败处置
 
@@ -114,6 +120,8 @@
 
 ---
 
-> 文档结束。变更请联系 `.kiro/specs/golang-coding-standards/` 的维护者，
-> 任何修改需同步更新 `.golangci.yml`、`.github/workflows/ci.yml`、
-> `Makefile`、`CONTRIBUTING.md`、`.kiro/AGENTS.md`、`docs/STEERING.md`。
+> 文档结束。本文档作为项目级 steering（`mode: always`）注入 IDE 指令
+> 文件，变更请同步更新 `.kiro/steering/agent-rules.md`、`.golangci.yml`、
+> `.github/workflows/ci.yml`、`Makefile`、`CONTRIBUTING.md`、
+> `.kiro/AGENTS.md`，并重跑 `free-kiro steering inject` 重生成 5 份 IDE
+> 指令文件底部块。

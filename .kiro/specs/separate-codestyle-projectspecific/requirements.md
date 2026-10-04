@@ -1,5 +1,10 @@
 # separate-codestyle-projectspecific
 
+> **Superseded by [`migrate-docs-triple-to-steering`](../migrate-docs-triple-to-steering/)**
+> —— 本 spec 的方向（拆分 `docs/CODING_STYLE.md` 项目特定内容到
+> `docs/AGENT_RULES.md` + `docs/POLICY.md`）已被升级为「整体迁移到
+> `.kiro/steering/`」方案。本 spec 历史保留作为设计讨论记录，**不再推进**。
+
 把 `docs/CODING_STYLE.md` 中混入的项目特定策略从"Go 编码规范"载体中分离出去，
 让文档回到 Go 社区通用规范的本职。
 

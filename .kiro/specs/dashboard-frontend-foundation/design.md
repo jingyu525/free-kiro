@@ -128,7 +128,7 @@ export type SpecReport = {
 | SSE `onerror` | EventSource 断开 | conn-dot → `reconnecting` / `offline`（不弹 toast，避免噪音） |
 | SSE 30s 无事件 | 服务端 hang | conn-dot → `offline`，强制 `es.close()` 重连 |
 
-- **零吞错误**（AGENT_RULES §2）：所有 `try/catch` 必须显式处理或重新抛出；不允许 `_ = doX()`。
+- **零吞错误**（.kiro/steering/agent-rules.md §2）：所有 `try/catch` 必须显式处理或重新抛出；不允许 `_ = doX()`。
 - **错误分类前置**：在 `api.ts` 一处分类，UI 层不再判断 `instanceof Error`。
 - **退避**：`fetchRetry` 用 `attempt * attempt * 1000ms`，cap 8000ms；成功一次归零；UI 按钮 disable 直到下一次 success。
 
@@ -209,7 +209,7 @@ curl -sfI http://127.0.0.1:7373/assets/main.HASH.js | grep -i 'cache-control:.*i
 - **风险 C**：bundle 超 30KB → 首屏慢。**对策**：CI 跑 `gzip -c | wc -c` 断言 ≤ 30 KB，超出则 fail。
 - **风险 D**：SSE 事件名不匹配（dashboard-sse-bugfix 链路断）→ 自动刷新失效。**对策**：保留 dashboard-sse-bugfix 的 `ping`/`refresh` 不变；E2E 用 `touch .kiro/specs/<name>/requirements.md` 验证 2s 内收 `refresh`。
 
-### 落地前置（按 AGENT_RULES §1）
+### 落地前置（按 .kiro/steering/agent-rules.md §1）
 
 - 本 spec 三件套（requirements / design / tasks）必须 `free-kiro lint` 全绿。
 - 落地后由用户显式 `free-kiro spec approve dashboard-frontend-foundation` 后再 `spec start`。

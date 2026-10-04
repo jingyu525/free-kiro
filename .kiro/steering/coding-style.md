@@ -1,3 +1,8 @@
+---
+mode: always
+description: Go 社区通用编码规范（命名 / 错误处理 / 并发 / 接口 / 测试 / 注释与文档 / 依赖管理）
+---
+
 # Go 编码规范（通用）
 
 > 适用对象：任何遵循 Go 社区通用风格基线的 Go 项目；本仓库
@@ -9,11 +14,12 @@
 > 接口、测试通用部分、注释与文档通用部分、依赖管理通用部分），共 7 章。
 > 本仓库的**项目特定策略**（覆盖率硬阈值、TODO owner、协议合规、内部依赖路径、
 > commit message 中文、代码规模上限、PR 范围约束）见
-> [`POLICY.md`](./POLICY.md)；**AI agent 协作硬性要求**见
-> [`AGENT_RULES.md`](./AGENT_RULES.md)。
+> [`.kiro/steering/policy.md`](./policy.md)；**AI agent 协作硬性要求**见
+> [`.kiro/steering/agent-rules.md`](./agent-rules.md)。
 >
 > **配套文档**：CI 门禁见 `.github/workflows/ci.yml` 的 `lint-go` job；
-> 入口索引见 `CONTRIBUTING.md`。
+> 入口索引见 `CONTRIBUTING.md`；技术栈事实见
+> [`.kiro/steering/tech.md`](./tech.md)。
 
 ## 目录
 
@@ -390,7 +396,7 @@ return firstErr
 
 - 性能热路径里用 `sync/atomic` 替代 Mutex：可接受，但要在注释里
   标注 race detector 测过的场景。
-- 测试代码里的 `time.Sleep(...)`：可以用，但优先 `assert.Eventually`。
+- 测试代码里的 `time.Sleep(...)`：可以用，但优先用 `for { ... if cond { break } ; time.Sleep(...) }` 轮询直到条件成立或 `t.Fatal` 兜底。
 
 ---
 
@@ -492,10 +498,15 @@ type ILintEngine interface { ... }   // Go 不推荐匈牙利命名
 - **测试是代码的第一公民**。与产品代码同包、同 review 标准。
 - **表驱动测试**（table-driven）是默认形态。同一逻辑多场景 → 1 个
   `TestXxx(t *testing.T)` + 多 `cases := []struct{...}{}` 子用例。
-- **`testify/assert` 与 `testify/require`**：默认断言用 `assert`（失败
-  继续），初始化/前置条件用 `require`（失败立即停止）。
-- **不写无断言测试**。每条 case 必须至少有 1 个 `assert/require`。
-- **`-race` 必跑**。任何启用 goroutine 的代码都必须 `go test -race` 验证。
+- **只用标准库 `testing`**：断言用 `if got != want { t.Errorf(...) }` /
+  `t.Fatal(...)` / `t.Fatalf(...)`，**不引入 testify / assert / require**
+  （与 `.kiro/steering/tech.md` 测试节一致）。初始化 / 前置条件失败用
+  `t.Fatal` / `t.Fatalf` 立即停止；普通断言失败用 `t.Errorf` 让后续
+  case 继续跑，方便看全部差异。
+- **不写无断言测试**。每条 case 必须至少有 1 个 `t.Error*` /
+  `t.Fatal*` 调用，否则视为无断言测试。
+- **`-race` 必跑**。任何启用 goroutine 的代码都必须 `go test -race`
+  验证（详见 `.kiro/steering/tech.md` 测试节）。
 
 ### 5.2 ✅ 推荐 / ❌ 反例
 
@@ -515,10 +526,14 @@ func TestLintEngine_Run(t *testing.T) {
         t.Run(tc.name, func(t *testing.T) {
             err := engine.Run(tc.spec)
             if tc.wantErr != nil {
-                require.ErrorIs(t, err, tc.wantErr)
+                if !errors.Is(err, tc.wantErr) {
+                    t.Fatalf("Run(%q) = %v, want %v", tc.spec, err, tc.wantErr)
+                }
                 return
             }
-            require.NoError(t, err)
+            if err != nil {
+                t.Fatalf("Run(%q) unexpected error: %v", tc.spec, err)
+            }
         })
     }
 }
@@ -530,14 +545,22 @@ func TestLintEngine_Run_Draft(t *testing.T) { ... }   // 重复 boilerplate
 ```
 
 ```go
-// ✅ 推荐：断言 vs require 分清
+// ✅ 推荐：t.Fatal 区分初始化失败 vs t.Errorf 区分普通断言
 func TestUser_Create(t *testing.T) {
     u, err := NewUser("alice")
-    require.NoError(t, err)              // 初始化失败，后面没意义
-    require.NotNil(t, u)
+    if err != nil {
+        t.Fatalf("NewUser 初始化失败: %v", err)   // 初始化失败，后面没意义
+    }
+    if u == nil {
+        t.Fatal("NewUser 返回 nil")
+    }
 
-    assert.Equal(t, "alice", u.Name)     // 断言失败继续，方便看全部差异
-    assert.True(t, u.Active)
+    if got, want := u.Name, "alice"; got != want {
+        t.Errorf("u.Name = %q, want %q", got, want)   // 断言失败继续，方便看全部差异
+    }
+    if !u.Active {
+        t.Error("u.Active = false, want true")
+    }
 }
 ```
 
@@ -554,17 +577,25 @@ func TestSomething(t *testing.T) {
 func TestLoadSpec(t *testing.T) {
     dir := t.TempDir()
     path := filepath.Join(dir, "spec.md")
-    require.NoError(t, os.WriteFile(path, []byte("# spec"), 0o644))
+    if err := os.WriteFile(path, []byte("# spec"), 0o644); err != nil {
+        t.Fatalf("WriteFile: %v", err)
+    }
 
     spec, err := LoadSpec(path)
-    require.NoError(t, err)
-    assert.Equal(t, "spec", spec.Name)
+    if err != nil {
+        t.Fatalf("LoadSpec: %v", err)
+    }
+    if got, want := spec.Name, "spec"; got != want {
+        t.Errorf("spec.Name = %q, want %q", got, want)
+    }
 }
 
 // ❌ 反例：手工写 defer os.Remove
 func TestLoadSpec(t *testing.T) {
     path := "/tmp/spec_test.md"
-    require.NoError(t, os.WriteFile(path, []byte("# spec"), 0o644))
+    if err := os.WriteFile(path, []byte("# spec"), 0o644); err != nil {
+        t.Fatal(err)
+    }
     defer os.Remove(path)               // 容易忘，测试间互相污染
     ...
 }
@@ -584,7 +615,9 @@ func TestCounter_ConcurrentInc(t *testing.T) {
         }()
     }
     wg.Wait()
-    assert.Equal(t, n, c.Value())
+    if got, want := c.Value(), n; got != want {
+        t.Errorf("c.Value() = %d, want %d", got, want)
+    }
 }
 // 调用：go test -race ./...
 ```
@@ -592,8 +625,8 @@ func TestCounter_ConcurrentInc(t *testing.T) {
 ### 5.3 由 linter 强制
 
 - `govet` 的 `lostcancel`、`nilness`（不直接由 lint 触发但易出 bug）
-- `testify` 风格的 `if got != want { t.Fatalf(...) }` 替换为 `assert.Equal`
-- 覆盖率由 CI 报告而非 lint 强制
+- 覆盖率硬阈值（≥70% 全包 / ≥80% 新增）见
+  [`.kiro/steering/policy.md`](./policy.md)，本文档不重复项目特定阈值
 
 ### 5.4 何时可以例外
 
@@ -668,17 +701,16 @@ import "github.com/some/bodyfetcher"   // 仅仅为了把 io.ReadAll 包一下
 ```
 
 ```bash
-# ✅ 推荐：升级第三方依赖的提交信息模板
+# ✅ 推荐：升级单个依赖、固定版本、可 review
 go get github.com/foo/bar@v1.2.3
 go mod tidy
-git commit -m "deps: bump github.com/foo/bar from v1.2.2 to v1.2.3
-- changelog: https://github.com/foo/bar/releases/tag/v1.2.3
-- impact: API 兼容，仅 bug 修复
-- tested: make ci"
 
 # ❌ 反例：裸 `go get -u` 把所有依赖升一通
 go get -u ./...   # 难以 review，可能引入不可控 breaking change
 ```
+
+> **commit 模板与 major 升级策略**见 `.kiro/steering/policy.md` §3「依赖协议合规」
+> 与 §5「commit message 格式」——本文档不重复项目特定条款。
 
 ### 7.3 由 linter 强制
 
@@ -694,6 +726,7 @@ go get -u ./...   # 难以 review，可能引入不可控 breaking change
 
 ---
 
-> 文档结束。变更请联系 `.kiro/specs/golang-coding-standards/` 的维护者，
-> 任何修改需同步更新 `.golangci.yml`、`.github/workflows/ci.yml`、
-> `Makefile`、`CONTRIBUTING.md`。
+> 文档结束。本文档作为项目级 steering（`mode: always`）注入 IDE 指令
+> 文件，变更请同步更新 `.kiro/steering/coding-style.md`、`.golangci.yml`、
+> `.github/workflows/ci.yml`、`Makefile`、`CONTRIBUTING.md`，并重跑
+> `free-kiro steering inject` 重生成 5 份 IDE 指令文件底部块。

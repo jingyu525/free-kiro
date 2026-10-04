@@ -318,7 +318,7 @@ Vite 通过 `import 'shared/styles/globals.css'` 在 `app/index.tsx` 入口加�
 | SSE 30s 无事件 | 服务端 hang | conn-dot → `offline`，SSEClient `es.close()` 强制重连 |
 | React Query `error` 状态 | react-query 触发 | `<RetryBanner error=... onRetry={() => query.refetch()} />` |
 
-- **零吞错误**（AGENT_RULES §2）：所有 `try/catch` 必须显式处理或重新抛出；不允许 `_ = doX()`。
+- **零吞错误**（.kiro/steering/agent-rules.md §2）：所有 `try/catch` 必须显式处理或重新抛出；不允许 `_ = doX()`。
 - **错误分类前置**：在 `shared/api/client.ts` 一处分类为 `ApiError`（union type），UI 层不再判断 `instanceof Error`。
 - **退避**：`fetchRetry` 用 `attempt * attempt * 1000ms`，cap 8000ms；成功一次归零；UI 按钮 disable 直到下一次 success。
 
@@ -419,7 +419,7 @@ curl -sfI http://127.0.0.1:7374/assets/index.HASH.js | grep -i 'cache-control:.*
 - **风险 E**：FSD 分层违规 import（反向依赖）导致循环依赖。**对策**：`pnpm lint` 跑 `eslint-plugin-boundaries` 或自写 `scripts/check-fsd-layers.mjs`，违规阻断。
 - **风险 F**：React 18 升级到 19 的 minor 风险（hydration / concurrent 行为变化）。**对策**：锁版本到 `react@18.3.x` patch；不引入 React 19 特性。
 
-### 落地前置（按 AGENT_RULES §1）
+### 落地前置（按 .kiro/steering/agent-rules.md §1）
 
 - 本 spec 三件套（requirements / design / tasks）必须 `free-kiro lint dashboard-frontend-react-vite-fsd` 全绿。
 - 落地后由用户显式 `free-kiro spec approve dashboard-frontend-react-vite-fsd` 后再 `spec start`。

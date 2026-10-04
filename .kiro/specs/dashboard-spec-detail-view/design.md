@@ -209,7 +209,7 @@ export function useSparklineData(name: string, key: string): SparklineData;
 | 历史点 < 2 个 | 不够画折线 | `<svg>` 只画当前点一个 circle |
 | 跨 spec 跳转时新 spec 详情加载失败 | useSpec*Query 失败 | RetryBanner 显示，新 tab 内可点 retry |
 
-- **零吞错误**（AGENT_RULES §2）：所有异常显式处理
+- **零吞错误**（.kiro/steering/agent-rules.md §2）：所有异常显式处理
 - **错误分类**：announce('assertive') 用于阻断用户（clipboard fail），announce('polite') 用于信息通知
 
 ## Testing Strategy

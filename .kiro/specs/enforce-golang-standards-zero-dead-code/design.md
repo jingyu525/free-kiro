@@ -35,7 +35,7 @@ U1000（避免误报未引用符号）。需要把 `unused` 加到 `linters.enab
 | `internal/visualize/mermaid.go:122` | 删 `taskWaves`（已由 `internal/visualize/taskgraph.go` 接管） | n/a |
 | `internal/visualize/server.go:45,180` | 删 `osDirEntry` 类型别名 + `(*Server).loadWorkspace` 方法（无 caller） | n/a |
 | `internal/visualize/server_static.go` (4 函数) | 删 `atoiLocal` / `detectBrowserAutoOpen` / `openBrowser` / `detectBrowserOpen`（前提：build tag 排除确认） | n/a |
-| `docs/CODING_STYLE.md` 第 8 章 | 追加"零死代码（U1000 zero-tolerance）"段落 | Markdown |
+| `.kiro/steering/coding-style.md` 第 8 章 | 追加"零死代码（U1000 zero-tolerance）"段落 | Markdown |
 
 ## Data Model
 
@@ -56,7 +56,7 @@ U1000（避免误报未引用符号）。需要把 `unused` 加到 `linters.enab
 - **集成测试**：`free-kiro lint` 在 spec 落地后必须以 0 错误退出。
 - **门禁验证**：`golangci-lint run ./... --timeout=5m` 退出码 0；
   `staticcheck ./...` 退出码 0（两者行为一致后即可信任）。
-- **回归保护**：在 `docs/CODING_STYLE.md` 第 8 章追加 U1000 条款，让
+- **回归保护**：在 `.kiro/steering/coding-style.md` 第 8 章追加 U1000 条款，让
   后续 AI agent 在写代码前自觉避免引入未引用符号。
 
 ## Migration / Rollout

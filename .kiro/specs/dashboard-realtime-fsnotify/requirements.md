@@ -76,4 +76,4 @@ ETag/If-None-Match → 304 缓存复用。同时承担 dashboard-spec-detail-vie
 - Etag 跨实例同步（per-process 计算即可，AC-41）
 - spec 详情 dialog 内的写操作（dashboard 当前 read-only viewer）
 - 移动端深度适配（dashboard-mobile-a11y）
-- 单元测试覆盖率提升至 80%（POLICY §1 已 70%；CI 跑 `go test -race -coverprofile` 不破即可）
+- 单元测试覆盖率提升至 80%（.kiro/steering/policy.md §1 已 70%；CI 跑 `go test -race -coverprofile` 不破即可）

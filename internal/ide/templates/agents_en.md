@@ -57,17 +57,21 @@ ERRORs in the output, edit the spec documents (not the code) until
 
 ## Coding Standards (SessionStart must Read first)
 
-**Before writing any Go code, Read [`docs/CODING_STYLE.md`](../../docs/CODING_STYLE.md),
-[`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md), and [`docs/POLICY.md`](../../docs/POLICY.md)**.
+**Before writing any Go code, Read
+[`.kiro/steering/coding-style.md`](../../.kiro/steering/coding-style.md),
+[`.kiro/steering/agent-rules.md`](../../.kiro/steering/agent-rules.md), and
+[`.kiro/steering/policy.md`](../../.kiro/steering/policy.md)**
+(automatically maintained by `free-kiro steering inject`; the bottom
+`<!-- free-kiro-managed -->` block holds the live content).
 
-- `docs/CODING_STYLE.md` covers 7 chapters of generic Go community conventions (naming / error handling /
+- `.kiro/steering/coding-style.md` covers 7 chapters of generic Go community conventions (naming / error handling /
   concurrency / interfaces / testing / comments / dependencies). It is **generic** guidance, not free-kiro-specific.
-- [`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) carries AI agent hard requirements +
+- [`.kiro/steering/agent-rules.md`](../../.kiro/steering/agent-rules.md) carries AI agent hard requirements +
   the zero-exemptions / zero-dead-code policy (violating any one = PR rejected).
-- [`docs/POLICY.md`](../../docs/POLICY.md) carries free-kiro project-specific policy (coverage thresholds,
+- [`.kiro/steering/policy.md`](../../.kiro/steering/policy.md) carries free-kiro project-specific policy (coverage thresholds,
   TODO comment ownership, license compliance, commit format, code size limits, PR scope constraints).
 
-Hard constraints excerpt (source: [`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) §1):
+Hard constraints excerpt (source: [`.kiro/steering/agent-rules.md`](../../.kiro/steering/agent-rules.md) §1):
 
 1. Zero `// TODO` / `// FIXME` / `// XXX` — unfinished features **do not write code**, go back
    to the spec phase and complete requirements/design first.

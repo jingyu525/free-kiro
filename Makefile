@@ -5,7 +5,7 @@
 #   - 增量构建用 `make build`，CI 用 `make ci`
 #   - 所有 target 在 PATH 缺失时打印清晰的安装命令
 #
-# 配套：.golangci.yml + docs/CODING_STYLE.md + .github/workflows/ci.yml
+# 配套：.golangci.yml + .kiro/steering/coding-style.md + .github/workflows/ci.yml
 
 SHELL := /bin/bash
 GO    ?= go

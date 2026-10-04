@@ -247,8 +247,8 @@ git diff docs/PERF.md      # 期望只动 fenced block 内的数字
 
 ## 引用
 
-- `docs/POLICY.md` §1 覆盖率（_bench_test.go 不计入覆盖率）
-- `docs/AGENT_RULES.md` §1（先 spec 后代码，> 50 行强制 spec）
+- `.kiro/steering/policy.md` §1 覆盖率（_bench_test.go 不计入覆盖率）
+- `.kiro/steering/agent-rules.md` §1（先 spec 后代码，> 50 行强制 spec）
 - `docs/EARS.md` "## 五种模板 + 无条件基线"（fixture 文本需符合 EARS 句式）
 - `Makefile` 现有 target 索引
 - `golang.org/x/perf/cmd/benchstat`（仓库 indirect 已有）

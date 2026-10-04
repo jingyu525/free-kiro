@@ -32,7 +32,7 @@
 - [AC-2] WHEN 调用 `Engine.TaskList(name)` 且 spec 存在且 `tasks.md` 可读 THE SYSTEM SHALL 返回非 nil 的 `[]Wave`，每个 `Wave` 包含 `Index int`（1-based）、`Tasks []models.Task`、`Done int`、`Total int`。
 - [AC-3] WHEN spec 存在但 `tasks.md` 不存在或为空 THE SYSTEM SHALL 返回空切片 `[]Wave{}` 与 nil error（不报错）。
 - [AC-4] WHEN spec 不存在 THE SYSTEM SHALL 返回 nil 与 `SpecNotFound` 错误（用 `errors.Is(err, ErrSpecNotFound)` 判定）。
-- [AC-5] THE SYSTEM SHALL 复用现有 `taskgraph.ParseTasks` + `taskgraph.ExecutionWaves`，不重新实现 wave 计算（零重复，AGENT_RULES §6）。
+- [AC-5] THE SYSTEM SHALL 复用现有 `taskgraph.ParseTasks` + `taskgraph.ExecutionWaves`，不重新实现 wave 计算（零重复，.kiro/steering/agent-rules.md §6）。
 - [AC-6] THE SYSTEM SHALL `TaskList` 不调 `BuildReport`，不触发整 workspace 扫描，单 spec O(n) 其中 n = task 数。
 
 ### `/api/spec/<name>/tasks` 端点
@@ -55,7 +55,7 @@
 - [AC-16] WHEN spec 不存在 THE SYSTEM SHALL 返回 `404 Not Found`。
 - [AC-17] THE SYSTEM SHALL `files` 数组按 `mtime` 倒序（最新在前），最多 50 条。
 - [AC-18] THE SYSTEM SHALL 实现 `Server.collectSpecMtimes(name string)` 方法（与现有 `collectMtimes` 解耦），仅遍历 `.kiro/specs/<name>/` 目录。
-- [AC-19] THE SYSTEM SHALL 文件大小 < 0（stat 失败）记 `size: 0` 但仍保留 entry；不静默吞错（AGENT_RULES §2）。
+- [AC-19] THE SYSTEM SHALL 文件大小 < 0（stat 失败）记 `size: 0` 但仍保留 entry；不静默吞错（.kiro/steering/agent-rules.md §2）。
 
 ### `/api/health` 端点
 
