@@ -63,11 +63,17 @@ See `docs/STEERING.md` §"自动注入到 IDE 指令文件".
 
 ## Coding standards (SessionStart must Read first)
 
-**Before writing any Go code, Read [`docs/CODING_STYLE.md`](../../docs/CODING_STYLE.md).**
+**Before writing any Go code, Read
+[`.kiro/steering/coding-style.md`](../../.kiro/steering/coding-style.md),
+[`.kiro/steering/agent-rules.md`](../../.kiro/steering/agent-rules.md), and
+[`.kiro/steering/policy.md`](../../.kiro/steering/policy.md)**
+(automatically maintained by `free-kiro steering inject`; the bottom
+`<!-- free-kiro-managed -->` block holds the live content).
 
-The 8 chapters cover naming, error handling, concurrency, interfaces, testing,
-comments, dependencies, and AI agent collaboration. Chapter 8 ("AI agent
-collaboration") is a hard constraint; violating any rule means PR rejection.
+The 7 chapters in `coding-style.md` cover naming, error handling,
+concurrency, interfaces, testing, comments, and dependencies — all
+**generic** Go guidance, not free-kiro-specific. `agent-rules.md` is the
+hard constraint; violating any rule means PR rejection.
 
 Hard constraints summary:
 

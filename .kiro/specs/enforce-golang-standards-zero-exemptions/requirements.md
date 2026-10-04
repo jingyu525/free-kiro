@@ -41,7 +41,7 @@ CI lint job 从 `continue-on-error: true`（WARN）切换为硬阻断（ERROR �
   staticcheck `QF1xxx`/`SA4xxx` 告警、或 gofmt diff 时 THEN
   `.github/workflows/ci.yml` 的 `lint-go` job 必须以非 0 退出码失败，
   阻断 PR merge。
-- [AC-6] THE SYSTEM SHALL 在 `docs/CODING_STYLE.md` 第 8 章"AI 协作"明确
+- [AC-6] THE SYSTEM SHALL 在 `.kiro/steering/coding-style.md` 第 8 章"AI 协作"明确
   写入："本项目 lint 配置零豁免；任何新增 `//nolint` 必须附带理由，
   由 PR reviewer 在 review 时逐条签字。"
 

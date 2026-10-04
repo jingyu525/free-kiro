@@ -34,7 +34,10 @@ description: Go 技术栈、依赖、构建、测试与发布规范
 - 不引入 testify / gomock / mockery
 - table-driven 测试优先
 - fixture 放 `testdata/`，不要在测试里 inline 大段 mock 数据
-- 建议覆盖率目标：核心 lint 引擎 ≥ 80%，其他 ≥ 60%；CI 当前仅打印总数 `go test -cover`，不强制阈值
+- **`-race` 必跑**：`go test -race ./...` 在 CI 必跑，任何启用 goroutine
+  的代码都必须通过 race detector 验证
+- 建议覆盖率目标：核心 lint 引擎 ≥ 80%，其他 ≥ 60%；**覆盖率硬阈值**
+  （全包 ≥ 70% / 新增 ≥ 80%）以 `.kiro/steering/policy.md` §1 为准
 
 ## 错误处理
 
@@ -47,8 +50,9 @@ description: Go 技术栈、依赖、构建、测试与发布规范
 - `gofmt` + `goimports`（CI 必跑）
 - `go vet ./...`（GoReleaser before hook 跑）
 - **golangci-lint v2**（`.golangci.yml`，启用 `staticcheck` / `errcheck` /
-  `revive` 等软门禁 linter；零目录级豁免，全仓库 `//nolint:` 注释 ≤ 5 条，
-  每条必须附 `//nolint:reason`）
+  `revive` 等软门禁 linter；零目录级豁免，**全仓库 `//nolint:` 注释
+  ≤ 5 条，每条必须附 `//nolint:reason`**；详细政策见
+  `.kiro/steering/agent-rules.md` §5「零豁免政策」）
   - 本地：`make lint-go`（走 free-kiro 链路）或 `golangci-lint run ./...`
 
 ## 构建与发布

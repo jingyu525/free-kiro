@@ -210,7 +210,7 @@ func NewServer(addr string, ws WorkspacePaths, eng *spec.Engine) *Server {
 | `/assets/` 含 `/` 多级 | 保留 prefix 匹配（如 `/assets/foo/bar.js` → `static/dist/foo/bar.js`） |
 | `static/dist/` 目录为空 | `go build` 失败（embed 强制非空） |
 
-**零吞错误**（AGENT_RULES §2）：所有 `embed.FS.ReadFile` / `json.NewEncoder.Encode` 失败必须显式忽略原因（已写入 header 后无法改 status，silent ignore 是正确选择，但要在注释中说明）。
+**零吞错误**（.kiro/steering/agent-rules.md §2）：所有 `embed.FS.ReadFile` / `json.NewEncoder.Encode` 失败必须显式忽略原因（已写入 header 后无法改 status，silent ignore 是正确选择，但要在注释中说明）。
 
 ## Testing Strategy
 
@@ -316,7 +316,7 @@ NewServer:
 - **风险 C**：`/assets/` 路径被现有路由 `/api/spec/` 误匹配。**对策**：`http.ServeMux` prefix 匹配按注册顺序；`/api/spec/` 与 `/assets/` 互不重叠（前者以 `/api/` 开头，后者以 `/assets/` 开头）。
 - **风险 D**：`statusRecorder` 包装 `http.ResponseWriter` 破坏 `http.Flusher` 接口（SSE 需要）。**对策**：`/api/events` 走 SSE handler 不会被 `withCacheHeaders` 提前 buffer；如需兼容 Flusher，可实现 `http.Flusher` 转发（dashboard-realtime-fsnotify 处理）。
 
-### 落地前置（按 AGENT_RULES §1）
+### 落地前置（按 .kiro/steering/agent-rules.md §1）
 
 - 本 spec 三件套必须 `free-kiro lint` 全绿。
 - 软依赖 dashboard-frontend-foundation 的 `dist/` 构建产物（embed 要求目录非空）；若 dist 不存在，`go build` 失败提示开发者跑 `make dashboard-dist`。

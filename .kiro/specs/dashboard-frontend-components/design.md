@@ -203,7 +203,7 @@ export interface SpecReport {
 | SSE 推送 + react-query invalidate | 同 dashboard-frontend-react-vite-fsd | 不变 |
 | Playwright E2E 检测到 console.error | dashboard 渲染 | E2E exit 1，CI fail |
 
-- **零吞错误**（AGENT_RULES §2）：normalize 失败应 throw（开发期即可见），不允许静默 fallback。
+- **零吞错误**（.kiro/steering/agent-rules.md §2）：normalize 失败应 throw（开发期即可见），不允许静默 fallback。
 - **错误分类前置**：`isApiError()` 已在 `shared/api/client.ts` 实现。
 - **focus 归还**：dialog 关闭时 try/catch 包 trigger.focus()（防止 trigger 已被 unmount）。
 

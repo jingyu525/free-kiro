@@ -8,7 +8,7 @@
   linter，不是 staticcheck 子检查）；保留既有 `staticcheck` / `errcheck` /
   `revive` / `govet` 启用项不变 [deps: ]
 
-- [x] #2 在 `docs/CODING_STYLE.md` 第 8 章追加"零死代码（U1000
+- [x] #2 在 `.kiro/steering/coding-style.md` 第 8 章追加"零死代码（U1000
   zero-tolerance）"段落，与既有"零 `//nolint` 豁免"条款并列 [deps: ]
 
 ## Wave 2 — 自动修复（依赖 Wave 1）

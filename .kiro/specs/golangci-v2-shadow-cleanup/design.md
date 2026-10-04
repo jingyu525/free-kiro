@@ -12,7 +12,7 @@ PR（PR #9）将 config 完整迁移到 v2 schema 后，`enable-all: true` 真�
 ## Architecture
 
 最小改动，仅在违规处做变量重命名 / 复用外层 err，不改任何业务逻辑。
-**禁止用 `//nolint:govet` 绕过**（POLICY §5 零豁免政策）。
+**禁止用 `//nolint:govet` 绕过**（.kiro/steering/policy.md §5 零豁免政策）。
 
 ## Components
 
@@ -58,7 +58,7 @@ PR（PR #9）将 config 完整迁移到 v2 schema 后，`enable-all: true` 真�
 不需要新增单元测试。验证：
 - `golangci-lint run --timeout 5m` 在 `enable-all: true` 模式下输出 `0 issues.`
 - `go test ./...` 全绿（业务逻辑未改，但确认无回归）
-- `go test -race ./...`（AGENT_RULES §4）
+- `go test -race ./...`（.kiro/steering/agent-rules.md §4）
 
 ## Migration / Rollout
 

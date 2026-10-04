@@ -324,7 +324,7 @@ func (s *Server) collectSpecMtimes(specDir string) []specMtime {
 		}
 		info, err := d.Info()
 		if err != nil {
-			// Per AGENT_RULES §2: don't silently swallow; record a
+			// Per .kiro/steering/agent-rules.md §2: don't silently swallow; record a
 			// zero-size entry so the caller can see the file exists.
 			out = append(out, specMtime{
 				relPath: strings.TrimPrefix(path, specDir+string(filepath.Separator)),

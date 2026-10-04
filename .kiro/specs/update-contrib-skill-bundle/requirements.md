@@ -45,7 +45,7 @@
 ## Out of Scope
 
 - 不修改 free-kiro 二进制本身的代码、命令、flag、行为。
-- 不修改 `docs/` 下的开发者文档（POLICY.md / AGENT_RULES.md / CODING_STYLE.md）。
+- 不修改 `docs/` 下的开发者文档（.kiro/steering/policy.md / .kiro/steering/agent-rules.md / .kiro/steering/coding-style.md）。
 - 不改 `install.sh` 的安装逻辑与 `package.json` 的依赖。
 - 不改 `contrib/skills/free-kiro/references/prd-fetch.md`（已与 binary 对齐）。
 - 不引入新的 reference 文件，不删除现有 reference 文件。

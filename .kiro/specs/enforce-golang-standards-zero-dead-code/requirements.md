@@ -20,10 +20,10 @@ errcheck / gofmt / revive 问题时阻断 merge。
 [AC-5] WHERE `internal/visualize/server_static.go` 默认编译进入二进制 THE SYSTEM SHALL 启用 `detectBrowserAutoOpen` / `openBrowser` / `detectBrowserOpen` / `atoiLocal` 全部 4 个入口，否则在 30 天内视为死代码清理对象。
 [AC-6] UNLESS 资源释放调用（`defer xxx.Close()` / best-effort `os.RemoveAll`）附 `//nolint:reason` 注释且总数 ≤ 5 THE SYSTEM SHALL 在 1 秒内拒绝任何静默吞错的改动进入 main 分支。
 [AC-7] IF 任意 Go 文件被 `gofmt -s` 或 `goimports -local github.com/jingyu525/free-kiro` 改写 THEN `golangci-lint run` 必须在 5 秒内以非 0 退出码失败并打印 diff 摘要。
-[AC-8] THE SYSTEM SHALL 在 `docs/CODING_STYLE.md` 第 8 章"AI 协作"段落末尾追加 1 条 "零死代码（U1000 zero-tolerance）" 条款，与既有"零 `//nolint` 豁免"条款并列，全文字数增加不少于 30 字。
+[AC-8] THE SYSTEM SHALL 在 `.kiro/steering/coding-style.md` 第 8 章"AI 协作"段落末尾追加 1 条 "零死代码（U1000 zero-tolerance）" 条款，与既有"零 `//nolint` 豁免"条款并列，全文字数增加不少于 30 字。
 [AC-9] THE SYSTEM SHALL 在本 spec 的 `tasks.md` 全部 16 项勾选完成且 `go test ./...` 在 60 秒内 100% 通过后调用 `free-kiro spec complete enforce-golang-standards-zero-dead-code` 把 spec 标记为 DONE。
 [AC-6] IF 任意 Go 文件被 `gofmt -s` 或 `goimports -local github.com/jingyu525/free-kiro` 改写 THEN `golangci-lint run` 必须在 5 秒内以非 0 退出码失败并打印 diff 摘要。
-[AC-7] THE SYSTEM SHALL 在 `docs/CODING_STYLE.md` 第 8 章"AI 协作"段落末尾追加 1 条 "零死代码（U1000 zero-tolerance）" 条款，与既有"零 `//nolint` 豁免"条款并列，全文字数增加不少于 30 字。
+[AC-7] THE SYSTEM SHALL 在 `.kiro/steering/coding-style.md` 第 8 章"AI 协作"段落末尾追加 1 条 "零死代码（U1000 zero-tolerance）" 条款，与既有"零 `//nolint` 豁免"条款并列，全文字数增加不少于 30 字。
 [AC-8] THE SYSTEM SHALL 在本 spec 的 `tasks.md` 全部 16 项勾选完成且 `go test ./...` 在 60 秒内 100% 通过后调用 `free-kiro spec complete enforce-golang-standards-zero-dead-code` 把 spec 标记为 DONE。
 
 ## Out of Scope

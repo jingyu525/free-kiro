@@ -10,14 +10,14 @@ lint 配错不影响文档阅读。
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  入口层                                                    │
-│  CONTRIBUTING.md  ──链接──▶ docs/CODING_STYLE.md          │
+│  CONTRIBUTING.md  ──链接──▶ .kiro/steering/coding-style.md          │
 │  .kiro/AGENTS.md  ──SessionStart hook──▶ AI 自动读取规范  │
 └──────────────────────────────────────────────────────────┘
                             │
                             ▼
 ┌──────────────────────────────────────────────────────────┐
 │  承载层（8 章节 Markdown）                                  │
-│  docs/CODING_STYLE.md                                     │
+│  .kiro/steering/coding-style.md                                     │
 │    1. 命名约定   2. 错误处理   3. 并发   4. 接口设计         │
 │    5. 测试       6. 注释/文档  7. 依赖管理  8. AI 协作      │
 └──────────────────────────────────────────────────────────┘
@@ -45,12 +45,12 @@ lint 配错不影响文档阅读。
 
 | Component | Responsibility | Key API |
 |---|---|---|
-| `docs/CODING_STYLE.md` | 人读规范主文档；8 章节，每章 ✅/❌ 对照 | N/A |
+| `.kiro/steering/coding-style.md` | 人读规范主文档；8 章节，每章 ✅/❌ 对照 | N/A |
 | `.golangci.yml` | 聚合 linter 配置；可机械检查的规则 | `version: "2"` schema |
-| `CONTRIBUTING.md`（修改） | 新增"编码规范"小节，含 `docs/CODING_STYLE.md` 链接 | N/A |
+| `CONTRIBUTING.md`（修改） | 新增"编码规范"小节，含 `.kiro/steering/coding-style.md` 链接 | N/A |
 | `Makefile`（修改） | 新增 `lint-go` target，调用 `golangci-lint run ./...` | `make lint-go` |
 | `.github/workflows/ci.yml`（修改） | 新增 lint job，`make lint-go` 失败阻断 merge | N/A |
-| `.kiro/AGENTS.md`（修改） | SessionStart 注入时附带"先读 docs/CODING_STYLE.md" | N/A |
+| `.kiro/AGENTS.md`（修改） | SessionStart 注入时附带"先读 .kiro/steering/coding-style.md" | N/A |
 
 ## Data Model
 

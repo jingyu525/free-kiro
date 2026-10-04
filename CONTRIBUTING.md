@@ -29,14 +29,14 @@ free-kiro spec complete my-feature
 
 **所有 Go 代码（含 AI agent 生成）必须遵守以下三份文档**：
 
-- [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md) — Go 社区通用编码规范
+- [`.kiro/steering/coding-style.md`](.kiro/steering/coding-style.md) — Go 社区通用编码规范
   （命名 / 错误处理 / 并发 / 接口 / 测试 / 注释 / 依赖），共 7 章。
-- [`docs/AGENT_RULES.md`](docs/AGENT_RULES.md) — AI agent 协作硬性要求 +
+- [`.kiro/steering/agent-rules.md`](.kiro/steering/agent-rules.md) — AI agent 协作硬性要求 +
   零豁免 / 零死代码政策（违反任意一条 = PR 拒收）。
-- [`docs/POLICY.md`](docs/POLICY.md) — free-kiro 项目特定策略（覆盖率门槛、
+- [`.kiro/steering/policy.md`](.kiro/steering/policy.md) — free-kiro 项目特定策略（覆盖率门槛、
   TODO 注释 owner、协议合规、commit 格式、代码规模上限、PR 范围约束）。
 
-`CODING_STYLE.md` 关键章节速览：
+`coding-style.md` 关键章节速览：
 
 | # | 章节 | 关键约束 |
 |---|---|---|
@@ -95,7 +95,7 @@ free-kiro spec complete my-feature
 - 🐛 **Bug** → [GitHub Issues](https://github.com/jingyu525/free-kiro/issues)
 - 💡 **功能请求** → 先开 spec，PR spec 文档后再写代码
 - 💬 **讨论** → [GitHub Discussions](https://github.com/jingyu525/free-kiro/discussions)
-- 📖 **设计文档** → [`docs/`](.)（CLI.md / EARS.md / HOOKS.md / WORKFLOW.md / CODING_STYLE.md）
+- 📖 **设计文档** → [`docs/`](.)（CLI.md / EARS.md / HOOKS.md / WORKFLOW.md）+ [`.kiro/steering/`](.)（product.md / structure.md / tech.md / coding-style.md / agent-rules.md / policy.md）
 
 ---
 

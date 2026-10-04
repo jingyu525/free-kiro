@@ -2,7 +2,7 @@
 
 ## Architecture
 
-本 spec 把"价值兑现"分三层落地,**严格遵循 docs/CODING_STYLE.md
+本 spec 把"价值兑现"分三层落地,**严格遵循 .kiro/steering/coding-style.md
 的零豁免条款**(不引入 `//nolint`):
 
 ```

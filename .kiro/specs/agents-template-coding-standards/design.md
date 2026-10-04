@@ -46,18 +46,18 @@ internal/ide/templates/agents_en.md   ← 插入英文"## Coding Standards"段
 ```markdown
 ## 编码规范（SessionStart 必须先 Read）
 
-**在写任何 Go 代码之前，先 Read [`docs/CODING_STYLE.md`](../../docs/CODING_STYLE.md)、
-[`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) 与 [`docs/POLICY.md`](../../docs/POLICY.md)**。
+**在写任何 Go 代码之前，先 Read [`.kiro/steering/coding-style.md`](../../.kiro/steering/coding-style.md)、
+[`.kiro/steering/agent-rules.md`](../../.kiro/steering/agent-rules.md) 与 [`.kiro/steering/policy.md`](../../.kiro/steering/policy.md)**。
 
-- `docs/CODING_STYLE.md` 仅承载 7 章 Go 社区通用编码规范（命名 / 错误处理 /
+- `.kiro/steering/coding-style.md` 仅承载 7 章 Go 社区通用编码规范（命名 / 错误处理 /
   并发 / 接口 / 测试 / 注释 / 依赖）。它是**通用**规范，不是 free-kiro
   专属。
-- [`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) 承载 AI agent 协作硬性要求
+- [`.kiro/steering/agent-rules.md`](../../.kiro/steering/agent-rules.md) 承载 AI agent 协作硬性要求
   + 零豁免 / 零死代码政策（违反任意一条 = PR 拒收）。
-- [`docs/POLICY.md`](../../docs/POLICY.md) 承载 free-kiro 项目特定策略（覆盖率门槛、
+- [`.kiro/steering/policy.md`](../../.kiro/steering/policy.md) 承载 free-kiro 项目特定策略（覆盖率门槛、
   TODO 注释 owner、协议合规、commit 格式、代码规模上限、PR 范围约束）。
 
-硬约束摘录（来源：[`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) §1）：
+硬约束摘录（来源：[`.kiro/steering/agent-rules.md`](../../.kiro/steering/agent-rules.md) §1）：
 
 1. 零 `// TODO` / `// FIXME` / `// XXX` — 未完成的功能**不要写代码**，先
    回 spec 阶段补 requirements/design。
@@ -79,11 +79,11 @@ internal/ide/templates/agents_en.md   ← 插入英文"## Coding Standards"段
 - **为什么不改 prependMarker / init Go 代码**：模板是 init 的输入，
   prependMarker 只决定 marker 行的位置，编码规范是模板内容的一部分，
   不属于 init 框架逻辑。修改范围控制在 2 个 markdown 文件即可。
-- **为什么复制硬约束到模板而不只放指针**：AGENT_RULES.md §1 的 4 条
+- **为什么复制硬约束到模板而不只放指针**：.kiro/steering/agent-rules.md §1 的 4 条
   约束是 session-level 必读，但 agent 在读 AGENTS.md 时可能不会主动
-  跳到 AGENT_RULES.md。冗余复制让 agent 在不离开 AGENTS.md 的前提下
+  跳到 .kiro/steering/agent-rules.md。冗余复制让 agent 在不离开 AGENTS.md 的前提下
   也能看到硬约束（防"agent 看不到"场景）。同时，模板版本与
-  AGENT_RULES.md 内容可能漂移——这是已知风险，留给后续 spec 加
+  .kiro/steering/agent-rules.md 内容可能漂移——这是已知风险，留给后续 spec 加
   drift 检测。
 - **为什么不复制到 instructions_*.md**：本仓库主用 Claude Code（CLAUDE.md
   通过 steering inject 拿到项目上下文），硬约束段是否需要在 CLAUDE.md
@@ -106,7 +106,7 @@ internal/ide/templates/agents_en.md   ← 插入英文"## Coding Standards"段
 ## 风险与回滚
 
 - 风险 1：英文版硬约束翻译失真 → 中文版是 source of truth，英文版
-  仅作为兜底；agent 在 en locale 下若看不懂会 fall back 到 docs/AGENT_RULES.md
+  仅作为兜底；agent 在 en locale 下若看不懂会 fall back 到 .kiro/steering/agent-rules.md
 - 风险 2：模板行数膨胀 → 当前每个模板 ~67 行，加 22 行后 ~89 行，
   仍在可读范围内
 - 回滚：git revert 本 commit 即可恢复 init 模板到精简版本

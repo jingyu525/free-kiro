@@ -29,7 +29,7 @@
   - 不同变量名：`if err := foo(); err != nil { ... }` 改为 `if fooErr := foo();
     fooErr != nil { ... }` 并同步替换该块内 `err` 引用
 - [AC-4] THE SYSTEM SHALL 在 `golangci-lint run` 输出里 0 个 `//nolint:govet` 注释
-  （POLICY §5 零豁免政策：通过修代码达成，不通过豁免绕过）。
+  （.kiro/steering/policy.md §5 零豁免政策：通过修代码达成，不通过豁免绕过）。
 - [AC-5] IF 任一 shadow 违规通过 `//nolint:govet` 绕过而未修代码，THEN THE SYSTEM
   SHALL 视为本 spec 未完成。
 

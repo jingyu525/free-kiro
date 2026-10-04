@@ -8,7 +8,7 @@
   - internal/visualize/report.go: ProjectReport 加 Mode 字段；BuildReport 计算 mode
   - internal/workspace/workspace.go: WorkspacePaths 接口加 KiroDirExists() bool
 
-唯一架构原则：复用现有 taskgraph / hooks / workspace 模块，不重新实现（AGENT_RULES §6 零死代码）。
+唯一架构原则：复用现有 taskgraph / hooks / workspace 模块，不重新实现（.kiro/steering/agent-rules.md §6 零死代码）。
 -->
 
 ## Architecture
@@ -189,7 +189,7 @@ func (e *Engine) TaskList(name string) ([]taskgraph.Wave, error) {
 | `registry 未初始化` | hooks.Registry nil | `200` + `{"hooks":[],"registry_disabled":true}`（降级不报错） |
 | `panic` | handler 内任意 panic | `500` + `{"error":"internal server error"}`（middleware 提供） |
 
-**零吞错误**（AGENT_RULES §2）：所有 `os.Stat` / `os.ReadFile` / `taskgraph.ParseTasks` 失败都必须显式处理或 wrap 错误向上抛；不允许 `_ = doX()` 或 `log.Print(err)` 后继续。
+**零吞错误**（.kiro/steering/agent-rules.md §2）：所有 `os.Stat` / `os.ReadFile` / `taskgraph.ParseTasks` 失败都必须显式处理或 wrap 错误向上抛；不允许 `_ = doX()` 或 `log.Print(err)` 后继续。
 
 ## Testing Strategy
 
@@ -272,7 +272,7 @@ kill %1
 - **风险 C**：路径穿越（`/api/spec/..%2F..%2F/tasks`）。**对策**：`url.PathUnescape` 后 `filepath.Clean`，检查是否含 `..` 或以 `/` 开头，命中则 400。
 - **风险 D**：hook registry 未初始化导致 503 → 前端 health check 误报。**对策**：handler 降级返回 `registry_disabled: true`，让前端 UI 显示"hook 不可用"而非"服务挂了"。
 
-### 落地前置（按 AGENT_RULES §1）
+### 落地前置（按 .kiro/steering/agent-rules.md §1）
 
 - 本 spec 三件套（requirements / design / tasks）必须 `free-kiro lint` 全绿。
 - `dashboard-backend-middleware` 是本 spec 的**软依赖**（withRecover 提供 panic 兜底）；若 middleware 还没合入，本 spec 应在 handler 顶部加 `defer func(){ if r := recover(); r != nil { ... } }()` 自保。

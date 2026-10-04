@@ -37,7 +37,7 @@ dashboard-mobile-a11y 三个独立后续 spec。
 
 ### 模块拆分
 
-- [AC-6] THE SYSTEM SHALL 按 `src/{main.ts,types.ts,components/,stores/,lib/,styles/}` 拆分，单文件 ≤ 500 行（POLICY §6），函数 ≤ 50 行。
+- [AC-6] THE SYSTEM SHALL 按 `src/{main.ts,types.ts,components/,stores/,lib/,styles/}` 拆分，单文件 ≤ 500 行（.kiro/steering/policy.md §6），函数 ≤ 50 行。
 - [AC-7] THE SYSTEM SHALL 提供至少 9 个组件骨架：`App`、`HeaderBar`、`SummaryGrid`、`SpecsTable`、`StatCard`、`PhaseBadge`、`EmptyState`、`ToastStack`、`SkeletonRow`，以及 4 个 store：`summary`、`detail`、`connection`、`theme`。
 - [AC-8] THE SYSTEM SHALL 在 `src/lib/` 提供 `api.ts`（fetch 封装）、`sse.ts`（EventSource wrapper）、`format.ts`（时间/数字格式化）、`hash-router.ts`（URL hash 路由）、`theme.ts`（token 应用）5 个工具模块。
 

@@ -56,18 +56,24 @@ SessionStart hook 会自动跑同样的命令。
 
 ## 编码规范（SessionStart 必须先 Read）
 
-**在写任何 Go 代码之前，先 Read [`docs/CODING_STYLE.md`](../../docs/CODING_STYLE.md)、
-[`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) 与 [`docs/POLICY.md`](../../docs/POLICY.md)**。
+**在写任何 Go 代码之前，先 Read
+[`.kiro/steering/coding-style.md`](../../.kiro/steering/coding-style.md)、
+[`.kiro/steering/agent-rules.md`](../../.kiro/steering/agent-rules.md) 与
+[`.kiro/steering/policy.md`](../../.kiro/steering/policy.md)**（由
+`free-kiro steering inject` 自动维护，文件内容以底部
+`<!-- free-kiro-managed -->` 块为准）。
 
-- `docs/CODING_STYLE.md` 仅承载 7 章 Go 社区通用编码规范（命名 / 错误处理 /
-  并发 / 接口 / 测试 / 注释 / 依赖）。它是**通用**规范，不是 free-kiro
-  专属。
-- [`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) 承载 AI agent 协作硬性要求
-  + 零豁免 / 零死代码政策（违反任意一条 = PR 拒收）。
-- [`docs/POLICY.md`](../../docs/POLICY.md) 承载 free-kiro 项目特定策略（覆盖率门槛、
-  TODO 注释 owner、协议合规、commit 格式、代码规模上限、PR 范围约束）。
+- `.kiro/steering/coding-style.md` 承载 7 章 Go 社区通用编码规范（命名 /
+  错误处理 / 并发 / 接口 / 测试 / 注释 / 依赖）。它是**通用**规范，不是
+  free-kiro 专属。
+- [`.kiro/steering/agent-rules.md`](../../.kiro/steering/agent-rules.md)
+  承载 AI agent 协作硬性要求 + 零豁免 / 零死代码政策（违反任意一条 = PR
+  拒收）。
+- [`.kiro/steering/policy.md`](../../.kiro/steering/policy.md) 承载 free-kiro
+  项目特定策略（覆盖率门槛、TODO 注释 owner、协议合规、commit 格式、
+  代码规模上限、PR 范围约束）。
 
-硬约束摘录（来源：[`docs/AGENT_RULES.md`](../../docs/AGENT_RULES.md) §1）：
+硬约束摘录（来源：[`.kiro/steering/agent-rules.md`](../../.kiro/steering/agent-rules.md) §1）：
 
 1. 零 `// TODO` / `// FIXME` / `// XXX` — 未完成的功能**不要写代码**，先
    回 spec 阶段补 requirements/design。

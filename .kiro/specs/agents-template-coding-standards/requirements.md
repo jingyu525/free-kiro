@@ -1,8 +1,8 @@
 # agents-template-coding-standards
 
 把 `.kiro/AGENTS.md` 中"## 编码规范（SessionStart 必须先 Read）"段
-（含 docs/CODING_STYLE.md / AGENT_RULES.md / POLICY.md 必读指针 +
-AGENT_RULES.md §1 的 4 条硬约束摘录）固化进 init 模板
+（含 .kiro/steering/coding-style.md / .kiro/steering/agent-rules.md / .kiro/steering/policy.md 必读指针 +
+.kiro/steering/agent-rules.md §1 的 4 条硬约束摘录）固化进 init 模板
 `internal/ide/templates/agents_zh.md` 与 `agents_en.md`，让
 `free-kiro init --ide auto --overwrite-instructions` 重写 .kiro/AGENTS.md
 时保留该段，避免每次 init 都丢失 agent 必读的项目硬约束。
@@ -17,7 +17,7 @@ AGENT_RULES.md §1 的 4 条硬约束摘录）固化进 init 模板
 ## Acceptance Criteria
 
 - [AC-1] WHEN `free-kiro init` 把 `agents_zh.md` 模板写入项目根 AGENTS.md
-  THE SYSTEM SHALL 在"## 完成实现时"段之前插入 1 个 `## 编码规范（SessionStart 必须先 Read）` 段，段内至少包含 3 个必读 markdown 链接（CODING_STYLE.md / AGENT_RULES.md / POLICY.md）与 4 条编号硬约束，文件总行数相对插入前增加至少 20 行。
+  THE SYSTEM SHALL 在"## 完成实现时"段之前插入 1 个 `## 编码规范（SessionStart 必须先 Read）` 段，段内至少包含 3 个必读 markdown 链接（.kiro/steering/coding-style.md / .kiro/steering/agent-rules.md / .kiro/steering/policy.md）与 4 条编号硬约束，文件总行数相对插入前增加至少 20 行。
 - [AC-2] WHEN `free-kiro init --lang en` 把 `agents_en.md` 模板写入项目根 AGENTS.md THE SYSTEM SHALL 在同一位置插入英文版的"## Coding Standards (SessionStart must Read first)"段，段内至少包含 3 个必读链接与 4 条编号硬约束，文件总行数相对插入前增加至少 20 行。
 - [AC-3] WHEN init 写入 AGENTS.md 时 THE SYSTEM SHALL 保留现有的 frontmatter（`mode: manual`，共 2 行）与 `# free-kiro-managed:` marker 行共 1 行，新插入的硬约束段位于两者之后、`## 完成实现时`段之前（位置偏移 ≤ 5 行）。
 - [AC-4] WHEN init 写入 AGENTS.md 时 THE SYSTEM SHALL 让 AGENTS.md 中 2 个 marker 行（`<!-- free-kiro-managed:start -->` / `<!-- free-kiro-managed:end -->`）保留在文件末尾的最后 5 行内（与现有顺序一致），不被新插入的硬约束段推到中间。
@@ -33,4 +33,4 @@ AGENT_RULES.md §1 的 4 条硬约束摘录）固化进 init 模板
 - 不改 `prependMarker` 与 init 的 IO 流程——只需更新模板静态文本。
 - 不改 `.kiro/AGENTS.md` 当前手写的硬约束段——本次只动模板，下次 init
   时才会用新模板覆盖（因为 AGENTS.md 是 `# free-kiro-managed:` 文件）。
-- 不在模板里嵌入 AGENT_RULES.md 的链接图片或脚注——保持纯 markdown 文本。
+- 不在模板里嵌入 .kiro/steering/agent-rules.md 的链接图片或脚注——保持纯 markdown 文本。

@@ -1,0 +1,17 @@
+{
+  "name": "migrate-docs-triple-to-steering",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "把 docs/CODING_STYLE.md + docs/AGENT_RULES.md + docs/POLICY.md 三件套迁移到 .kiro/steering/ 下，作为项目级 steering 文档 mode: always 注入 IDE 指令文件",
+  "created_at": "2026-10-04T00:29:59Z",
+  "updated_at": "2026-10-04T00:51:55Z",
+  "baseline": {
+    "ac_count": 11,
+    "design_sections": 4,
+    "task_count": 17
+  }
+}
