@@ -19,19 +19,18 @@
 
 ## Acceptance Criteria
 
-- WHEN 执行 `golangci-lint run --timeout 5m` 在仓库根目录，THE SYSTEM SHALL
-  在 stdout 输出 `0 issues.`（不含 "X issues" 的非零数字）。
-- WHERE `.golangci.yml` 中 `linters.settings.govet.enable-all` 设为 `true`，
+- [AC-1] WHEN 执行 `golangci-lint run --timeout 5m` 在仓库根目录，THE SYSTEM SHALL 在 stdout 输出 `0 issues.`（不含 "X issues" 的非零数字）。
+- [AC-2] WHERE `.golangci.yml` 中 `linters.settings.govet.enable-all` 设为 `true`，
   THE SYSTEM SHALL 仍输出 `0 issues.`（即启用 enable-all 不暴露新违规）。
-- THE SYSTEM SHALL 修干净 13 处 govet shadow 违规（每处都是 `if err := ...;
+- [AC-3] THE SYSTEM SHALL 修干净 13 处 govet shadow 违规（每处都是 `if err := ...;
   err != nil { ... }` 在已声明 `err` 的作用域里 shadow）。修法二选一：
   - 复用外层 `err`：`if _, err := foo(); err != nil { ... }` 改为 `if err = foo();
     err != nil { ... }`（注意 `=` 而非 `:=`，外层已声明）
   - 不同变量名：`if err := foo(); err != nil { ... }` 改为 `if fooErr := foo();
     fooErr != nil { ... }` 并同步替换该块内 `err` 引用
-- THE SYSTEM SHALL 在 `golangci-lint run` 输出里 0 个 `//nolint:govet` 注释
+- [AC-4] THE SYSTEM SHALL 在 `golangci-lint run` 输出里 0 个 `//nolint:govet` 注释
   （POLICY §5 零豁免政策：通过修代码达成，不通过豁免绕过）。
-- IF 任一 shadow 违规通过 `//nolint:govet` 绕过而未修代码，THEN THE SYSTEM
+- [AC-5] IF 任一 shadow 违规通过 `//nolint:govet` 绕过而未修代码，THEN THE SYSTEM
   SHALL 视为本 spec 未完成。
 
 ## Out of Scope

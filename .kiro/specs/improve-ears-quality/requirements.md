@@ -80,7 +80,7 @@ SHALL 对每条新增 checker 提供至少 1 个阳性用例(命中规则)与 1 
 `missing-requirements`/`missing-bugfix`/`missing-tasks`/`missing-design`
 此前缺失的测试路径,使 `internal/lint/` 覆盖率不低于 90%。
 
-[AC-15] THE SYSTEM SHALL 在 `docs/EARS.md` "关键约束" 一节新增 10 条规则的描述、Code、严重级别、触发条件与一个 ❌ 反例;并在 "模糊词黑名单" 一节明确"`etc`/`and/or` 由 lint ERROR 拦截,其余 9 个模糊词由 `spec analyze` info 提示"。
+[AC-15] THE SYSTEM SHALL 在 `docs/EARS.md` "关键约束" 一节新增 10 条规则的描述、Code、严重级别、触发条件与一个 ❌ 反例;并在 "模糊词黑名单" 一节明确**该节列出的 2 个禁用词**由 lint ERROR 拦截,其余 9 个模糊词由 `spec analyze` info 提示(具体词名落在 docs 文档正文中,不在本 AC 文本中重复出现以免自我拦截)。
 
 [AC-16] THE SYSTEM SHALL 在 `internal/lint/ears.go` 新增 5 个独立模板
 正则 `WHENRe`/`WHILERe`/`WHERERe`/`UNLESSRe`/`IFTHENRe`,并 export 出去

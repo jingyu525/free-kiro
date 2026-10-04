@@ -29,8 +29,12 @@ import (
 
 // acIDPrefixRe matches the `[AC-N]` identifier prefix at the start of an
 // AC line. Used to identify the FIRST line of a (possibly multi-line)
-// AC — continuation lines of the same AC are not matched.
-var acIDPrefixRe = regexp.MustCompile(`(?i)^\s*\[AC-\d+\]`)
+// AC — continuation lines of the same AC are not matched. Accepts an
+// optional `- ` bullet prefix to mirror acIDRe's tolerance: specs that
+// prefer bullet-style ACs (`- [AC-1] WHEN ...`) must be recognized as
+// the AC marker line, otherwise extractEARSLines would mistreat the
+// following template-keyword continuation as a fresh AC.
+var acIDPrefixRe = regexp.MustCompile(`(?i)^\s*(?:-\s+)?\[AC-\d+\]`)
 
 // templateStartRe matches the START of a legacy single-line AC: one of
 // the EARS template keywords at line start (after optional whitespace

@@ -33,6 +33,11 @@ HAS_FREE_KIRO := $(shell command -v free-kiro 2>/dev/null)
 # the binary lives on PATH and `make bench` picks it up.
 HAS_BENCHSTAT := $(shell command -v benchstat 2>/dev/null)
 
+# dashboard frontend build 用 pnpm（dashboard-frontend-react-vite-fsd 锁定的
+# 包管理器；package.json 声明 packageManager: pnpm@9.x，engines.node >= 20）。
+# corepack 默认绑定 Node 20+，缺 pnpm 时 corepack enable 一键启用。
+HAS_PNPM := $(shell command -v pnpm 2>/dev/null)
+
 # ---------- 默认 target ----------
 
 .PHONY: help
@@ -48,6 +53,25 @@ build: ## 编译二进制到 ./bin/free-kiro
 .PHONY: install
 install: ## go install 到 $(GOBIN)/free-kiro
 	$(GO) install $(PKG)
+
+# 改完 internal/ide/templates/*.md 后用这个：
+#   1) go install 把新模板编进 binary（否则 PATH 上的 free-kiro 还是旧的）
+#   2) steering inject 把 IDE 指令文件同步成新模板
+#   3) drift 校验（exit 0 = 无漂移；有漂移时打印 diff stat 供 review，不阻断）
+# 详见 memory: free-kiro-template-embed-rebuild
+.PHONY: reinstall-templates
+reinstall-templates: install ## 改完 templates/*.md 后：重编 binary + 注入 IDE 指令文件 + drift 校验
+	@if [ -z "$(HAS_FREE_KIRO)" ]; then \
+		echo "free-kiro not on PATH"; exit 3; \
+	fi
+	@free-kiro steering inject || true
+	@git_root=$$(git rev-parse --show-toplevel 2>/dev/null) || git_root=.; \
+		if git -C $$git_root diff --exit-code CLAUDE.md AGENTS.md .cursorrules .cursor/rules/free-kiro.md >/dev/null 2>&1; then \
+			echo "✓ reinstall-templates: no drift"; \
+		else \
+			echo "drift (review then commit):"; \
+			git -C $$git_root diff --stat CLAUDE.md AGENTS.md .cursorrules .cursor/rules/free-kiro.md; \
+		fi
 
 .PHONY: clean
 clean: ## 删除 ./bin 与临时构建产物
@@ -94,6 +118,36 @@ fmt: ## gofmt + goimports 格式化
 	@if [ -n "$(LINT_BIN)" ]; then \
 		$(LINT_BIN) run --no-config --disable-all -E goimports --fix ./...; \
 	fi
+
+# ---------- Dashboard frontend ----------
+
+# dashboard 前端产物路径；internal/visualize/server.go 的
+# `//go:embed all:static/dist/assets/*` 依赖该目录存在 + 含 index.html
+# + assets/ 子目录至少 4 个 chunk（index / index.css / react-vendor /
+# query-vendor；hash 由 vite 决定）。
+DASHBOARD_DIR  := internal/visualize/static
+DASHBOARD_DIST := $(DASHBOARD_DIR)/dist
+
+.PHONY: dashboard-dist
+dashboard-dist: ## build dashboard frontend（pnpm install + pnpm build，//go:embed 依赖）
+	@if [ -z "$(HAS_PNPM)" ]; then \
+		echo "pnpm not on PATH; install one of:"; \
+		echo "  corepack enable pnpm"; \
+		echo "  npm i -g pnpm@9"; \
+		exit 3; \
+	fi
+	cd $(DASHBOARD_DIR) && pnpm install --frozen-lockfile
+	cd $(DASHBOARD_DIR) && pnpm build
+	@if [ ! -f $(DASHBOARD_DIST)/index.html ]; then \
+		echo "FAIL: $(DASHBOARD_DIST)/index.html missing after pnpm build"; \
+		exit 1; \
+	fi
+	@dist_files=$$(ls $(DASHBOARD_DIST) $(DASHBOARD_DIST)/assets/ 2>/dev/null | wc -l | tr -d ' '); \
+		if [ "$$dist_files" -lt 5 ]; then \
+			echo "FAIL: $(DASHBOARD_DIST) has $$dist_files entries (expected >= 5: index.html + assets/*)"; \
+			exit 1; \
+		fi
+	@echo "✓ dashboard-dist: $(DASHBOARD_DIST) populated ($$(ls $(DASHBOARD_DIST) $(DASHBOARD_DIST)/assets/ | wc -l | tr -d ' ') entries)"
 
 # ---------- Benchmark ----------
 
@@ -144,7 +198,7 @@ bench-init: ## 把当前 current.txt 复制为 baseline.txt（首次 / 主动 re
 # ---------- 组合 ----------
 
 .PHONY: ci
-ci: lint lint-go test ## CI 全量（spec 门禁 + Go lint + test）
+ci: dashboard-dist lint lint-go test build ## CI 全量（dashboard frontend + spec 门禁 + Go lint + test + Go build）
 	@echo "✓ ci passed"
 
 .PHONY: precommit

@@ -35,6 +35,12 @@ jobs:
       - name: go mod download
         run: go mod download
 
+      # Build dashboard frontend（pnpm + Vite）— //go:embed all:static/dist/assets/*
+      # 依赖 dist/ 存在；不放进 go mod download 之前是因为 npm 错误应单独显示，
+      # 不掩盖 mod 下载的网络失败。详见 .github/actions/build-dashboard。
+      - name: Build dashboard frontend
+        uses: ./.github/actions/build-dashboard
+
       - name: go vet
         run: go vet ./...
 
@@ -64,6 +70,10 @@ jobs:
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-1.23-${{ hashFiles('**/go.sum') }}
+
+      # Build dashboard frontend（pnpm + Vite）— //go:embed 依赖 dist/
+      - name: Build dashboard frontend
+        uses: ./.github/actions/build-dashboard
 
       # golangci-lint-action 自动装匹配 Go 版本 + go.mod 的最新 linter；
       # 与本地 `make lint-go` 同一配置入口（.golangci.yml）。
@@ -97,6 +107,10 @@ jobs:
         with:
           go-version: "1.23"
 
+      # Build dashboard frontend（pnpm + Vite）— //go:embed 依赖 dist/
+      - name: Build dashboard frontend
+        uses: ./.github/actions/build-dashboard
+
       - name: Install free-kiro
         run: go install ./cmd/free-kiro
 
@@ -119,6 +133,10 @@ jobs:
         with:
           go-version: "1.23"
 
+      # Build dashboard frontend（pnpm + Vite）— //go:embed 依赖 dist/
+      - name: Build dashboard frontend
+        uses: ./.github/actions/build-dashboard
+
       - name: Cross-compile
         env:
           GOOS: ${{ matrix.goos }}
@@ -136,6 +154,11 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.23"
+
+      # Build dashboard frontend（pnpm + Vite）— //go:embed 依赖 dist/
+      - name: Build dashboard frontend
+        uses: ./.github/actions/build-dashboard
+
       - name: End-to-end smoke
         run: |
           set -e

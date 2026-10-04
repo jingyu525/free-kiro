@@ -23,29 +23,25 @@ CI lint job 从 `continue-on-error: true`（WARN）切换为硬阻断（ERROR �
 
 ## Acceptance Criteria
 
-- WHEN 开发者执行 `golangci-lint run ./...`（或 `make lint-go`）时 THE
+- [AC-1] WHEN 开发者执行 `golangci-lint run ./...`（或 `make lint-go`）时 THE
   SYSTEM SHALL 退出码 0，stdout/stderr 不输出任何 issue。
-- WHILE `.golangci.yml` 仍存在 `path: 'internal/(spec|lint|...)/...'` 这类
+- [AC-2] WHILE `.golangci.yml` 仍存在 `path: 'internal/(spec|lint|...)/...'` 这类
   目录级 exclude-rule 时 THE SYSTEM SHALL 把软门禁 linter（`staticcheck`、
   `errcheck`、`revive`）视为"规范未全面落地"，CI `lint-go` job 必须以
   ERROR 退出。
-- WHERE `.golangci.yml` 使用 v1 schema（如 `output.formats` 为 slice、
-  `gofmt`/`goimports` 在 `linters.enable` 内、未声明 `version: "2"`）时
-  THE SYSTEM SHALL 在迁移完成后使用 v2 schema（`version: "2"` + 
-  `formatters.enable` 拆分 `gofmt`/`goimports` + `output.formats` 改为
-  map），并通过 `golangci-lint v2.x` 的 config 加载校验。
-- UNLESS linter 在该行加注 `//nolint:reason <具体原因>` 时 THE SYSTEM
+- [AC-3] WHERE `.golangci.yml` 使用 v1 schema（如 `output.formats` 为 slice、`gofmt`/`goimports` 在 `linters.enable` 内、未声明 `version: "2"`）时 THE SYSTEM SHALL 在迁移完成后使用 v2 schema（`version: "2"` + `formatters.enable` 拆分 `gofmt`/`goimports` + `output.formats` 改为 map），并通过 `golangci-lint v2.x` 的 config 加载校验。
+- [AC-4] UNLESS linter 在该行加注 `//nolint:reason <具体原因>` 时 THE SYSTEM
   SHALL 默认对所有非 `vendor/` / `third_party/` / `testdata/` / `_gen.go` /
   `*.pb.go` 的 Go 文件应用 5 类 linter（`govet` + `gofmt` + `goimports` +
   `staticcheck` + `errcheck` + `revive`）；本 spec 落地后，全仓库
   `//nolint:reason` 注释总数 ≤ 5（仅允许在 OS 信号处理、不可恢复 stderr
   写入等极少数场景保留）。
-- IF 任意包新增/修改 Go 代码后存在 errcheck 未处理返回、revive
+- [AC-5] IF 任意包新增/修改 Go 代码后存在 errcheck 未处理返回、revive
   `exported` 缺注释、revive `unused-parameter` 未改名 `_`、
   staticcheck `QF1xxx`/`SA4xxx` 告警、或 gofmt diff 时 THEN
   `.github/workflows/ci.yml` 的 `lint-go` job 必须以非 0 退出码失败，
   阻断 PR merge。
-- THE SYSTEM SHALL 在 `docs/CODING_STYLE.md` 第 8 章"AI 协作"明确
+- [AC-6] THE SYSTEM SHALL 在 `docs/CODING_STYLE.md` 第 8 章"AI 协作"明确
   写入："本项目 lint 配置零豁免；任何新增 `//nolint` 必须附带理由，
   由 PR reviewer 在 review 时逐条签字。"
 

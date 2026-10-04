@@ -129,13 +129,64 @@ func TestCheckACMissingID(t *testing.T) {
 		}
 	})
 	t.Run("hit: mixed — some have IDs, some don't", func(t *testing.T) {
+		// AC-1 is ID'd and multi-line; a non-template prose line breaks
+		// the continuation, so the next AC starts fresh without an ID.
 		doc := "- [AC-1] WHEN foo THE SYSTEM SHALL bar.\n" +
-			"WHEN baz THE SYSTEM SHALL qux."
+			"  prose continuation that does NOT start with a template keyword.\n" +
+			"- WHEN baz THE SYSTEM SHALL qux within 100 ms."
 		issues := CheckACMissingID(doc)
 		if len(issues) != 1 {
-			t.Errorf("expected exactly 1 issue for the second line; got %v", issues)
+			t.Errorf("expected exactly 1 issue for the third line; got %v", issues)
 		}
 	})
+}
+
+// --- acIDPrefixRe + extractEARSLines regression (bullet-prefixed AC marker) ---
+//
+// Before this fix, `- [AC-N] WHEN ... THE SYSTEM SHALL ...` (bullet-
+// prefixed canonical form) was not recognized as an AC marker line by
+// acIDPrefixRe, so the following `  THE SYSTEM SHALL ...` continuation
+// was misclassified as a fresh legacy AC — producing a spurious
+// `ears-ac-missing-id` warning on every multi-line bullet-prefixed AC
+// (e.g. performance-benchmarks:39, :53, :63).
+
+func TestExtractEARSLinesBulletPrefix(t *testing.T) {
+	t.Run("bullet AC marker with continuation is one AC", func(t *testing.T) {
+		doc := "- [AC-1] WHEN foo THE SYSTEM SHALL do X\n" +
+			"  THE SYSTEM SHALL continue with Y\n" +
+			"- [AC-2] WHEN bar THE SYSTEM SHALL do Z.\n"
+		acs := extractEARSLines(doc)
+		if len(acs) != 2 {
+			t.Fatalf("expected 2 ACs (continuation must not split AC-1); got %d: %+v", len(acs), acs)
+		}
+		if acs[0].LineNum != 1 {
+			t.Errorf("AC-1 line should be 1; got %d", acs[0].LineNum)
+		}
+		if acs[1].LineNum != 3 {
+			t.Errorf("AC-2 line should be 3; got %d", acs[1].LineNum)
+		}
+	})
+	t.Run("no bullet AC marker still recognized", func(t *testing.T) {
+		doc := "[AC-1] WHEN foo THE SYSTEM SHALL do X.\n" +
+			"[AC-2] WHEN bar THE SYSTEM SHALL do Z.\n"
+		acs := extractEARSLines(doc)
+		if len(acs) != 2 {
+			t.Fatalf("expected 2 ACs; got %d: %+v", len(acs), acs)
+		}
+	})
+}
+
+func TestACIDPrefixReAcceptsBullet(t *testing.T) {
+	for _, line := range []string{
+		"- [AC-1] WHEN foo THE SYSTEM SHALL bar.",
+		"[AC-1] WHEN foo THE SYSTEM SHALL bar.",
+		"  - [AC-2] WHEN foo THE SYSTEM SHALL bar.",
+		"  [AC-2] WHEN foo THE SYSTEM SHALL bar.",
+	} {
+		if !acIDPrefixRe.MatchString(line) {
+			t.Errorf("acIDPrefixRe must accept %q as an AC marker line", line)
+		}
+	}
 }
 
 // --- AC-6 CheckMeasurableResponse ---

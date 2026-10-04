@@ -1,0 +1,13 @@
+{
+  "name": "docs-template-marker-explanation",
+  "phase": "done",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": false,
+  "generator": "template",
+  "prompt": "CLAUDE.md / AGENTS.md 等 IDE 指令文件模板 `internal/ide/templates/{instructions,agents}_{zh,en}.md` 的『项目上下文（自动注入的 steering）』段只解释了底部 `\u003c!-- free-kiro-managed:start/end --\u003e` marker 由 steering inject 写入，没解释**顶部** `# free-kiro-managed:` 行（由 `internal/ide/ide.go` 的 `prependMarker` 在 YAML frontmatter 闭合后运行时注入）的用途。用户/agent 看到顶部 marker 容易误以为是 bug / 重复。\\n\\n修：\\n1. 改 4 个模板（instructions_zh/en.md, agents_zh/en.md）的『项目上下文（自动注入的 steering）』段，把两套 marker（顶部 `# free-kiro-managed:` 文件级 + 底部 `\u003c!-- ... --\u003e` 区域级）都讲清楚，区分注入源（init vs steering inject）和用途（识别 ownership vs 划定注入区）。\\n2. 加测试 `TestInstructionTemplate_ExplainsBothMarkers`：扫 4 个模板正文，确认两套 marker 的命名 + 用途都出现。\\n3. 跑 `free-kiro init --ide auto --overwrite-instructions` 同步到 CLAUDE.md / AGENTS.md / .cursorrules / .continuerules / .kiro/AGENTS.md。\\n4. 不改 `prependMarker` / `IsFreeKiroInstruction` 函数行为 —— 两套 marker 是有意设计。\\n5. docs/STEERING.md §\"自动注入到 IDE 指令文件\" 同步更新，让用户能查到两套 marker 的差别。",
+  "created_at": "2026-10-03T12:45:47Z",
+  "updated_at": "2026-10-03T12:56:19Z",
+  "baseline": {}
+}

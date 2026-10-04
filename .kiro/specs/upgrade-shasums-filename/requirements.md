@@ -16,19 +16,17 @@
 
 ## Acceptance Criteria
 
-- WHEN 用户执行 `free-kiro upgrade` 且当前 binary 版本落后于 latest release，
+- [AC-1] WHEN 用户执行 `free-kiro upgrade` 且当前 binary 版本落后于 latest release，
   THE SYSTEM SHALL 从 SHA256SUMS 中按完整 tarball 文件名
   `free-kiro_<version>_<GOOS>_<GOARCH>.tar.gz` 匹配到对应的 sha256 条目。
-- WHILE `free-kiro upgrade.Apply` 在校验 tarball，
+- [AC-2] WHILE `free-kiro upgrade.Apply` 在校验 tarball，
   THE SYSTEM SHALL 把 `p.Tarball`（而非 `p.Binary`）作为 SHA256SUMS 的查找 key。
-- THE SYSTEM SHALL 删除 `LookupSHA256` 内的 `name == "free-kiro"` fallback
+- [AC-3] THE SYSTEM SHALL 删除 `LookupSHA256` 内的 `name == "free-kiro"` fallback
   分支，因为 SHA256SUMS 实际不列 tarball 内部二进制条目，该分支是死代码。
-- IF 当前 GOOS/GOARCH 在 release assets 中不存在匹配的 tarball 条目，
+- [AC-4] IF 当前 GOOS/GOARCH 在 release assets 中不存在匹配的 tarball 条目，
   THEN THE SYSTEM SHALL 返回 `upgrade.apply` 错误并停止流程，不写入任何文件。
-- WHERE 调用方传 `p.Tarball = "free-kiro_0.8.0_darwin_arm64.tar.gz"`
-  且 SHA256SUMS 内含对应行，
-  THE SYSTEM SHALL 返回该行首字段的 hex sha256 字符串。
-- THE SYSTEM SHALL 新增单元测试 `TestApplyLookupSHA256UsesTarballNotBinary`，
+- [AC-5] WHERE 调用方传 `p.Tarball = "free-kiro_0.8.0_darwin_arm64.tar.gz"` 且 SHA256SUMS 内含对应行，THE SYSTEM SHALL 返回该行首字段的 hex sha256 字符串。
+- [AC-6] THE SYSTEM SHALL 新增单元测试 `TestApplyLookupSHA256UsesTarballNotBinary`，
   覆盖"传 `p.Binary` 当 key 会失败、传 `p.Tarball` 当 key 能成功"这一回归路径。
 
 ## Out of Scope
