@@ -1,0 +1,17 @@
+{
+  "name": "dashboard-ci-frontend-build",
+  "phase": "implementing",
+  "workflow": "requirements-first",
+  "spec_type": "feature",
+  "quick": false,
+  "approved": true,
+  "generator": "template",
+  "prompt": "修 CI 集成：dashboard frontend dist 在 CI 里缺失导致 lint-go / drift-check-steering / test / build / smoke 5 个 job 全失败。Makefile 缺 dashboard-dist target，ci.yml 缺 build step。需要在本 spec 修复：1) Makefile 新增 dashboard-dist target（pnpm install + pnpm build）；2) ci.yml 5 个 job 前面加 frontend build step（带 pnpm cache）；3) 同步 docs/STEERING 反映新流程。",
+  "created_at": "2026-10-04T00:07:15Z",
+  "updated_at": "2026-10-04T00:14:40Z",
+  "baseline": {
+    "ac_count": 14,
+    "design_sections": 6,
+    "task_count": 6
+  }
+}
