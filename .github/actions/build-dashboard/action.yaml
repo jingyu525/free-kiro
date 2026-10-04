@@ -1,0 +1,36 @@
+# composite action：build dashboard frontend (pnpm install + pnpm build)
+#
+# dashboard-frontend-react-vite-fsd 已锁定 pnpm + Vite + React 18；
+# 本 action 把 dashboard frontend build 抽出来给 ci.yml 5 个 Go job 复用，
+# 避免在每个 job 里复制 4 步 setup（setup-node + cache + corepack + make）。
+#
+# 依赖：调用方必须已 actions/checkout@v4 当前仓库（setup-go 也需在仓库里）。
+# node 20 与 internal/visualize/static/package.json 的 `engines.node >= 20` 对齐。
+#
+# 使用：
+#   - uses: ./.github/actions/build-dashboard
+# 详见 docs/STEERING.md § "dashboard frontend dev / CI"。
+name: Build dashboard frontend
+description: pnpm install --frozen-lockfile + pnpm build 产 internal/visualize/static/dist/，满足 //go:embed 依赖
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Cache pnpm node_modules
+      uses: actions/cache@v4
+      with:
+        path: internal/visualize/static/node_modules
+        key: pnpm-${{ runner.os }}-${{ hashFiles('internal/visualize/static/pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-${{ runner.os }}-
+
+    - name: Enable pnpm via corepack
+      run: corepack enable pnpm
+
+    - name: Build dashboard frontend (make dashboard-dist)
+      run: make dashboard-dist

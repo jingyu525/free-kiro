@@ -242,3 +242,64 @@ IDE 指令文件里实际有 **2 套** free-kiro 维护的标记，名字都带
 ---
 
 参考：[CLI.md](CLI.md)（steering 命令）/ [HOOKS.md](HOOKS.md)（用 hook 自动触发 context 组装）
+
+## dashboard frontend dev / CI
+
+dashboard 前端（pnpm + Vite + React 18 + FSD）由
+`internal/visualize/static/` 子模块承载；build 产物
+`internal/visualize/static/dist/{index.html,assets/*}` 被 Go 端
+`//go:embed all:static/dist/assets/*` 嵌入 binary。
+
+`dist/` **不入 git**（`internal/visualize/static/.gitignore` 忽略），由本机 /
+GitHub Actions 现场产出。
+
+### 本地开发
+
+```bash
+# 一行命令复现 CI 的 frontend build：
+make dashboard-dist
+
+# 等价于：
+cd internal/visualize/static
+pnpm install --frozen-lockfile
+pnpm build
+ls -lh dist/ dist/assets/
+```
+
+产物清单（必须全部存在，否则 `go build` 在 `//go:embed` 处失败）：
+
+- `dist/index.html`
+- `dist/assets/index-<hash>.js`（入口 chunk，gzip ≤ 80 KB）
+- `dist/assets/index-<hash>.css`（样式，gzip ≤ 12 KB）
+- `dist/assets/react-vendor-<hash>.js`（React runtime 拆 chunk）
+- `dist/assets/query-vendor-<hash>.js`（React Query 拆 chunk）
+
+pnpm 缺失时 `make dashboard-dist` 退出码 3，并打印
+`corepack enable pnpm` 或 `npm i -g pnpm@9` 的安装命令（与 `package.json`
+声明的 `packageManager: pnpm@9.x`、`engines.node >= 20` 对齐）。
+
+### CI 集成
+
+`.github/workflows/ci.yml` 5 个 Go job（`test` / `lint-go` /
+`drift-check-steering` / `build` / `smoke`）**每个都在原 Go 命令之前**
+插入 `Build dashboard frontend` step，调用 composite action
+`.github/actions/build-dashboard/`。composite action 顺序 4 步：
+
+1. `actions/setup-node@v4`（node-version: '20'）
+2. `actions/cache@v4`（key `pnpm-${{ runner.os }}-${{ hashFiles('internal/visualize/static/pnpm-lock.yaml') }}`，path `internal/visualize/static/node_modules`，restore-keys `pnpm-${{ runner.os }}-`）
+3. `corepack enable pnpm`（启用 Node 自带 corepack 绑定 `pnpm@9.x`）
+4. `make dashboard-dist`（与本地入口共享 target）
+
+cache 仅当 `pnpm-lock.yaml` hash 变化时失效；cache hit 时
+`pnpm install --frozen-lockfile` < 30s，cache miss < 180s。
+
+`make ci` target 顺序执行 `dashboard-dist + lint + lint-go + test + build`，
+与 GitHub Actions 5 job 等价。本地提 PR 前跑一次 `make ci` 可拦截 90% CI 失败。
+
+### 关联 spec
+
+- `dashboard-frontend-react-vite-fsd`（done）— Vite + pnpm + FSD 迁移，dist 内容
+- `dashboard-ci-frontend-build`（approved）— 本 spec，把 dist build 接入 CI
+- `dashboard-frontend-components`（后续）— 修 TypeError / spec detail view
+
+任何 dashboard frontend 改动都必须经过 `make ci` 验证 5 文件产物齐全后再 push。
